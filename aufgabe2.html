@@ -821,7 +821,7 @@ function check2b_step1() {
 
 function check2b_step2() {
   const val = parseNum(document.getElementById('ans-2b-box').value);
-  const ok = !isNaN(val) && Math.abs(val - BOX_V) < 2;
+  const ok = !isNaN(val) && Math.abs(val - BOX_V) < 0.01;
   clearInputStyle('ans-2b-box');
   applyInputStyle('ans-2b-box', ok);
   showInlineFB('2b-2', ok,
