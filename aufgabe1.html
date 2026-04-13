@@ -539,6 +539,7 @@ function saveAndRefresh() { ExamState.save(state); updateScoreDisplay(); }
 const mcSelections = {};
 
 function selectMC(groupId, el) {
+  /* Allow re-selection freely */
   const container = el.closest('.mc-options, .mc-inline');
   container.querySelectorAll('.mc-option').forEach(o => {
     o.classList.remove('selected','correct','incorrect');
@@ -567,166 +568,36 @@ function restoreMC(groupId) {
   });
 }
 
+/*
+  checkMC – applies the new MC rule:
+  correct → chosen turns green
+  wrong   → chosen turns red, correct stays neutral
+*/
 function checkMC(groupId, correctVal, subId, maxPoints, hintText) {
   if (!mcSelections[groupId]) {
     alert('Bitte wähle eine Antwort aus.');
     return;
   }
-  const ok = (mcSelections[groupId] === correctVal);
+  const chosen = mcSelections[groupId];
+  const ok = (chosen === correctVal);
+
+  /* Visual: only colour the chosen option */
   const container = document.getElementById(`mc-${groupId}`);
   container.querySelectorAll('.mc-option').forEach(o => {
     o.classList.remove('correct','incorrect');
-    if (o.dataset.val === correctVal) o.classList.add('correct');
-    else if (o.dataset.val === mcSelections[groupId] && !ok)
-      o.classList.add('incorrect');
   });
+  container.querySelectorAll('.mc-option').forEach(o => {
+    if (o.dataset.val === chosen) {
+      o.classList.add(ok ? 'correct' : 'incorrect');
+    }
+    /* Do NOT add 'correct' to the right answer when wrong */
+  });
+
   state = recordScore(subId, maxPoints, ok, state);
   showFeedback(subId, ok, ok ? '' : hintText);
   updateNotice(subId);
   saveAndRefresh();
 }
-
-
-/* ══════════════════════════════════════════
-   1c  Interactive Circle Slicer
-   ══════════════════════════════════════════ */
-
-const canvas = document.getElementById('slicer-canvas');
-const ctx = canvas.getContext('2d');
-const CX = 110, CY = 110, CR = 90;
-
-// Angle in radians (0 = top = -π/2)
-// We store angle clockwise from top as a fraction of 2π
-let sliceFraction = loadCustom('slicer-fraction');
-if (sliceFraction === undefined || sliceFraction === null) {
-  sliceFraction = 0.1; // start at 10%
-}
-
-function angleFromFraction(f) {
-  // 0 at top (-π/2), going clockwise
-  return -Math.PI / 2 + f * 2 * Math.PI;
-}
-
-function fractionFromAngle(a) {
-  // Convert angle back to fraction (0=top, clockwise positive)
-  let f = (a + Math.PI / 2) / (2 * Math.PI);
-  if (f < 0) f += 1;
-  if (f > 1) f -= 1;
-  return f;
-}
-
-function drawSlicer() {
-  ctx.clearRect(0, 0, 220, 220);
-
-  // White circle
-  ctx.beginPath();
-  ctx.arc(CX, CY, CR, 0, 2 * Math.PI);
-  ctx.fillStyle = 'white';
-  ctx.fill();
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Coloured slice (clockwise from top)
-  const startAngle = -Math.PI / 2;
-  const endAngle = angleFromFraction(sliceFraction);
-
-  ctx.beginPath();
-  ctx.moveTo(CX, CY);
-  ctx.arc(CX, CY, CR, startAngle, endAngle, false);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(26, 82, 118, 0.35)';
-  ctx.fill();
-  ctx.strokeStyle = '#1a5276';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Line from centre to top (fixed)
-  ctx.beginPath();
-  ctx.moveTo(CX, CY);
-  ctx.lineTo(CX, CY - CR);
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Line from centre to handle point
-  const hx = CX + CR * Math.cos(endAngle);
-  const hy = CY + CR * Math.sin(endAngle);
-  ctx.beginPath();
-  ctx.moveTo(CX, CY);
-  ctx.lineTo(hx, hy);
-  ctx.strokeStyle = '#1a5276';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Handle dot
-  ctx.beginPath();
-  ctx.arc(hx, hy, 12, 0, 2 * Math.PI);
-  ctx.fillStyle = '#1a5276';
-  ctx.fill();
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Centre dot
-  ctx.beginPath();
-  ctx.arc(CX, CY, 4, 0, 2 * Math.PI);
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fill();
-
-  // Top dot
-  ctx.beginPath();
-  ctx.arc(CX, CY - CR, 5, 0, 2 * Math.PI);
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fill();
-
-  // Update readout
-  const pct = Math.round(sliceFraction * 100);
-  document.getElementById('slicer-readout').textContent = pct + ' %';
-}
-
-function handleSlicerMove(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left - CX;
-  const y = clientY - rect.top - CY;
-  const angle = Math.atan2(y, x);
-  sliceFraction = fractionFromAngle(angle);
-  // Snap to nearest 5%
-  sliceFraction = Math.round(sliceFraction * 20) / 20;
-  if (sliceFraction <= 0) sliceFraction = 0.05;
-  if (sliceFraction > 1) sliceFraction = 1;
-  saveCustom('slicer-fraction', sliceFraction);
-  drawSlicer();
-}
-
-let isDragging = false;
-
-canvas.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  handleSlicerMove(e.clientX, e.clientY);
-});
-canvas.addEventListener('mousemove', (e) => {
-  if (isDragging) handleSlicerMove(e.clientX, e.clientY);
-});
-document.addEventListener('mouseup', () => { isDragging = false; });
-
-canvas.addEventListener('touchstart', (e) => {
-  isDragging = true;
-  const t = e.touches[0];
-  handleSlicerMove(t.clientX, t.clientY);
-  e.preventDefault();
-}, { passive: false });
-canvas.addEventListener('touchmove', (e) => {
-  if (isDragging) {
-    const t = e.touches[0];
-    handleSlicerMove(t.clientX, t.clientY);
-  }
-  e.preventDefault();
-}, { passive: false });
-canvas.addEventListener('touchend', () => { isDragging = false; });
-
-drawSlicer();
-
 
 /* ── 1a ── */
 function check1a() {
@@ -735,7 +606,8 @@ function check1a() {
   applyInputStyle('ans-1a', ok);
   state = recordScore('1a', 1, ok, state);
   showFeedback('1a', ok, ok ? '' :
-    'Prozentsatz = Rabatt ÷ Gesamtpreis × 100. Also: 8 ÷ 40 × 100 = ?');
+    'Überlege, welche Formel den Prozentsatz berechnet, ' +
+    'wenn Rabattbetrag und ursprünglicher Preis bekannt sind.');
   updateNotice('1a'); saveAndRefresh();
 }
 
@@ -746,40 +618,38 @@ function check1b() {
   applyInputStyle('ans-1b', ok);
   state = recordScore('1b', 1, ok, state);
   showFeedback('1b', ok, ok ? '' :
-    '1 cm² = 100 mm² (nicht 10!). Also: 1,3 × 100 = ?');
+    'Denke daran, wie sich cm² und mm² zueinander verhalten. ' +
+    '1 cm hat wie viele mm?');
   updateNotice('1b'); saveAndRefresh();
 }
 
 /* ── 1c  Circle slicer ── */
 function check1c() {
-  // 75% = 3/4
   const pct = Math.round(sliceFraction * 100);
   const ok = (pct === 75);
-
   state = recordScore('1c', 1, ok, state);
-
   const fb = document.getElementById('feedback-1c');
   fb.classList.add('show');
   if (ok) {
     fb.className = 'feedback-box show correct';
     fb.innerHTML = '<span class="feedback-icon">✅</span>' +
-      '<strong>Richtig!</strong> 75 % = drei Viertel. (1/1 Punkt)';
+      '<strong>Richtig!</strong> (1/1 Punkt)';
   } else {
     fb.className = 'feedback-box show incorrect';
     fb.innerHTML = '<span class="feedback-icon">❌</span>' +
-      '<strong>Leider falsch.</strong> Du hast ' + pct + ' % markiert.' +
-      '<div class="hint-text">💡 Drei Viertel = 3/4 = 75 %. ' +
-      'Ziehe den Punkt, bis die Anzeige 75 % zeigt.</div>';
+      '<strong>Leider falsch.</strong> Du hast ' + pct + '% markiert.' +
+      '<div class="hint-text">💡 Drei Viertel bedeutet, ' +
+      'dass der markierte Anteil genau 3 von 4 gleichen Teilen entspricht.' +
+      '</div>';
   }
-
   updateNotice('1c'); saveAndRefresh();
 }
 
 /* ── 1d ── */
 function check1d() {
-  checkMC('1d', 'B', '1d', 1,
-    'Multipliziere aus: 4 · 3x = 12x und 4 · (−7) = −28. ' +
-    'Also: 4 · (3x − 7) = 12x − 28.');
+  checkMC('1d','B','1d', 1,
+    'Wende das Distributivgesetz an: ' +
+    'multipliziere jeden Term in der Klammer mit dem Faktor außen.');
 }
 
 /* ── 1e ── */
@@ -789,47 +659,39 @@ function check1e() {
   applyInputStyle('ans-1e', ok);
   state = recordScore('1e', 1, ok, state);
   showFeedback('1e', ok, ok ? '' :
-    'In einer Raute sind gegenüberliegende Winkel gleich groß. ' +
-    'Benachbarte Winkel ergänzen sich zu 180°: α + 100° = 180°.');
+    'Welche Beziehung gilt zwischen benachbarten Winkeln in einer Raute?');
   updateNotice('1e'); saveAndRefresh();
 }
 
-/* ── 1f  Kante + Oberfläche with calc check ── */
+/* ── 1f ── */
 function check1f() {
   const edgeOk = (mcSelections['1f-edge'] === '3');
   const surfVal = parseNum(document.getElementById('ans-1f-surface').value);
-  const surfOk = Math.abs(surfVal - 54) < 0.5;
+  const surfOk  = Math.abs(surfVal - 54) < 0.5;
 
-  // Check calculation text
   const calcText = document.getElementById('ans-1f-calc').value;
-  const calcEl = document.getElementById('ans-1f-calc');
-  calcEl.classList.remove('correct', 'incorrect');
-
-  // Calc should contain: formula reference (6, a², 9, 54)
-  const ct = calcText.toLowerCase().replace(/\s/g, '');
-  const hasFormula = ct.includes('6') && (ct.includes('9') || ct.includes('3²') || ct.includes('3^2'));
-  const hasResult = ct.includes('54');
+  const calcEl   = document.getElementById('ans-1f-calc');
+  calcEl.classList.remove('correct','incorrect');
+  const ct = calcText.toLowerCase().replace(/\s/g,'');
+  const hasFormula = ct.includes('6') &&
+    (ct.includes('9') || ct.includes('3²') || ct.includes('3^2'));
+  const hasResult  = ct.includes('54');
   const calcOk = calcText.trim().length > 5 && hasFormula && hasResult;
-
   calcEl.classList.add(calcOk ? 'correct' : 'incorrect');
 
-  // MC visual
+  /* MC visual – only colour the chosen option */
   const container = document.getElementById('mc-1f-edge');
   container.querySelectorAll('.mc-option').forEach(o => {
     o.classList.remove('correct','incorrect');
-    if (o.dataset.val === '3') o.classList.add('correct');
-    else if (o.dataset.val === mcSelections['1f-edge'] && !edgeOk)
-      o.classList.add('incorrect');
+    if (o.dataset.val === mcSelections['1f-edge']) {
+      o.classList.add(edgeOk ? 'correct' : 'incorrect');
+    }
   });
 
   clearInputStyle('ans-1f-surface');
   applyInputStyle('ans-1f-surface', surfOk);
 
-  // Scoring: 1 P edge, 1 P surface (calc + result)
-  // Surface point only if both calc and result are correct
-  const surfPoint = (surfOk && calcOk) ? 1 : (surfOk ? 1 : 0);
-  const earned = (edgeOk ? 1 : 0) + surfPoint;
-
+  const earned = (edgeOk ? 1 : 0) + (surfOk ? 1 : 0);
   state = recordPartialScore('1f', earned, 2, state);
 
   const fb = document.getElementById('feedback-1f');
@@ -839,14 +701,18 @@ function check1f() {
     fb.innerHTML = '<span class="feedback-icon">✅</span>' +
       '<strong>Richtig!</strong> (2/2 Punkte)';
     if (!calcOk) {
-      fb.innerHTML += '<div class="hint-text">⚠️ Dein Ergebnis stimmt, ' +
-        'aber der Rechenweg sollte die Formel O = 6 · a² enthalten.</div>';
+      fb.innerHTML += '<div class="hint-text">⚠️ Dein Ergebnis stimmt. ' +
+        'Achte beim nächsten Mal darauf, den Rechenweg ' +
+        'vollständig aufzuschreiben.</div>';
     }
   } else {
     const hints = [];
-    if (!edgeOk) hints.push('V = a³ → a = ∛27 = 3 cm.');
-    if (!surfOk) hints.push('Oberfläche = 6 · a² = 6 · 3² = 6 · 9 = 54 cm².');
-    if (!calcOk && surfOk) hints.push('Notiere deinen Rechenweg: O = 6 · a² = 6 · 9 = 54.');
+    if (!edgeOk)
+      hints.push('Wie lautet die Formel für das Volumen eines Würfels? ' +
+        'Welche Kantenlänge ergibt das gegebene Volumen?');
+    if (!surfOk)
+      hints.push('Wie viele Flächen hat ein Würfel, ' +
+        'und wie berechnet man den Flächeninhalt einer Fläche?');
     fb.className = 'feedback-box show incorrect';
     fb.innerHTML = `<span class="feedback-icon">⚠️</span>
       <strong>${earned}/2 Punkte.</strong>
@@ -857,50 +723,43 @@ function check1f() {
 
 /* ── 1g ── */
 function check1g() {
-  checkMC('1g', 'C', '1g', 1,
-    'Im rechtwinkligen Dreieck: tan(ε) = Gegenkathete / Ankathete. ' +
-    'Die Gegenkathete von ε ist d, die Ankathete ist e. ' +
-    'Also: tan ε = d / e.');
+  checkMC('1g','C','1g', 1,
+    'Welche trigonometrische Funktion beschreibt das Verhältnis ' +
+    'von Gegenkathete zu Ankathete?');
 }
 
-/* ── 1h  Scientific notation ── */
+/* ── 1h ── */
 function check1h() {
   const baseVal = parseNum(document.getElementById('ans-1h-base').value);
-  const expVal = parseNum(document.getElementById('ans-1h-exp').value);
-
-  // 5 470 000 000 = 5.47 × 10^9
+  const expVal  = parseNum(document.getElementById('ans-1h-exp').value);
   const userResult = baseVal * Math.pow(10, expVal);
   const ok = !isNaN(baseVal) && !isNaN(expVal) &&
              Math.abs(userResult - 5470000000) < 1000 &&
              baseVal >= 1 && baseVal < 10;
-
   clearInputStyle('ans-1h-base');
   document.getElementById('ans-1h-exp').classList.remove('correct','incorrect');
   applyInputStyle('ans-1h-base', ok);
-  document.getElementById('ans-1h-exp').classList.add(ok ? 'correct' : 'incorrect');
-
+  document.getElementById('ans-1h-exp')
+    .classList.add(ok ? 'correct' : 'incorrect');
   state = recordScore('1h', 1, ok, state);
-
   showFeedback('1h', ok, ok ? '' :
-    'Schiebe das Komma so, dass eine Zahl zwischen 1 und 10 entsteht. ' +
-    'Zähle dann, wie viele Stellen das Komma gewandert ist – das ist der Exponent.');
-
+    'Der Vorfaktor muss zwischen 1 (einschließlich) und 10 (ausschließlich) liegen. ' +
+    'Der Exponent gibt an, um wie viele Stellen das Komma verschoben wird.');
   updateNotice('1h'); saveAndRefresh();
 }
 
 /* ── 1i ── */
 function check1i() {
-  checkMC('1i', 'B', '1i', 1,
-    'Die graue Fläche = gesamtes Rechteck minus weiße Fläche. ' +
-    'Gesamtes Rechteck: a · b. Weiße Fläche: c · b. ' +
-    'Grau = a·b − c·b = b·(a − c).');
+  checkMC('1i','B','1i', 1,
+    'Die graue Fläche ergibt sich aus der Gesamtfläche ' +
+    'minus der weißen Teilfläche.');
 }
 
-
-/* ── Restore everything on page load ── */
+/* ── Restore MC selections + notices on page load ── */
 (function init() {
   ['1d','1f-edge','1g','1i'].forEach(id => restoreMC(id));
-  ['1a','1b','1c','1d','1e','1f','1g','1h','1i'].forEach(id => updateNotice(id));
+  ['1a','1b','1c','1d','1e','1f','1g','1h','1i']
+    .forEach(id => updateNotice(id));
   updateScoreDisplay();
 })();
 </script>

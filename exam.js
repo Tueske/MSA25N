@@ -1,6 +1,5 @@
 /* ============================================
    MSA 2025 Nachschreibtermin – Shared Exam Logic
-   Full input persistence + scoring
    ============================================ */
 
 const ExamState = {
@@ -18,9 +17,9 @@ const ExamState = {
     return {
       studentName:  '',
       studentClass: '',
-      scores:    {},   // { "1a": { earned: 1, max: 1, attempts: 0 } }
-      inputs:    {},   // { "ans-1a": "20", "ans-1b": "130" }
-      completed: {}    // { "task1": true }
+      scores:    {},
+      inputs:    {},
+      completed: {}
     };
   },
 
@@ -31,14 +30,6 @@ const ExamState = {
   totalEarned(state) {
     return Object.values(state.scores)
       .reduce((sum, s) => sum + (s.earned || 0), 0);
-  },
-
-  totalMax() {
-    return 60; // MSA total
-  },
-
-  totalMaxEBBR() {
-    return 40; // eBBR total
   }
 };
 
@@ -88,7 +79,22 @@ function parseNum(str) {
   );
 }
 
-/* ── UI Helpers ── */
+/* ── Input style helpers ── */
+
+function applyInputStyle(id, isCorrect) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('correct', 'incorrect');
+  el.classList.add(isCorrect ? 'correct' : 'incorrect');
+}
+
+function clearInputStyle(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('correct', 'incorrect');
+}
+
+/* ── Feedback box ── */
 
 function showFeedback(subId, isCorrect, hintText = '') {
   const box = document.getElementById(`feedback-${subId}`);
@@ -106,26 +112,22 @@ function showFeedback(subId, isCorrect, hintText = '') {
   }
 }
 
-function applyInputStyle(id, isCorrect) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('correct', 'incorrect');
-  el.classList.add(isCorrect ? 'correct' : 'incorrect');
-}
-
-function clearInputStyle(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('correct', 'incorrect');
-}
-
-/* ── Points recording ── */
+/* ══════════════════════════════════════════
+   SCORING
+   Rules:
+   - Points awarded ONLY on the first attempt.
+   - Attempts and earned points are persisted
+     in localStorage.
+   - From attempt 2 onwards: feedback only,
+     no points change.
+   ══════════════════════════════════════════ */
 
 function recordScore(subId, maxPoints, isCorrect, state) {
   if (!state.scores[subId]) {
     state.scores[subId] = { earned: 0, max: maxPoints, attempts: 0 };
   }
   const entry = state.scores[subId];
+  /* Only award on first attempt */
   if (entry.attempts === 0 && isCorrect) {
     entry.earned = maxPoints;
   }
@@ -145,6 +147,33 @@ function recordPartialScore(subId, earned, maxPoints, state) {
   return state;
 }
 
+/*
+  recordStepScore – for individual guided steps.
+  Each step has its own key (e.g. "2a-step1").
+  Returns whether this is the first attempt.
+*/
+function recordStepScore(stepKey, maxPoints, isCorrect, state) {
+  const key = `step_${stepKey}`;
+  if (!state.scores[key]) {
+    state.scores[key] = { earned: 0, max: maxPoints, attempts: 0 };
+  }
+  const entry = state.scores[key];
+  if (entry.attempts === 0 && isCorrect) {
+    entry.earned = maxPoints;
+  }
+  entry.attempts += 1;
+  return state;
+}
+
+function isFirstAttempt(subId, state) {
+  return !state.scores[subId] || state.scores[subId].attempts === 0;
+}
+
+function isFirstStepAttempt(stepKey, state) {
+  const key = `step_${stepKey}`;
+  return !state.scores[key] || state.scores[key].attempts === 0;
+}
+
 /* ── Score display ── */
 
 function updateScoreDisplay() {
@@ -155,7 +184,7 @@ function updateScoreDisplay() {
   });
 }
 
-/* ── Scored notice ── */
+/* ── scored-notice ── */
 
 function updateNotice(subId) {
   const state = ExamState.load();
@@ -165,22 +194,46 @@ function updateNotice(subId) {
   if (!s || s.attempts === 0) { el.textContent = ''; return; }
   if (s.earned > 0) {
     el.className = 'scored-notice earned';
-    el.textContent =
-      `✓ ${s.earned}/${s.max} Punkt(e) bereits vergeben`;
+    el.textContent = `✓ ${s.earned}/${s.max} Punkt(e) vergeben`;
   } else {
     el.className = 'scored-notice not-earned';
-    el.textContent =
-      `0/${s.max} Punkt(e) – weiteres Üben möglich`;
+    el.textContent = `0/${s.max} Punkt(e) – weiteres Üben möglich`;
   }
+}
+
+/* ══════════════════════════════════════════
+   MC FEEDBACK RULE
+   Wrong answer: only the chosen option turns red.
+   The correct answer is NOT revealed (no green).
+   Correct answer: chosen option turns green.
+   From attempt 2 onwards: same visual rule,
+   but the scored-notice already shows 0 pts.
+   ══════════════════════════════════════════ */
+
+/*
+  markMCResult(container, chosenVal, correctVal, isCorrect)
+  - If correct: chosen option → green
+  - If wrong:   chosen option → red only
+                correct option stays neutral
+*/
+function markMCResult(container, chosenVal, correctVal, isCorrect) {
+  if (!container) return;
+  container.querySelectorAll('.mc-option, .step-mc-option').forEach(o => {
+    o.classList.remove('correct', 'incorrect');
+    /* Only colour the chosen option */
+    if (o.dataset.val === chosenVal) {
+      o.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+  });
 }
 
 /* ── Input Persistence ── */
 
-// Save a single input's value to state
 function saveInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
   const state = ExamState.load();
+  if (!state.inputs) state.inputs = {};
   if (el.type === 'checkbox' || el.type === 'radio') {
     state.inputs[inputId] = el.checked;
   } else {
@@ -189,7 +242,6 @@ function saveInput(inputId) {
   ExamState.save(state);
 }
 
-// Restore all saved inputs on a page
 function restoreInputs() {
   const state = ExamState.load();
   if (!state.inputs) return;
@@ -199,25 +251,20 @@ function restoreInputs() {
     if (el.type === 'checkbox' || el.type === 'radio') {
       el.checked = state.inputs[id];
     } else {
-      el.value = state.inputs[id];
+      el.value = state.inputs[id] || '';
     }
   });
 }
 
-// Auto-bind all inputs/textareas/selects on page to persist on change
 function bindInputPersistence() {
-  const inputs = document.querySelectorAll(
-    'input[id], textarea[id], select[id]'
-  );
-  inputs.forEach(el => {
-    const events = ['input', 'change'];
-    events.forEach(evt => {
-      el.addEventListener(evt, () => saveInput(el.id));
+  document.querySelectorAll('input[id], textarea[id], select[id]')
+    .forEach(el => {
+      ['input','change'].forEach(evt => {
+        el.addEventListener(evt, () => saveInput(el.id));
+      });
     });
-  });
 }
 
-// Save custom state (for buttons, MC selections, etc.)
 function saveCustom(key, value) {
   const state = ExamState.load();
   if (!state.inputs) state.inputs = {};
