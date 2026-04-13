@@ -1197,8 +1197,9 @@ function check2a_final() {
   const maxPoints = 2;
   const isCorrect = earned === maxPoints;
   const hint = isCorrect ? '' : 'Überprüfe deine Berechnungen in den Schritten 2 und 3.';
+  recordScore('2a', maxPoints, isCorrect);
   showFeedback('2a', isCorrect, hint, earned, maxPoints);
-  updateNotice('2a-final');
+  updateNotice('2a');
 }
 
 function check2b_final() {
@@ -1209,8 +1210,9 @@ function check2b_final() {
   const maxPoints = 3;
   const isCorrect = earned === maxPoints;
   const hint = isCorrect ? '' : 'Überprüfe deine Berechnungen und "Was als nächstes?"-Auswahlen.';
+  recordScore('2b', maxPoints, isCorrect);
   showFeedback('2b', isCorrect, hint, earned, maxPoints);
-  updateNotice('2b-final');
+  updateNotice('2b');
 }
 
 function check2c_final() {
@@ -1221,8 +1223,9 @@ function check2c_final() {
   const maxPoints = 4;
   const isCorrect = earned === maxPoints;
   const hint = isCorrect ? '' : 'Überprüfe deine Berechnungen und Auswahlen in beiden Teilen.';
+  recordScore('2c', maxPoints, isCorrect);
   showFeedback('2c', isCorrect, hint, earned, maxPoints);
-  updateNotice('2c-final');
+  updateNotice('2c');
 }
 
 /* ── Restore on page load ── */
