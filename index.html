@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MSA 2025">
+  <title>MSA 2025 – Mathematik Nachschreibtermin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="cover-page">
+    <div class="header-bar">
+      <span class="header-title">Berlin / Brandenburg – Schriftliche Prüfung 2025</span>
+    </div>
+
+    <div class="cover-content">
+      <h1>Schriftliche Prüfungsarbeit 2025</h1>
+      <h2>Mathematik – Nachschreibtermin</h2>
+
+      <div class="cover-meta">
+        <p>Mittwoch, 04. Juni 2025</p>
+        <p>Bearbeitungszeit: <strong>135 Minuten</strong></p>
+        <div class="dual-grade-info"
+             style="justify-content:center; margin-top:12px;">
+          <span class="grade-badge ebbr">eBBR: 40 Punkte = 100 %</span>
+          <span class="grade-badge msa">MSA: 60 Punkte = 100 %</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h3>Hinweise zur Bearbeitung</h3>
+        <ul>
+          <li>Gib bei jeder Teilaufgabe deine Lösung ein und drücke
+              <strong>„Antwort prüfen"</strong>.</li>
+          <li>Punkte werden nur für den <strong>ersten Versuch</strong>
+              vergeben.</li>
+          <li>Bei falscher Antwort erhältst du einen Hinweis.</li>
+          <li>Aufgaben mit <strong>(*)</strong> sind für den MSA
+              anspruchsvoller.</li>
+          <li>Deine Eingaben werden <strong>automatisch gespeichert</strong>
+              – du kannst jederzeit zurückkehren.</li>
+          <li>Es sind insgesamt <strong>60 Punkte</strong> erreichbar.</li>
+        </ul>
+      </div>
+
+      <div class="name-field">
+        <label for="student-name">Name, Vorname:</label>
+        <input type="text" id="student-name" placeholder="Dein Name...">
+        <label for="student-class">Klasse:</label>
+        <input type="text" id="student-class"
+               placeholder="z.B. 10a" style="width:80px">
+      </div>
+
+      <div class="task-overview">
+        <h3>Aufgaben</h3>
+        <div class="task-grid">
+          <a href="aufgabe1.html" class="task-card">
+            <span class="task-number">1</span>
+            <span class="task-title">Basisaufgaben</span>
+            <span class="task-points">10 Punkte</span>
+          </a>
+          <a href="aufgabe2.html" class="task-card">
+            <span class="task-number">2</span>
+            <span class="task-title">Kugelkerze</span>
+            <span class="task-points">9 Punkte</span>
+          </a>
+          <a href="aufgabe3.html" class="task-card">
+            <span class="task-number">3</span>
+            <span class="task-title">Tulpenzwiebeln</span>
+            <span class="task-points">9 Punkte</span>
+          </a>
+          <a href="aufgabe4.html" class="task-card">
+            <span class="task-number">4</span>
+            <span class="task-title">Viereck</span>
+            <span class="task-points">9 Punkte</span>
+          </a>
+          <a href="aufgabe5.html" class="task-card">
+            <span class="task-number">5</span>
+            <span class="task-title">Funktionen</span>
+            <span class="task-points">11 Punkte</span>
+          </a>
+          <a href="aufgabe6.html" class="task-card">
+            <span class="task-number">6</span>
+            <span class="task-title">Sonnenstunden</span>
+            <span class="task-points">8 Punkte</span>
+          </a>
+          <a href="aufgabe7.html" class="task-card">
+            <span class="task-number">7</span>
+            <span class="task-title">Kapital</span>
+            <span class="task-points">4 Punkte</span>
+          </a>
+        </div>
+      </div>
+
+      <a href="aufgabe1.html" class="start-button">
+        Prüfung beginnen →
+      </a>
+    </div>
+  </div>
+
+  <script src="exam.js"></script>
+  <script>
+    const nameInput  = document.getElementById('student-name');
+    const classInput = document.getElementById('student-class');
+
+    // Load saved
+    const st = ExamState.load();
+    nameInput.value  = st.studentName || '';
+    classInput.value = st.studentClass || '';
+
+    nameInput.addEventListener('input', () => {
+      const s = ExamState.load();
+      s.studentName = nameInput.value;
+      ExamState.save(s);
+    });
+    classInput.addEventListener('input', () => {
+      const s = ExamState.load();
+      s.studentClass = classInput.value;
+      ExamState.save(s);
+    });
+  </script>
+</body>
+</html>
