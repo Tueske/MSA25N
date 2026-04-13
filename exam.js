@@ -122,20 +122,25 @@ function showFeedback(subId, isCorrect, hintText = '') {
      no points change.
    ══════════════════════════════════════════ */
 
-function recordScore(subId, maxPoints, isCorrect, state) {
+/* ── Points recording ── */
+
+function recordScore(subId, maxPoints, isCorrect) {
+  // Always load fresh from storage
+  const state = ExamState.load();
   if (!state.scores[subId]) {
     state.scores[subId] = { earned: 0, max: maxPoints, attempts: 0 };
   }
   const entry = state.scores[subId];
-  /* Only award on first attempt */
   if (entry.attempts === 0 && isCorrect) {
     entry.earned = maxPoints;
   }
   entry.attempts += 1;
-  return state;
+  ExamState.save(state);
+  return state; // return for chaining if needed
 }
 
-function recordPartialScore(subId, earned, maxPoints, state) {
+function recordPartialScore(subId, earned, maxPoints) {
+  const state = ExamState.load();
   if (!state.scores[subId]) {
     state.scores[subId] = { earned: 0, max: maxPoints, attempts: 0 };
   }
@@ -144,15 +149,12 @@ function recordPartialScore(subId, earned, maxPoints, state) {
     entry.earned = earned;
   }
   entry.attempts += 1;
+  ExamState.save(state);
   return state;
 }
 
-/*
-  recordStepScore – for individual guided steps.
-  Each step has its own key (e.g. "2a-step1").
-  Returns whether this is the first attempt.
-*/
-function recordStepScore(stepKey, maxPoints, isCorrect, state) {
+function recordStepScore(stepKey, maxPoints, isCorrect) {
+  const state = ExamState.load();
   const key = `step_${stepKey}`;
   if (!state.scores[key]) {
     state.scores[key] = { earned: 0, max: maxPoints, attempts: 0 };
@@ -162,22 +164,24 @@ function recordStepScore(stepKey, maxPoints, isCorrect, state) {
     entry.earned = maxPoints;
   }
   entry.attempts += 1;
+  ExamState.save(state);
   return state;
 }
 
-function isFirstAttempt(subId, state) {
+function isFirstAttempt(subId) {
+  const state = ExamState.load();
   return !state.scores[subId] || state.scores[subId].attempts === 0;
 }
 
-function isFirstStepAttempt(stepKey, state) {
+function isFirstStepAttempt(stepKey) {
+  const state = ExamState.load();
   const key = `step_${stepKey}`;
   return !state.scores[key] || state.scores[key].attempts === 0;
 }
 
 /* ── Score display ── */
-
 function updateScoreDisplay() {
-  const state  = ExamState.load();
+  const state = ExamState.load();
   const earned = ExamState.totalEarned(state);
   document.querySelectorAll('.score-display').forEach(d => {
     d.textContent = `Punkte: ${earned} / 60`;
@@ -185,7 +189,6 @@ function updateScoreDisplay() {
 }
 
 /* ── scored-notice ── */
-
 function updateNotice(subId) {
   const state = ExamState.load();
   const el = document.getElementById(`notice-${subId}`);
@@ -200,6 +203,7 @@ function updateNotice(subId) {
     el.textContent = `0/${s.max} Punkt(e) – weiteres Üben möglich`;
   }
 }
+
 
 /* ══════════════════════════════════════════
    MC FEEDBACK RULE
@@ -229,9 +233,11 @@ function markMCResult(container, chosenVal, correctVal, isCorrect) {
 
 /* ── Input Persistence ── */
 
+/* ── saveInput: merge don't overwrite ── */
 function saveInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
+  // Always load fresh, update only inputs key, save back
   const state = ExamState.load();
   if (!state.inputs) state.inputs = {};
   if (el.type === 'checkbox' || el.type === 'radio') {
@@ -241,6 +247,8 @@ function saveInput(inputId) {
   }
   ExamState.save(state);
 }
+
+
 
 function restoreInputs() {
   const state = ExamState.load();
@@ -266,6 +274,7 @@ function bindInputPersistence() {
 }
 
 function saveCustom(key, value) {
+  // Always load fresh, update one key, save back
   const state = ExamState.load();
   if (!state.inputs) state.inputs = {};
   state.inputs[key] = value;

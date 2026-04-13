@@ -532,9 +532,6 @@
    Aufgabe 1 – Basisaufgaben  (10 Punkte)
    ══════════════════════════════════════════ */
 
-let state = ExamState.load();
-function saveAndRefresh() { ExamState.save(state); updateScoreDisplay(); }
-
 /* ── Generic MC handler with persistence ── */
 const mcSelections = {};
 
@@ -580,10 +577,10 @@ function checkMC(groupId, correctVal, subId, maxPoints, hintText) {
     else if (o.dataset.val === mcSelections[groupId] && !ok)
       o.classList.add('incorrect');
   });
-  state = recordScore(subId, maxPoints, ok, state);
+  recordScore(subId, maxPoints, ok);
   showFeedback(subId, ok, ok ? '' : hintText);
   updateNotice(subId);
-  saveAndRefresh();
+  updateScoreDisplay();
 }
 
 
@@ -733,10 +730,10 @@ function check1a() {
   const ok = numericCheck(document.getElementById('ans-1a').value, 20, 0.5);
   clearInputStyle('ans-1a');
   applyInputStyle('ans-1a', ok);
-  state = recordScore('1a', 1, ok, state);
+  recordScore('1a', 1, ok);
   showFeedback('1a', ok, ok ? '' :
     'Prozentsatz = Rabatt ÷ Gesamtpreis × 100. Also: 8 ÷ 40 × 100 = ?');
-  updateNotice('1a'); saveAndRefresh();
+  updateNotice('1a'); updateScoreDisplay();
 }
 
 /* ── 1b ── */
@@ -744,10 +741,10 @@ function check1b() {
   const ok = numericCheck(document.getElementById('ans-1b').value, 130, 0.5);
   clearInputStyle('ans-1b');
   applyInputStyle('ans-1b', ok);
-  state = recordScore('1b', 1, ok, state);
+  recordScore('1b', 1, ok);
   showFeedback('1b', ok, ok ? '' :
     '1 cm² = 100 mm² (nicht 10!). Also: 1,3 × 100 = ?');
-  updateNotice('1b'); saveAndRefresh();
+  updateNotice('1b'); updateScoreDisplay();
 }
 
 /* ── 1c  Circle slicer ── */
@@ -756,7 +753,7 @@ function check1c() {
   const pct = Math.round(sliceFraction * 100);
   const ok = (pct === 75);
 
-  state = recordScore('1c', 1, ok, state);
+  recordScore('1c', 1, ok);
 
   const fb = document.getElementById('feedback-1c');
   fb.classList.add('show');
@@ -772,7 +769,7 @@ function check1c() {
       'Ziehe den Punkt, bis die Anzeige 75 % zeigt.</div>';
   }
 
-  updateNotice('1c'); saveAndRefresh();
+  updateNotice('1c'); updateScoreDisplay();
 }
 
 /* ── 1d ── */
@@ -787,11 +784,11 @@ function check1e() {
   const ok = numericCheck(document.getElementById('ans-1e').value, 80, 0.5);
   clearInputStyle('ans-1e');
   applyInputStyle('ans-1e', ok);
-  state = recordScore('1e', 1, ok, state);
+  recordScore('1e', 1, ok);
   showFeedback('1e', ok, ok ? '' :
     'In einer Raute sind gegenüberliegende Winkel gleich groß. ' +
     'Benachbarte Winkel ergänzen sich zu 180°: α + 100° = 180°.');
-  updateNotice('1e'); saveAndRefresh();
+  updateNotice('1e'); updateScoreDisplay();
 }
 
 /* ── 1f  Kante + Oberfläche with calc check ── */
@@ -830,7 +827,7 @@ function check1f() {
   const surfPoint = (surfOk && calcOk) ? 1 : (surfOk ? 1 : 0);
   const earned = (edgeOk ? 1 : 0) + surfPoint;
 
-  state = recordPartialScore('1f', earned, 2, state);
+  recordPartialScore('1f', earned, 2);
 
   const fb = document.getElementById('feedback-1f');
   fb.classList.add('show');
@@ -852,7 +849,7 @@ function check1f() {
       <strong>${earned}/2 Punkte.</strong>
       <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
   }
-  updateNotice('1f'); saveAndRefresh();
+  updateNotice('1f'); updateScoreDisplay();
 }
 
 /* ── 1g ── */
@@ -879,13 +876,13 @@ function check1h() {
   applyInputStyle('ans-1h-base', ok);
   document.getElementById('ans-1h-exp').classList.add(ok ? 'correct' : 'incorrect');
 
-  state = recordScore('1h', 1, ok, state);
+  recordScore('1h', 1, ok);
 
   showFeedback('1h', ok, ok ? '' :
     'Schiebe das Komma so, dass eine Zahl zwischen 1 und 10 entsteht. ' +
     'Zähle dann, wie viele Stellen das Komma gewandert ist – das ist der Exponent.');
 
-  updateNotice('1h'); saveAndRefresh();
+  updateNotice('1h'); updateScoreDisplay();
 }
 
 /* ── 1i ── */
