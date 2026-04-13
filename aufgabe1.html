@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <style>
 
-    /* ── MC inline layout (horizontal for short options) ── */
+    /* ── MC inline layout ── */
     .mc-inline {
       display: flex;
       flex-wrap: wrap;
@@ -20,14 +20,29 @@
       min-width: 120px;
     }
 
-    /* ── Circle diagram for 1c ── */
-    .circle-wrap {
+    /* ── 1c interactive circle slicer ── */
+    .circle-slicer-wrap {
       display: flex;
-      justify-content: center;
-      margin: 12px 0;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .circle-slicer-wrap canvas {
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      cursor: pointer;
+      touch-action: none;
+    }
+    .slicer-readout {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1a5276;
     }
 
-    /* ── Rhombus diagram for 1e ── */
+    /* ── Diagram + text side-by-side ── */
     .diagram-inline {
       display: flex;
       align-items: flex-start;
@@ -38,8 +53,12 @@
     .diagram-inline .exercise-text {
       flex: 1; min-width: 200px;
     }
+    .diagram-inline img {
+      max-width: 160px;
+      height: auto;
+    }
 
-    /* ── Two-part row for f ── */
+    /* ── Two-part vertical ── */
     .two-part-vert {
       display: flex;
       flex-direction: column;
@@ -47,14 +66,56 @@
       margin: 10px 0;
     }
 
-    /* ── Scientific notation input ── */
+    /* ── Calculation area for 1f ── */
+    .calc-area {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 10px 0;
+    }
+    .calc-area p {
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    .calc-textarea {
+      border: 2px solid #999;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-family: Arial, sans-serif;
+      width: 100%;
+      resize: vertical;
+      min-height: 70px;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    .calc-textarea.correct   { border-color: #27ae60; background: #f0fff4; }
+    .calc-textarea.incorrect { border-color: #c0392b; background: #fff5f5; }
+
+    /* ── Scientific notation with raised exponent ── */
     .sci-row {
       display: flex;
-      align-items: center;
-      gap: 6px;
+      align-items: flex-start;
+      gap: 4px;
       flex-wrap: wrap;
-      font-size: 18px;
+      font-size: 20px;
       margin: 8px 0;
+    }
+    .sci-base-part {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sci-exp-part {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      font-size: 20px;
+    }
+    .sci-exp-part .sci-ten {
+      line-height: 1;
+      margin-top: 10px;
     }
     .sci-input {
       border: 2px solid #999;
@@ -62,21 +123,42 @@
       padding: 8px 10px;
       font-size: 18px;
       font-family: Arial, sans-serif;
-      width: 70px;
+      width: 80px;
       text-align: center;
       -webkit-appearance: none;
       transition: border-color 0.2s;
     }
     .sci-input.correct   { border-color: #27ae60; background: #f0fff4; }
     .sci-input.incorrect { border-color: #c0392b; background: #fff5f5; }
+    .sci-exp-input {
+      border: 2px solid #999;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      width: 44px;
+      text-align: center;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+      position: relative;
+      top: -4px;
+    }
+    .sci-exp-input.correct   { border-color: #27ae60; background: #f0fff4; }
+    .sci-exp-input.incorrect { border-color: #c0392b; background: #fff5f5; }
 
-    /* ── Rectangle diagram for 1i ── */
+    /* ── 1i rect diagram with image ── */
     .rect-diagram-wrap {
       display: flex;
       gap: 24px;
       flex-wrap: wrap;
       align-items: flex-start;
       margin: 12px 0;
+    }
+    .rect-diagram-wrap img {
+      max-width: 220px;
+      height: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
     }
     .rect-diagram-wrap .mc-options {
       flex: 1;
@@ -108,7 +190,6 @@
 
     <!-- ════════════════════════════════════
          1a  Rabatt in %  (1 P)
-         40 € Hose, 8 € Rabatt → 8/40 = 20 %
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">a)</div>
@@ -129,9 +210,9 @@
       <div class="feedback-box" id="feedback-1a"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
-         1b  Einheiten cm² → mm²  (1 P)
-         1,3 cm² = 130 mm²
+         1b  cm² → mm²  (1 P)
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">b)</div>
@@ -150,50 +231,23 @@
       <div class="feedback-box" id="feedback-1b"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
-         1c  Drei Viertel des Kreises  (1 P)
-         MC: Which image shows 3/4 shaded?
+         1c  3/4 Kreis interaktiv  (1 P)
+         Interactive circle slicer
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">c)</div>
       <p class="exercise-text">
         Kennzeichne in dem abgebildeten Kreis
         <strong>drei Viertel</strong> der Fläche.<br>
-        Welches Bild zeigt drei Viertel korrekt?
+        Ziehe den Punkt auf der Kreislinie, um den
+        markierten Anteil einzustellen.
       </p>
 
-      <div class="mc-inline" id="mc-1c">
-        <!-- Option A: 1/4 shaded -->
-        <div class="mc-option" data-val="A" onclick="selectMC('1c', this)">
-          <div class="mc-checkbox" id="cb-1c-A"></div>
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="28" fill="white" stroke="#1a1a1a" stroke-width="2"/>
-            <path d="M30,30 L30,2 A28,28 0 0,1 58,30 Z" fill="#bbb"/>
-          </svg>
-        </div>
-        <!-- Option B: 1/2 shaded -->
-        <div class="mc-option" data-val="B" onclick="selectMC('1c', this)">
-          <div class="mc-checkbox" id="cb-1c-B"></div>
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="28" fill="white" stroke="#1a1a1a" stroke-width="2"/>
-            <path d="M30,30 L30,2 A28,28 0 0,1 30,58 Z" fill="#bbb"/>
-          </svg>
-        </div>
-        <!-- Option C: 3/4 shaded (CORRECT) -->
-        <div class="mc-option" data-val="C" onclick="selectMC('1c', this)">
-          <div class="mc-checkbox" id="cb-1c-C"></div>
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="28" fill="#bbb" stroke="#1a1a1a" stroke-width="2"/>
-            <path d="M30,30 L30,2 A28,28 0 0,0 2,30 Z" fill="white"/>
-          </svg>
-        </div>
-        <!-- Option D: full circle -->
-        <div class="mc-option" data-val="D" onclick="selectMC('1c', this)">
-          <div class="mc-checkbox" id="cb-1c-D"></div>
-          <svg width="60" height="60" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="28" fill="#bbb" stroke="#1a1a1a" stroke-width="2"/>
-          </svg>
-        </div>
+      <div class="circle-slicer-wrap">
+        <canvas id="slicer-canvas" width="220" height="220"></canvas>
+        <div class="slicer-readout" id="slicer-readout">0 %</div>
       </div>
 
       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
@@ -203,9 +257,9 @@
       <div class="feedback-box" id="feedback-1c"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
          1d  Term ausmultiplizieren  (1 P)
-         4·(3x − 7) = 12x − 28
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">d)</div>
@@ -214,7 +268,6 @@
         <strong>4 · (3x − 7)</strong>.<br>
         Kreuze an.
       </p>
-
       <div class="mc-options" id="mc-1d">
         <div class="mc-option" data-val="A" onclick="selectMC('1d', this)">
           <div class="mc-checkbox" id="cb-1d-A"></div>
@@ -233,7 +286,6 @@
           <span>16x</span>
         </div>
       </div>
-
       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
         <button class="submit-btn" onclick="check1d()">Antwort prüfen</button>
         <span class="scored-notice" id="notice-1d"></span>
@@ -241,11 +293,10 @@
       <div class="feedback-box" id="feedback-1d"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
          1e  Winkel in der Raute  (1 P)
-         Opposite angles in a rhombus are equal.
-         Adjacent angles are supplementary: α + 100° = 180°
-         α = 80°
+         Image: raute.png
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">e)</div>
@@ -263,27 +314,11 @@
                    style="width:90px;" autocomplete="off">
             <span class="unit-label">°</span>
           </div>
+          <p class="text-small">(Abbildung nicht maßstabsgerecht)</p>
         </div>
-        <!-- Rhombus SVG -->
-        <svg width="140" height="150" viewBox="0 0 140 150"
-             aria-label="Raute mit Winkel 100° und α">
-          <!-- Rhombus shape -->
-          <polygon points="70,10 130,75 70,140 10,75"
-                   fill="#f0f0f0" stroke="#1a1a1a" stroke-width="2"/>
-          <!-- 100° angle arc (bottom) -->
-          <path d="M60,75 A15,15 0 0,1 80,75"
-                fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
-          <text x="70" y="82" text-anchor="middle"
-                font-family="Arial" font-size="12">100°</text>
-          <!-- α angle arc (top) -->
-          <path d="M60,30 A18,18 0 0,1 80,30"
-                fill="none" stroke="#c0392b" stroke-width="1.5"/>
-          <text x="70" y="26" text-anchor="middle"
-                font-family="Arial" font-size="12"
-                fill="#c0392b" font-weight="bold">α</text>
-        </svg>
+        <img src="images/raute.png"
+             alt="Raute mit Winkel 100° und gesuchtem Winkel α">
       </div>
-      <p class="text-small">(Abbildung nicht maßstabsgerecht)</p>
 
       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
         <button class="submit-btn" onclick="check1e()">Antwort prüfen</button>
@@ -292,11 +327,10 @@
       <div class="feedback-box" id="feedback-1e"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
          1f  Würfel: Kante + Oberfläche  (2 P)
-         V = 27 cm³ → a = 3 cm
-         O = 6 · 3² = 54 cm²
-         1 P for correct edge, 1 P for surface area
+         Now with dedicated calculation area
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">f)</div>
@@ -328,10 +362,20 @@
             </div>
           </div>
         </div>
+
         <div>
           <p class="exercise-text">
             Ermittle den Oberflächeninhalt des Würfels.
           </p>
+
+          <div class="calc-area">
+            <p><strong>Rechenweg:</strong></p>
+            <textarea class="calc-textarea" id="ans-1f-calc"
+                      placeholder="z. B. O = 6 · a² = 6 · 3² = …"
+                      rows="3"></textarea>
+          </div>
+
+          <p class="exercise-text mt-8">Ergebnis:</p>
           <div class="answer-unit-row">
             <input class="unit-input" id="ans-1f-surface" type="text"
                    inputmode="decimal" placeholder="" autocomplete="off">
@@ -347,30 +391,10 @@
       <div class="feedback-box" id="feedback-1f"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
          1g  Trigonometrie MC  (1 P)
-         Right triangle with sides c (hypotenuse),
-         d (opposite to ε), e (adjacent to ε).
-         ε is at bottom-right.
-         tan ε = d/e? sin ε = c/d? etc.
-
-         Looking at the diagram:
-         - angle ε is at bottom-right
-         - side d is vertical (opposite ε)
-         - side e is horizontal (adjacent to ε)
-         - side c is hypotenuse
-
-         sin ε = opposite/hypotenuse = d/c
-         cos ε = adjacent/hypotenuse = e/c
-         tan ε = opposite/adjacent = d/e
-
-         Options given:
-         tan ε = c/d  → WRONG
-         sin ε = c/d  → WRONG (inverted)
-         tan ε = d/e  → CORRECT
-         cos ε = d/c  → WRONG (that would be sin)
-
-         Answer: tan ε = d/e
+         Image: triangle1.png
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">g)</div>
@@ -383,36 +407,9 @@
             berechnet werden kann.
           </p>
         </div>
-        <!-- Right triangle SVG -->
-        <svg width="150" height="110" viewBox="0 0 150 110"
-             aria-label="Rechtwinkliges Dreieck mit Seiten c, d, e und Winkel ε">
-          <!-- Triangle -->
-          <polygon points="10,100 140,100 140,15"
-                   fill="#f0f0f0" stroke="#1a1a1a" stroke-width="2"/>
-          <!-- Right angle marker -->
-          <rect x="126" y="86" width="14" height="14"
-                fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
-          <!-- Labels -->
-          <!-- e = bottom side (adjacent) -->
-          <text x="75" y="98" text-anchor="middle"
-                font-family="Arial" font-size="14"
-                font-weight="bold" font-style="italic">e</text>
-          <!-- d = right side (opposite) -->
-          <text x="146" y="60" text-anchor="start"
-                font-family="Arial" font-size="14"
-                font-weight="bold" font-style="italic">d</text>
-          <!-- c = hypotenuse -->
-          <text x="65" y="50" text-anchor="middle"
-                font-family="Arial" font-size="14"
-                font-weight="bold" font-style="italic"
-                transform="rotate(-33,65,50)">c</text>
-          <!-- ε angle arc at bottom-left -->
-          <path d="M30,100 A20,20 0 0,0 24,85"
-                fill="none" stroke="#c0392b" stroke-width="1.5"/>
-          <text x="36" y="90" font-family="Arial"
-                font-size="12" fill="#c0392b"
-                font-weight="bold" font-style="italic">ε</text>
-        </svg>
+        <img src="images/triangle1.png"
+             alt="Rechtwinkliges Dreieck mit Seiten c, d, e und Winkel ε"
+             style="max-width:180px;">
       </div>
 
       <div class="mc-options" id="mc-1g">
@@ -441,33 +438,33 @@
       <div class="feedback-box" id="feedback-1g"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
          1h  Zehnerpotenzschreibweise  (1 P)
-         5 470 000 000 = 5,47 × 10⁹
+         Raised exponent layout, no hint text
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">h)</div>
       <p class="exercise-text">
         Gib die Zahl <strong>5 470 000 000</strong> in der
-        Zehnerpotenzschreibweise (wissenschaftlichen Schreibweise) an.
+        Zehnerpotenzschreibweise
+        (wissenschaftlichen Schreibweise) an.
       </p>
 
       <div class="sci-row">
-        <input class="sci-input" id="ans-1h-base" type="text"
-               inputmode="decimal" placeholder="a"
-               autocomplete="off">
-        <span>×&nbsp;10</span>
-        <sup>
-          <input class="sci-input" id="ans-1h-exp" type="text"
-                 inputmode="numeric" placeholder="n"
-                 style="width:50px; font-size:16px;"
+        <div class="sci-base-part">
+          <input class="sci-input" id="ans-1h-base" type="text"
+                 inputmode="decimal" placeholder=""
                  autocomplete="off">
-        </sup>
+          <span style="font-size:20px;">&nbsp;×&nbsp;</span>
+        </div>
+        <div class="sci-exp-part">
+          <span class="sci-ten" style="font-size:20px;">10</span>
+          <input class="sci-exp-input" id="ans-1h-exp" type="text"
+                 inputmode="numeric" placeholder=""
+                 autocomplete="off">
+        </div>
       </div>
-      <p class="input-hint">
-        Gib den Vorfaktor (z.&thinsp;B. 5,47) und den Exponenten
-        (z.&thinsp;B. 9) getrennt ein.
-      </p>
 
       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
         <button class="submit-btn" onclick="check1h()">Antwort prüfen</button>
@@ -476,12 +473,10 @@
       <div class="feedback-box" id="feedback-1h"></div>
     </div>
 
+
     <!-- ════════════════════════════════════
-         1i  Graue Fläche im Rechteck MC  (1 P)
-         Rectangle has width a, height b.
-         White rectangle cut out on the right has width c.
-         Grey area = total − white = a·b − c·b = b·(a−c)
-         Answer: A = b·(a − c)
+         1i  Graue Fläche MC  (1 P)
+         Image: rechteck1.png
          ════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">i)</div>
@@ -492,46 +487,8 @@
       </p>
 
       <div class="rect-diagram-wrap">
-        <!-- Rectangle SVG -->
-        <svg width="200" height="100" viewBox="0 0 200 100"
-             aria-label="Rechteck mit grauer und weißer Fläche">
-          <!-- full rectangle outline -->
-          <rect x="5" y="5" width="190" height="80"
-                fill="#ccc" stroke="#1a1a1a" stroke-width="2"/>
-          <!-- white cut-out on the right -->
-          <rect x="130" y="5" width="65" height="80"
-                fill="white" stroke="#1a1a1a" stroke-width="2"/>
-          <!-- label a (full width, top) -->
-          <line x1="5" y1="0" x2="195" y2="0"
-                stroke="#c0392b" stroke-width="1.5"
-                marker-start="url(#arrowL)"
-                marker-end="url(#arrowR)"/>
-          <text x="100" y="-2" text-anchor="middle"
-                font-family="Arial" font-size="13"
-                font-style="italic" fill="#c0392b">a</text>
-          <!-- label b (right side) -->
-          <text x="198" y="48" text-anchor="start"
-                font-family="Arial" font-size="13"
-                font-style="italic">b</text>
-          <!-- label c (bottom, cut-out width) -->
-          <line x1="130" y1="92" x2="195" y2="92"
-                stroke="#c0392b" stroke-width="1.5"/>
-          <text x="162" y="100" text-anchor="middle"
-                font-family="Arial" font-size="13"
-                font-style="italic" fill="#c0392b">c</text>
-
-          <!-- Arrow markers -->
-          <defs>
-            <marker id="arrowL" markerWidth="6" markerHeight="6"
-                    refX="6" refY="3" orient="auto">
-              <polygon points="6,0 6,6 0,3" fill="#c0392b"/>
-            </marker>
-            <marker id="arrowR" markerWidth="6" markerHeight="6"
-                    refX="0" refY="3" orient="auto">
-              <polygon points="0,0 0,6 6,3" fill="#c0392b"/>
-            </marker>
-          </defs>
-        </svg>
+        <img src="images/rechteck1.png"
+             alt="Rechteck mit grauer Fläche, Seiten a, b und c">
 
         <div class="mc-options" id="mc-1i" style="flex:1; min-width:200px;">
           <div class="mc-option" data-val="A" onclick="selectMC('1i', this)">
@@ -573,16 +530,7 @@
 <script src="exam.js"></script>
 <script>
 /* ══════════════════════════════════════════
-   Aufgabe 1 – Basisaufgaben (10 Punkte)
-   a) 20 %           (1 P)
-   b) 130 mm²        (1 P)
-   c) 3/4 circle     (1 P)  MC → C
-   d) 12x − 28       (1 P)  MC → B
-   e) α = 80°        (1 P)
-   f) edge=3, O=54   (2 P)
-   g) tan ε = d/e    (1 P)  MC → C
-   h) 5,47 × 10⁹    (1 P)
-   i) A = b·(a−c)    (1 P)  MC → B
+   Aufgabe 1 – Basisaufgaben  (10 Punkte)
    ══════════════════════════════════════════ */
 
 let state = ExamState.load();
@@ -639,6 +587,148 @@ function checkMC(groupId, correctVal, subId, maxPoints, hintText) {
   saveAndRefresh();
 }
 
+
+/* ══════════════════════════════════════════
+   1c  Interactive Circle Slicer
+   ══════════════════════════════════════════ */
+
+const canvas = document.getElementById('slicer-canvas');
+const ctx = canvas.getContext('2d');
+const CX = 110, CY = 110, CR = 90;
+
+// Angle in radians (0 = top = -π/2)
+// We store angle clockwise from top as a fraction of 2π
+let sliceFraction = loadCustom('slicer-fraction');
+if (sliceFraction === undefined || sliceFraction === null) {
+  sliceFraction = 0.1; // start at 10%
+}
+
+function angleFromFraction(f) {
+  // 0 at top (-π/2), going clockwise
+  return -Math.PI / 2 + f * 2 * Math.PI;
+}
+
+function fractionFromAngle(a) {
+  // Convert angle back to fraction (0=top, clockwise positive)
+  let f = (a + Math.PI / 2) / (2 * Math.PI);
+  if (f < 0) f += 1;
+  if (f > 1) f -= 1;
+  return f;
+}
+
+function drawSlicer() {
+  ctx.clearRect(0, 0, 220, 220);
+
+  // White circle
+  ctx.beginPath();
+  ctx.arc(CX, CY, CR, 0, 2 * Math.PI);
+  ctx.fillStyle = 'white';
+  ctx.fill();
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Coloured slice (clockwise from top)
+  const startAngle = -Math.PI / 2;
+  const endAngle = angleFromFraction(sliceFraction);
+
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.arc(CX, CY, CR, startAngle, endAngle, false);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(26, 82, 118, 0.35)';
+  ctx.fill();
+  ctx.strokeStyle = '#1a5276';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Line from centre to top (fixed)
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(CX, CY - CR);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Line from centre to handle point
+  const hx = CX + CR * Math.cos(endAngle);
+  const hy = CY + CR * Math.sin(endAngle);
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(hx, hy);
+  ctx.strokeStyle = '#1a5276';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Handle dot
+  ctx.beginPath();
+  ctx.arc(hx, hy, 12, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a5276';
+  ctx.fill();
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Centre dot
+  ctx.beginPath();
+  ctx.arc(CX, CY, 4, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fill();
+
+  // Top dot
+  ctx.beginPath();
+  ctx.arc(CX, CY - CR, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fill();
+
+  // Update readout
+  const pct = Math.round(sliceFraction * 100);
+  document.getElementById('slicer-readout').textContent = pct + ' %';
+}
+
+function handleSlicerMove(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left - CX;
+  const y = clientY - rect.top - CY;
+  const angle = Math.atan2(y, x);
+  sliceFraction = fractionFromAngle(angle);
+  // Snap to nearest 5%
+  sliceFraction = Math.round(sliceFraction * 20) / 20;
+  if (sliceFraction <= 0) sliceFraction = 0.05;
+  if (sliceFraction > 1) sliceFraction = 1;
+  saveCustom('slicer-fraction', sliceFraction);
+  drawSlicer();
+}
+
+let isDragging = false;
+
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  handleSlicerMove(e.clientX, e.clientY);
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (isDragging) handleSlicerMove(e.clientX, e.clientY);
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+canvas.addEventListener('touchstart', (e) => {
+  isDragging = true;
+  const t = e.touches[0];
+  handleSlicerMove(t.clientX, t.clientY);
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  if (isDragging) {
+    const t = e.touches[0];
+    handleSlicerMove(t.clientX, t.clientY);
+  }
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener('touchend', () => { isDragging = false; });
+
+drawSlicer();
+
+
 /* ── 1a ── */
 function check1a() {
   const ok = numericCheck(document.getElementById('ans-1a').value, 20, 0.5);
@@ -661,11 +751,29 @@ function check1b() {
   updateNotice('1b'); saveAndRefresh();
 }
 
-/* ── 1c ── */
+/* ── 1c  Circle slicer ── */
 function check1c() {
-  checkMC('1c', 'C', '1c', 1,
-    'Drei Viertel = 3/4 = 75 % der Kreisfläche müssen grau sein. ' +
-    'Es darf nur 1/4 weiß bleiben.');
+  // 75% = 3/4
+  const pct = Math.round(sliceFraction * 100);
+  const ok = (pct === 75);
+
+  state = recordScore('1c', 1, ok, state);
+
+  const fb = document.getElementById('feedback-1c');
+  fb.classList.add('show');
+  if (ok) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Richtig!</strong> 75 % = drei Viertel. (1/1 Punkt)';
+  } else {
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
+      '<strong>Leider falsch.</strong> Du hast ' + pct + ' % markiert.' +
+      '<div class="hint-text">💡 Drei Viertel = 3/4 = 75 %. ' +
+      'Ziehe den Punkt, bis die Anzeige 75 % zeigt.</div>';
+  }
+
+  updateNotice('1c'); saveAndRefresh();
 }
 
 /* ── 1d ── */
@@ -687,13 +795,26 @@ function check1e() {
   updateNotice('1e'); saveAndRefresh();
 }
 
-/* ── 1f ── */
+/* ── 1f  Kante + Oberfläche with calc check ── */
 function check1f() {
-  const edgeOk   = (mcSelections['1f-edge'] === '3');
-  const surfVal  = parseNum(document.getElementById('ans-1f-surface').value);
-  const surfOk   = Math.abs(surfVal - 54) < 0.5;
+  const edgeOk = (mcSelections['1f-edge'] === '3');
+  const surfVal = parseNum(document.getElementById('ans-1f-surface').value);
+  const surfOk = Math.abs(surfVal - 54) < 0.5;
 
-  // MC visual feedback
+  // Check calculation text
+  const calcText = document.getElementById('ans-1f-calc').value;
+  const calcEl = document.getElementById('ans-1f-calc');
+  calcEl.classList.remove('correct', 'incorrect');
+
+  // Calc should contain: formula reference (6, a², 9, 54)
+  const ct = calcText.toLowerCase().replace(/\s/g, '');
+  const hasFormula = ct.includes('6') && (ct.includes('9') || ct.includes('3²') || ct.includes('3^2'));
+  const hasResult = ct.includes('54');
+  const calcOk = calcText.trim().length > 5 && hasFormula && hasResult;
+
+  calcEl.classList.add(calcOk ? 'correct' : 'incorrect');
+
+  // MC visual
   const container = document.getElementById('mc-1f-edge');
   container.querySelectorAll('.mc-option').forEach(o => {
     o.classList.remove('correct','incorrect');
@@ -705,22 +826,32 @@ function check1f() {
   clearInputStyle('ans-1f-surface');
   applyInputStyle('ans-1f-surface', surfOk);
 
-  const earned = (edgeOk ? 1 : 0) + (surfOk ? 1 : 0);
+  // Scoring: 1 P edge, 1 P surface (calc + result)
+  // Surface point only if both calc and result are correct
+  const surfPoint = (surfOk && calcOk) ? 1 : (surfOk ? 1 : 0);
+  const earned = (edgeOk ? 1 : 0) + surfPoint;
+
   state = recordPartialScore('1f', earned, 2, state);
 
   const fb = document.getElementById('feedback-1f');
   fb.classList.add('show');
   if (edgeOk && surfOk) {
     fb.className = 'feedback-box show correct';
-    fb.innerHTML = '<span class="feedback-icon">✅</span><strong>Richtig!</strong> (2/2 Punkte)';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Richtig!</strong> (2/2 Punkte)';
+    if (!calcOk) {
+      fb.innerHTML += '<div class="hint-text">⚠️ Dein Ergebnis stimmt, ' +
+        'aber der Rechenweg sollte die Formel O = 6 · a² enthalten.</div>';
+    }
   } else {
     const hints = [];
     if (!edgeOk) hints.push('V = a³ → a = ∛27 = 3 cm.');
-    if (!surfOk) hints.push('Oberfläche = 6 · a² = 6 · 9 = 54 cm².');
+    if (!surfOk) hints.push('Oberfläche = 6 · a² = 6 · 3² = 6 · 9 = 54 cm².');
+    if (!calcOk && surfOk) hints.push('Notiere deinen Rechenweg: O = 6 · a² = 6 · 9 = 54.');
     fb.className = 'feedback-box show incorrect';
     fb.innerHTML = `<span class="feedback-icon">⚠️</span>
       <strong>${earned}/2 Punkte.</strong>
-      <div class="hint-text">💡 ${hints.join(' ')}</div>`;
+      <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
   }
   updateNotice('1f'); saveAndRefresh();
 }
@@ -733,27 +864,28 @@ function check1g() {
     'Also: tan ε = d / e.');
 }
 
-/* ── 1h ── */
+/* ── 1h  Scientific notation ── */
 function check1h() {
   const baseVal = parseNum(document.getElementById('ans-1h-base').value);
-  const expVal  = parseNum(document.getElementById('ans-1h-exp').value);
+  const expVal = parseNum(document.getElementById('ans-1h-exp').value);
 
   // 5 470 000 000 = 5.47 × 10^9
-  // Accept any equivalent: base × 10^exp ≈ 5.47e9
   const userResult = baseVal * Math.pow(10, expVal);
-  const ok = Math.abs(userResult - 5470000000) < 1000 &&
+  const ok = !isNaN(baseVal) && !isNaN(expVal) &&
+             Math.abs(userResult - 5470000000) < 1000 &&
              baseVal >= 1 && baseVal < 10;
 
   clearInputStyle('ans-1h-base');
-  clearInputStyle('ans-1h-exp');
+  document.getElementById('ans-1h-exp').classList.remove('correct','incorrect');
   applyInputStyle('ans-1h-base', ok);
-  applyInputStyle('ans-1h-exp', ok);
+  document.getElementById('ans-1h-exp').classList.add(ok ? 'correct' : 'incorrect');
 
   state = recordScore('1h', 1, ok, state);
+
   showFeedback('1h', ok, ok ? '' :
     'Schiebe das Komma so, dass eine Zahl zwischen 1 und 10 entsteht. ' +
-    '5 470 000 000 → 5,47. Zähle, wie viele Stellen das Komma gewandert ist: 9. ' +
-    'Also: 5,47 × 10⁹.');
+    'Zähle dann, wie viele Stellen das Komma gewandert ist – das ist der Exponent.');
+
   updateNotice('1h'); saveAndRefresh();
 }
 
@@ -765,11 +897,11 @@ function check1i() {
     'Grau = a·b − c·b = b·(a − c).');
 }
 
-/* ── Restore MC selections + notices on page load ── */
+
+/* ── Restore everything on page load ── */
 (function init() {
-  ['1c','1d','1f-edge','1g','1i'].forEach(id => restoreMC(id));
+  ['1d','1f-edge','1g','1i'].forEach(id => restoreMC(id));
   ['1a','1b','1c','1d','1e','1f','1g','1h','1i'].forEach(id => updateNotice(id));
-  markTaskCompleted('task1');
   updateScoreDisplay();
 })();
 </script>
