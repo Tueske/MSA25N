@@ -782,10 +782,10 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 2 – Kugelkerze  (9 Punkte)
+   Points distributed across steps.
    No module-level state.
    ══════════════════════════════════════════ */
 
-/* ── Step MC (page-local tracking only) ── */
 const stepMCSel = {};
 
 function selectStepMC(groupId, el) {
@@ -817,11 +817,6 @@ function restoreStepMC(groupId) {
   });
 }
 
-/*
-  markStepMC:
-  wrong → chosen turns red, correct stays neutral
-  right → chosen turns green
-*/
 function markStepMC(groupId, correctVal) {
   const container = document.getElementById(`smc-${groupId}`);
   if (!container) return;
@@ -829,11 +824,9 @@ function markStepMC(groupId, correctVal) {
   const ok     = (chosen === correctVal);
   container.querySelectorAll('.step-mc-option').forEach(o => {
     o.classList.remove('correct','incorrect');
-    if (o.dataset.val === chosen) {
+    if (o.dataset.val === chosen)
       o.classList.add(ok ? 'correct' : 'incorrect');
-    }
   });
-  /* Persist */
   saveResult(`smc_${groupId}_chosen`, chosen);
   saveResult(`smc_${groupId}_result`, ok ? 'correct' : 'incorrect');
 }
@@ -850,13 +843,9 @@ function restoreStepMCResult(groupId) {
   });
 }
 
-/* ── Unlock step ── */
 function unlockStep(id) {
   const el = document.getElementById(id);
-  if (el) {
-    el.classList.remove('locked');
-    saveCustom(`unlocked-${id}`, true);
-  }
+  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
 }
 function restoreUnlocked(id) {
   if (loadCustom(`unlocked-${id}`)) {
@@ -865,12 +854,11 @@ function restoreUnlocked(id) {
   }
 }
 
-/* ── Inline feedback (shown + persisted) ── */
 function showInlineFB(id, ok, hint) {
   const el = document.getElementById(`ifb-${id}`);
   if (!el) return;
   const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
+  const html = ok
     ? '✅ Richtig!'
     : '❌ Noch nicht richtig.'
       + (hint
@@ -882,7 +870,6 @@ function showInlineFB(id, ok, hint) {
   saveInlineFeedback(id, html, cssClass);
 }
 
-/* ── Select persistence ── */
 function saveSelect(id) {
   const el = document.getElementById(id);
   if (el) saveCustom(`sel-${id}`, el.value);
@@ -893,69 +880,55 @@ function restoreSelect(id) {
   if (el && val !== undefined) el.value = val;
 }
 
-/* ── Constants ── */
-const BOX_V     = 20.5 * 10.5 * 10.5;           // 2260.125
-const CANDLES_V = 2 * (4/3) * Math.PI * 125;    // ≈ 1047.198
-const PCT       = (CANDLES_V / BOX_V) * 100;    // ≈ 46.33
+const BOX_V     = 20.5 * 10.5 * 10.5;
+const CANDLES_V = 2 * (4/3) * Math.PI * 125;
+const PCT       = (CANDLES_V / BOX_V) * 100;
 
 /* ══════════════════════════════════════════
-   2a
+   2a  (2 P)
+   Step 1: substitution MC → 1 P
+   Step 2: final calculation → 1 P
    ══════════════════════════════════════════ */
 
 function check2a_step1() {
-  if (!stepMCSel['2a-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2a-1'] === 'B';
-  markStepMC('2a-1','B');
-  recordStepScore('2a-step1', ok);
-  showInlineFB('2a-1', ok,
+  /* Which term after substituting r = 5? → 1 P */
+  if (!stepMCSel['2a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2a-2'] === 'C';
+  markStepMC('2a-2','C');
+  recordScore('2a-step1', 1, ok);
+  showInlineFB('2a-step1', ok,
     ok ? '' :
-    'Überlege, welche Formel das Volumen eines kugelförmigen Körpers '
-    + 'beschreibt.');
-  if (ok) unlockStep('2a-step2');
+    'Setze r\u00a0=\u00a05 in die Kugelformel ein. '
+    + 'Beachte: r³ bedeutet r hoch\u00a03.');
+  if (ok) unlockStep('2a-step3');
+  updateNotice('2a-step1');
   updateScoreDisplay();
 }
 
 function check2a_step2() {
-  if (!stepMCSel['2a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2a-2'] === 'C';
-  markStepMC('2a-2','C');
-  recordStepScore('2a-step2', ok);
-  showInlineFB('2a-2', ok,
-    ok ? '' :
-    'Setze r\u00a0=\u00a05 ein. Beachte: r³ bedeutet r hoch\u00a03, '
-    + 'nicht r\u00a0·\u00a03.');
-  if (ok) unlockStep('2a-step3');
-  updateScoreDisplay();
-}
-
-function check2a_final() {
+  /* Final numerical result → 1 P */
   const val     = parseNum(document.getElementById('ans-2a').value);
   const CORRECT = (4/3) * Math.PI * 125;
   const ok      = !isNaN(val) && Math.abs(val - CORRECT) < 1.5;
   clearInputStyle('ans-2a');
   applyInputStyle('ans-2a', ok);
-  recordScore('2a', 2, ok);
-  const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
-    ? '<span class="feedback-icon">✅</span>'
-      + '<strong>Richtig!</strong> (2/2\u00a0Punkte)'
-    : '<span class="feedback-icon">❌</span>'
-      + '<strong>Leider falsch.</strong>'
-      + '<div class="hint-text">💡 Nutze den Taschenrechner und '
-      + 'beachte die Reihenfolge der Rechenoperationen.</div>';
-  const fb = document.getElementById('feedback-2a');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('2a', html, cssClass);
-  updateNotice('2a');
+  recordScore('2a-step2', 1, ok);
+  showInlineFB('2a-result', ok,
+    ok ? '' :
+    'Nutze den Taschenrechner und beachte '
+    + 'die Reihenfolge der Rechenoperationen.');
+  updateNotice('2a-step2');
   updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
-   2b
+   2b  (3 P)
+   "What next?" selectors = conceptual gates (0 P)
+   Box volume → 1 P
+   Two-candle volume → 1 P
+   Percentage → 1 P
    ══════════════════════════════════════════ */
 
-/* ── "What next?" helper ── */
 function checkWhatNext(nounId, ofId, correctNoun, correctOf, fbId, nextStepId) {
   const nounVal = document.getElementById(nounId).value;
   const ofVal   = document.getElementById(ofId).value;
@@ -965,7 +938,6 @@ function checkWhatNext(nounId, ofId, correctNoun, correctOf, fbId, nextStepId) {
   nounEl.classList.remove('correct','incorrect');
   ofEl.classList.remove('correct','incorrect');
   const nounOk = nounVal === correctNoun;
-  /* ofOk accepts an array of correct values */
   const ofOk   = Array.isArray(correctOf)
     ? correctOf.includes(ofVal)
     : ofVal === correctOf;
@@ -974,142 +946,94 @@ function checkWhatNext(nounId, ofId, correctNoun, correctOf, fbId, nextStepId) {
   ofEl.classList.add(ofOk   ? 'correct' : 'incorrect');
   saveResult(nounId, nounOk ? 'correct' : 'incorrect');
   saveResult(ofId,   ofOk   ? 'correct' : 'incorrect');
-  recordStepScore(`2b-${fbId}`, ok);
+  /* No points for conceptual gate */
   showInlineFB(fbId, ok,
     ok ? '' :
-    'Überlege, welche Größe als nächste Größe unbekannt ist.');
+    'Überlege, welche Größe als nächstes unbekannt ist.');
   if (ok && nextStepId) unlockStep(nextStepId);
   updateScoreDisplay();
 }
 
 function check2b_what1() {
   checkWhatNext(
-    'sel-2b-what-noun', 'sel-2b-what-of',
-    'Volumen', 'der Schachtel',
-    '2b-what1', '2b-step1'
+    'sel-2b-what-noun','sel-2b-what-of',
+    'Volumen','der Schachtel',
+    '2b-what1','2b-step2'
   );
 }
 function check2b_what2() {
   checkWhatNext(
-    'sel-2b-what2-noun', 'sel-2b-what2-of',
-    'Volumen', 'zweier Kerzen',
-    '2b-what2', '2b-step3'
+    'sel-2b-what2-noun','sel-2b-what2-of',
+    'Volumen','zweier Kerzen',
+    '2b-what2','2b-step4'
   );
 }
 function check2b_what3() {
   checkWhatNext(
-    'sel-2b-what3-noun', 'sel-2b-what3-of',
-    'Prozent', ['der Füllung','der Kerzen'],
-    '2b-what3', '2b-step5'
+    'sel-2b-what3-noun','sel-2b-what3-of',
+    'Prozent',['der Füllung','der Kerzen'],
+    '2b-what3','2b-step5'
   );
 }
 
-function check2b_step1() {
-  if (!stepMCSel['2b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2b-1'] === 'C';
-  markStepMC('2b-1','C');
-  recordStepScore('2b-step1', ok);
-  showInlineFB('2b-1', ok,
-    ok ? '' :
-    'Ein Quader hat drei Kantenlängen. '
-    + 'Wie wird das Volumen eines Quaders berechnet?');
-  if (ok) unlockStep('2b-step2');
-  updateScoreDisplay();
-}
-
-function check2b_step2() {
+function check2b_box() {
+  /* Box volume → 1 P */
   const val = parseNum(document.getElementById('ans-2b-box').value);
   const ok  = !isNaN(val) && Math.abs(val - BOX_V) < 2;
   clearInputStyle('ans-2b-box');
   applyInputStyle('ans-2b-box', ok);
-  recordStepScore('2b-step2', ok);
+  recordScore('2b-box', 1, ok);
   showInlineFB('2b-2', ok,
     ok ? '' :
-    'Setze die drei Kantenlängen in die Formel ein und multipliziere.');
+    'Setze die drei Kantenlängen in die Volumenformel '
+    + 'des Quaders ein und multipliziere.');
   if (ok) unlockStep('2b-what2');
+  updateNotice('2b-box');
   updateScoreDisplay();
 }
 
-function check2b_step3() {
-  if (!stepMCSel['2b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2b-3'] === 'C';
-  markStepMC('2b-3','C');
-  recordStepScore('2b-step3', ok);
-  showInlineFB('2b-3', ok,
-    ok ? '' :
-    'Eine Kerze hat Kugelform. '
-    + 'Welche Formel beschreibt das Volumen einer Kugel?');
-  if (ok) unlockStep('2b-step4');
-  updateScoreDisplay();
-}
-
-function check2b_step4() {
+function check2b_candles() {
+  /* Two-candle volume → 1 P */
   const val = parseNum(document.getElementById('ans-2b-candles').value);
   const ok  = !isNaN(val) && Math.abs(val - CANDLES_V) < 2;
   clearInputStyle('ans-2b-candles');
   applyInputStyle('ans-2b-candles', ok);
-  recordStepScore('2b-step4', ok);
+  recordScore('2b-candles', 1, ok);
   showInlineFB('2b-4', ok,
     ok ? '' :
-    'Das Volumen einer einzelnen Kerze wurde in Aufgabe\u00a0a) bestimmt. '
+    'Das Volumen einer einzelnen Kerze wurde in '
+    + 'Aufgabe\u00a0a) bestimmt. '
     + 'Überlege, wie du das Gesamtvolumen zweier Kerzen erhältst.');
   if (ok) unlockStep('2b-what3');
+  updateNotice('2b-candles');
   updateScoreDisplay();
 }
 
-function check2b_step5() {
-  if (!stepMCSel['2b-5']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2b-5'] === 'B';
-  markStepMC('2b-5','B');
-  recordStepScore('2b-step5', ok);
-  showInlineFB('2b-5', ok,
-    ok ? '' :
-    'Der Prozentsatz gibt an, welchen Anteil ein Teilwert '
-    + 'am Grundwert hat.');
-  if (ok) unlockStep('2b-step6');
-  updateScoreDisplay();
-}
-
-function check2b_final() {
+function check2b_percent() {
+  /* Percentage → 1 P */
   const pctVal = parseNum(document.getElementById('ans-2b-pct').value);
   const ok     = !isNaN(pctVal) && Math.abs(pctVal - PCT) < 1;
   clearInputStyle('ans-2b-pct');
   applyInputStyle('ans-2b-pct', ok);
-  recordScore('2b', 3, ok);
-  const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
-    ? '<span class="feedback-icon">✅</span>'
-      + '<strong>Richtig!</strong> (3/3\u00a0Punkte)'
-    : '<span class="feedback-icon">❌</span>'
-      + '<strong>Leider falsch.</strong>'
-      + '<div class="hint-text">💡 Überprüfe deine Zwischenergebnisse '
-      + 'und setze sie in die gewählte Formel ein.</div>';
-  const fb = document.getElementById('feedback-2b');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('2b', html, cssClass);
-  updateNotice('2b');
+  recordScore('2b-pct', 1, ok);
+  showInlineFB('2b-pct', ok,
+    ok ? '' :
+    'Setze Kerzenvolumen und Schachtelvolumen in die '
+    + 'Prozentformel ein: p = (Teilwert ÷ Grundwert) · 100.');
+  updateNotice('2b-pct');
   updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
-   2c
+   2c  (4 P)
+   Numerical calc (V(r) + V(2r)) → 1 P
+   Ratio MC                       → 1 P
+   (2r)³ = 8r³ MC                → 1 P
+   V(2r) = 8·V(r) MC             → 1 P
    ══════════════════════════════════════════ */
 
-function check2c_stepA() {
-  if (!stepMCSel['2c-A']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2c-A'] === 'A';
-  markStepMC('2c-A','A');
-  recordStepScore('2c-stepA', ok);
-  showInlineFB('2c-A', ok,
-    ok ? '' :
-    'Ein Zahlenbeispiel bedeutet: du wählst selbst einen konkreten Wert '
-    + 'und überprüfst die Aussage damit.');
-  if (ok) unlockStep('2c-stepC');
-  updateScoreDisplay();
-}
-
-function check2c_stepC() {
+function check2c_numerical() {
+  /* Part 1: student picks r, computes V(r) and V(2r) → 1 P */
   const rVal  = parseNum(document.getElementById('ans-2c-r').value);
   const v1Val = parseNum(document.getElementById('ans-2c-v1').value);
   const v2Val = parseNum(document.getElementById('ans-2c-v2').value);
@@ -1129,136 +1053,103 @@ function check2c_stepC() {
   clearInputStyle('ans-2c-r');
   clearInputStyle('ans-2c-v1');
   clearInputStyle('ans-2c-v2');
-  applyInputStyle('ans-2c-r',  true);   // any r > 0 accepted
+  applyInputStyle('ans-2c-r',  rVal > 0);
   applyInputStyle('ans-2c-v1', v1Ok);
   applyInputStyle('ans-2c-v2', v2Ok);
 
-  recordStepScore('2c-stepC', ok);
+  recordScore('2c-num', 1, ok);
 
   if (!ok) {
     const hints = [];
     if (!v1Ok)
       hints.push('Prüfe V(r) mit der Kugelformel für deinen Radius.');
     if (!v2Ok)
-      hints.push('Für V(2r) setzt du den doppelten Radius in die Formel ein.');
+      hints.push('Für V(2r) setzt du den doppelten Radius '
+        + 'in dieselbe Formel ein.');
     showInlineFB('2c-C', false, hints.join(' '));
   } else {
     showInlineFB('2c-C', true, '');
     unlockStep('2c-stepD');
   }
+  updateNotice('2c-num');
   updateScoreDisplay();
 }
 
-function check2c_stepD() {
+function check2c_ratio() {
+  /* Ratio MC → 1 P */
   if (!stepMCSel['2c-D']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['2c-D'] === '8';
   markStepMC('2c-D','8');
-  recordStepScore('2c-stepD', ok);
+  recordScore('2c-ratio', 1, ok);
   showInlineFB('2c-D', ok,
     ok ? '' :
-    'Berechne den Quotienten V(2r)\u00a0÷\u00a0V(r) mit deinen Werten.');
+    'Berechne den Quotienten V(2r)\u00a0÷\u00a0V(r) '
+    + 'mit deinen ermittelten Werten.');
+  updateNotice('2c-ratio');
   updateScoreDisplay();
 }
 
-function check2c_stepE() {
+function check2c_cube() {
+  /* (2r)³ = 8r³ MC → 1 P */
   if (!stepMCSel['2c-E']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['2c-E'] === 'C';
   markStepMC('2c-E','C');
-  recordStepScore('2c-stepE', ok);
+  recordScore('2c-cube', 1, ok);
   showInlineFB('2c-E', ok,
     ok ? '' :
-    'Wende die Potenzregel an: (a\u00a0·\u00a0b)ⁿ\u00a0=\u00a0aⁿ\u00a0·\u00a0bⁿ. '
-    + 'Berechne dann den Wert von 2³.');
+    'Wende die Potenzregel an: (a\u00a0·\u00a0b)ⁿ\u00a0='
+    + '\u00a0aⁿ\u00a0·\u00a0bⁿ. Berechne dann 2³.');
   if (ok) unlockStep('2c-stepF');
+  updateNotice('2c-cube');
   updateScoreDisplay();
 }
 
-function check2c_stepF() {
+function check2c_factor() {
+  /* V(2r) = 8·V(r) expression MC → 1 P */
   if (!stepMCSel['2c-F']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['2c-F'] === 'B';
   markStepMC('2c-F','B');
-  recordStepScore('2c-stepF', ok);
+  recordScore('2c-factor', 1, ok);
   showInlineFB('2c-F', ok,
     ok ? '' :
-    'Ersetze (2r)³ durch das Ergebnis aus Schritt\u00a0D '
-    + 'und forme den Term um.');
+    'Ersetze (2r)³ durch das Ergebnis aus dem vorigen Schritt '
+    + 'und forme den Ausdruck um.');
+  updateNotice('2c-factor');
   updateScoreDisplay();
 }
 
-function check2c_final() {
-  let earned = 0;
-  if (stepMCSel['2c-A'] === 'A') earned += 1;
-  if (stepMCSel['2c-D'] === '8') earned += 1;
-  if (stepMCSel['2c-E'] === 'C') earned += 1;
-  if (stepMCSel['2c-F'] === 'B') earned += 1;
-
-  recordPartialScore('2c', earned, 4);
-
-  const cssClass = (earned === 4) ? 'correct' : 'incorrect';
-  let html;
-  if (earned === 4) {
-    html = '<span class="feedback-icon">✅</span>'
-      + '<strong>Vollständig richtig!</strong> (4/4\u00a0Punkte)';
-  } else {
-    const hints = [];
-    if (stepMCSel['2c-A'] !== 'A')
-      hints.push('Beginne mit Schritt\u00a0A im Zahlenbeispiel.');
-    if (stepMCSel['2c-D'] !== '8')
-      hints.push('Schließe das Zahlenbeispiel vollständig ab.');
-    if (stepMCSel['2c-E'] !== 'C' || stepMCSel['2c-F'] !== 'B')
-      hints.push('Bearbeite alle Schritte des allgemeinen Beweises.');
-    html = `<span class="feedback-icon">⚠️</span>`
-      + `<strong>${earned}/4\u00a0Punkte.</strong>`
-      + `<div class="hint-text">💡 ${hints.join('<br>')}</div>`;
-  }
-  const fb = document.getElementById('feedback-2c');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('2c', html, cssClass);
-
-  markTaskCompleted('task2');
-  updateNotice('2c');
-  updateScoreDisplay();
-}
-
-/* ── Restore full visual state on page load ── */
+/* ── Restore on page load ── */
 (function init() {
-  /* MC selections (blue) */
-  ['2a-1','2a-2','2b-1','2b-3','2b-5',
-   '2c-A','2c-D','2c-E','2c-F']
+  ['2a-2','2b-1','2b-3','2b-5',
+   '2c-D','2c-E','2c-F']
     .forEach(id => restoreStepMC(id));
 
-  /* MC evaluation colours */
-  ['2a-1','2a-2','2b-1','2b-3','2b-5',
-   '2c-A','2c-D','2c-E','2c-F']
+  ['2a-2','2b-1','2b-3','2b-5',
+   '2c-D','2c-E','2c-F']
     .forEach(id => restoreStepMCResult(id));
 
-  /* Select (dropdown) values */
   ['sel-2b-what-noun','sel-2b-what-of',
    'sel-2b-what2-noun','sel-2b-what2-of',
    'sel-2b-what3-noun','sel-2b-what3-of']
     .forEach(id => restoreSelect(id));
 
-  /* Unlock states */
-  ['2a-step2','2a-step3',
-   '2b-step1','2b-step2','2b-what2',
-   '2b-step3','2b-step4','2b-what3',
-   '2b-step5','2b-step6',
+  ['2a-step3',
+   '2b-step2','2b-what2','2b-step4',
+   '2b-what3','2b-step5','2b-step6',
    '2c-stepC','2c-stepD','2c-stepF']
     .forEach(id => restoreUnlocked(id));
 
-  /* Inline feedbacks */
-  ['2a-1','2a-2',
-   '2b-what1','2b-1','2b-2','2b-what2',
-   '2b-3','2b-4','2b-what3','2b-5',
-   '2c-A','2c-C','2c-D','2c-E','2c-F']
+  ['2a-step1','2a-result',
+   '2b-what1','2b-2','2b-what2',
+   '2b-4','2b-what3','2b-pct',
+   '2c-C','2c-D','2c-E','2c-F']
     .forEach(id => restoreInlineFeedback(id));
 
-  /* Main feedback boxes + notices */
-  ['2a','2b','2c'].forEach(id => {
-    restoreFeedback(id);
-    updateNotice(id);
-  });
+  /* Notices for all scored steps */
+  ['2a-step1','2a-step2',
+   '2b-box','2b-candles','2b-pct',
+   '2c-num','2c-ratio','2c-cube','2c-factor']
+    .forEach(id => updateNotice(id));
 
   updateScoreDisplay();
 })();

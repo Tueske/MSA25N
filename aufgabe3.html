@@ -930,10 +930,10 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 3 – Tulpenzwiebeln  (9 Punkte)
+   Points distributed across steps.
    No module-level state.
    ══════════════════════════════════════════ */
 
-/* ── Step MC ── */
 const stepMCSel = {};
 
 function selectStepMC(groupId, el) {
@@ -965,10 +965,6 @@ function restoreStepMC(groupId) {
   });
 }
 
-/*
-  markStepMC: wrong → chosen red only, correct neutral
-              right  → chosen green
-*/
 function markStepMC(groupId, correctVal) {
   const container = document.getElementById(`smc-${groupId}`);
   if (!container) return;
@@ -976,9 +972,8 @@ function markStepMC(groupId, correctVal) {
   const ok     = (chosen === correctVal);
   container.querySelectorAll('.step-mc-option').forEach(o => {
     o.classList.remove('correct','incorrect');
-    if (o.dataset.val === chosen) {
+    if (o.dataset.val === chosen)
       o.classList.add(ok ? 'correct' : 'incorrect');
-    }
   });
   saveResult(`smc_${groupId}_chosen`, chosen);
   saveResult(`smc_${groupId}_result`, ok ? 'correct' : 'incorrect');
@@ -996,7 +991,6 @@ function restoreStepMCResult(groupId) {
   });
 }
 
-/* ── Unlock ── */
 function unlockStep(id) {
   const el = document.getElementById(id);
   if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
@@ -1008,17 +1002,16 @@ function restoreUnlocked(id) {
   }
 }
 
-/* ── Inline feedback ── */
 function showInlineFB(id, ok, hint) {
   const el = document.getElementById(`ifb-${id}`);
   if (!el) return;
   const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
+  const html = ok
     ? '✅ Richtig!'
     : '❌ Noch nicht richtig.'
       + (hint
-          ? `<br><span style="font-style:italic;font-size:13px;">`
-            + `${hint}</span>`
+          ? `<br><span style="font-style:italic;font-size:13px;">
+             ${hint}</span>`
           : '');
   el.className = `inline-feedback show ${cssClass}`;
   el.innerHTML = html;
@@ -1026,16 +1019,18 @@ function showInlineFB(id, ok, hint) {
 }
 
 /* ══════════════════════════════════════════
-   3a
+   3a  (1 P)
+   Step 1: total count input (gate, 0 P)
+   Step 2: fraction term MC  → 1 P
    ══════════════════════════════════════════ */
 
-function check3a_step1() {
+function check3a_total() {
+  /* Conceptual gate: how many total? → 0 P */
   const val = parseNum(
     document.getElementById('ans-3a-total').value);
   const ok  = Math.abs(val - 14) < 0.5;
   clearInputStyle('ans-3a-total');
   applyInputStyle('ans-3a-total', ok);
-  recordStepScore('3a-step1', ok);
   showInlineFB('3a-1', ok,
     ok ? '' :
     'Zähle alle Zwiebeln in der Packung: rote und gelbe zusammen.');
@@ -1043,59 +1038,45 @@ function check3a_step1() {
   updateScoreDisplay();
 }
 
-function check3a_step2() {
+function check3a_fraction() {
+  /* Which term describes the fraction? → 1 P */
   if (!stepMCSel['3a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3a-2'] === 'B';
   markStepMC('3a-2','B');
-  recordStepScore('3a-step2', ok);
+  recordScore('3a', 1, ok);
   showInlineFB('3a-2', ok,
     ok ? '' :
     'Ein Anteil wird berechnet, indem man den betrachteten Teil '
     + 'durch die Gesamtmenge teilt.');
-  updateScoreDisplay();
-}
-
-function check3a_final() {
-  const totalOk = Math.abs(
-    parseNum(document.getElementById('ans-3a-total').value) - 14) < 0.5;
-  const mcOk    = stepMCSel['3a-2'] === 'B';
-  const ok      = totalOk && mcOk;
-  recordScore('3a', 1, ok);
-  const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
-    ? '<span class="feedback-icon">✅</span>'
-      + '<strong>Richtig!</strong> (1/1\u00a0Punkt)'
-    : '<span class="feedback-icon">❌</span>'
-      + '<strong>Leider falsch.</strong>'
-      + '<div class="hint-text">💡 Bearbeite zuerst beide '
-      + 'Schritte oben vollständig.</div>';
-  const fb = document.getElementById('feedback-3a');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('3a', html, cssClass);
   updateNotice('3a');
   updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
-   3b
+   3b  (3 P)
+   Without-replacement MC = conceptual gate (0 P)
+   Tree inputs correct → 1 P
+   Intermediate product (9·8) correct → 1 P
+     modelled as: student enters numerator of 9/14·8/13
+     i.e. 72 or 36 (after reduction)
+   Final result P(beide gelb) → 1 P
    ══════════════════════════════════════════ */
 
-function check3b_step1() {
+function check3b_concept() {
+  /* Conceptual gate → 0 P */
   if (!stepMCSel['3b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3b-1'] === 'B';
   markStepMC('3b-1','B');
-  recordStepScore('3b-step1', ok);
   showInlineFB('3b-1', ok,
     ok ? '' :
     'Die Aufgabe sagt „ohne Zurücklegen". Was bedeutet das '
-    + 'für die Anzahl der verbleibenden Zwiebeln beim zweiten Zug?');
+    + 'für die Anzahl der verbleibenden Zwiebeln?');
   if (ok) unlockStep('3b-step2');
   updateScoreDisplay();
 }
 
-function check3b_step2() {
-  /* Expected fractions for the 5 empty tree inputs */
+function check3b_tree() {
+  /* All 5 tree inputs correct → 1 P */
   const checks = {
     'tree-p-gelb1': { num: 9,  den: 14 },
     'tree-p-rr':    { num: 4,  den: 13 },
@@ -1115,231 +1096,205 @@ function check3b_step2() {
     }
     if (!ok) allOk = false;
   });
-  recordStepScore('3b-step2', allOk);
+  recordScore('3b-tree', 1, allOk);
   showInlineFB('3b-2', allOk,
     allOk ? '' :
     'Nach dem ersten Zug sind noch 13\u00a0Zwiebeln übrig. '
     + 'Die Anzahl der jeweiligen Farbe hängt davon ab, '
     + 'welche Farbe zuerst gezogen wurde.');
   if (allOk) unlockStep('3b-step3');
+  updateNotice('3b-tree');
   updateScoreDisplay();
 }
 
-function check3b_step3() {
-  if (!stepMCSel['3b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['3b-3'] === 'B';
-  markStepMC('3b-3','B');
-  recordStepScore('3b-step3', ok);
+function check3b_product() {
+  /* Intermediate product: student shows 9/14 · 8/13
+     We ask them to enter the numerator of the product (72)
+     or the unreduced fraction 72/182.
+     This is modelled via the existing ans-3b-calc input.
+     → 1 P                                              */
+  const raw = document.getElementById('ans-3b-calc').value.trim();
+  /* Accept: 72, 72/182, 36/91 */
+  const numVal = parseNum(raw);
+  const ok = fractionCheck(raw, 72, 182)
+          || fractionCheck(raw, 36, 91)
+          || Math.abs(numVal - 72) < 0.5;
+  clearInputStyle('ans-3b-calc');
+  applyInputStyle('ans-3b-calc', ok);
+  recordScore('3b-product', 1, ok);
   showInlineFB('3b-3', ok,
     ok ? '' :
-    'Um die Wahrscheinlichkeit eines vollständigen Pfades zu berechnen, '
-    + 'werden die Wahrscheinlichkeiten entlang dieses Pfades verknüpft.');
+    'Multipliziere die Wahrscheinlichkeiten entlang des '
+    + 'gelb-gelb-Pfades miteinander: P(gelb)·P(gelb|gelb).');
   if (ok) unlockStep('3b-step4');
+  updateNotice('3b-product');
   updateScoreDisplay();
 }
 
-function check3b_final() {
+function check3b_result() {
+  /* Final result P(beide gelb) = 36/91 → 1 P */
   const raw = document.getElementById('ans-3b-result').value;
-  /* P(beide gelb) = 9/14 · 8/13 = 72/182 = 36/91 */
-  const ok  = fractionCheck(raw, 36, 91) || fractionCheck(raw, 72, 182);
+  const ok  = fractionCheck(raw, 36, 91)
+           || fractionCheck(raw, 72, 182);
   clearInputStyle('ans-3b-result');
   applyInputStyle('ans-3b-result', ok);
-  recordScore('3b', 3, ok);
-  const cssClass = ok ? 'correct' : 'incorrect';
-  const html     = ok
-    ? '<span class="feedback-icon">✅</span>'
-      + '<strong>Richtig!</strong> (3/3\u00a0Punkte)'
-    : '<span class="feedback-icon">❌</span>'
-      + '<strong>Leider falsch.</strong>'
-      + '<div class="hint-text">💡 Suche im Baumdiagramm den Pfad, '
-      + 'der zu „beide gelb" führt, und wende die richtige Regel an.'
-      + '</div>';
-  const fb = document.getElementById('feedback-3b');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('3b', html, cssClass);
-  updateNotice('3b');
+  recordScore('3b-result', 1, ok);
+  showInlineFB('3b-result', ok,
+    ok ? '' :
+    'Das Ergebnis aus dem vorigen Schritt ist bereits '
+    + 'die gesuchte Wahrscheinlichkeit – kürze den Bruch, '
+    + 'falls möglich.');
+  updateNotice('3b-result');
   updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
-   3c
+   3c  (5 P)
+   "mindestens" MC    = conceptual gate (0 P)
+   Combinations MC    → 1 P
+   P(A) calculation   → 1 P
+   First product MC   → 1 P
+   Second product MC  → 1 P
+   Event B MC         → 1 P
    ══════════════════════════════════════════ */
 
-function check3c_stepA1() {
+function check3c_concept() {
+  /* "mindestens" understanding → conceptual gate, 0 P */
   if (!stepMCSel['3c-A1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-A1'] === 'C';
   markStepMC('3c-A1','C');
-  recordStepScore('3c-stepA1', ok);
   showInlineFB('3c-A1', ok,
     ok ? '' :
     'Das Wort „mindestens" schließt mehrere Fälle ein. '
-    + 'Überlege, was der einzige Fall wäre, der NICHT zu\u00a0A gehört.');
+    + 'Überlege, was der einzige Fall wäre, '
+    + 'der NICHT zu\u00a0A gehört.');
   if (ok) unlockStep('3c-stepA2');
   updateScoreDisplay();
 }
 
-function check3c_stepA2() {
+function check3c_combinations() {
+  /* How many combinations for A? → 1 P */
   if (!stepMCSel['3c-A2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-A2'] === '3';
   markStepMC('3c-A2','3');
-  recordStepScore('3c-stepA2', ok);
+  recordScore('3c-combo', 1, ok);
   showInlineFB('3c-A2', ok,
     ok ? '' :
-    'Überlege: Welches der vier Paare gehört NICHT zu Ereignis\u00a0A '
-    + 'und warum?');
+    'Überlege: Welches der vier Paare (WW,\u00a0WL,\u00a0LW,\u00a0LL) '
+    + 'gehört NICHT zu Ereignis\u00a0A?');
   if (ok) unlockStep('3c-stepA3');
+  updateNotice('3c-combo');
   updateScoreDisplay();
 }
 
-function check3c_stepA3() {
+function check3c_strategy() {
+  /* Strategy MC → conceptual gate, 0 P */
   if (!stepMCSel['3c-A3']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  /* Both direct calculation (A) and complement (B) are valid */
-  const ok = stepMCSel['3c-A3'] === 'A' || stepMCSel['3c-A3'] === 'B';
-  /* Mark only the chosen option */
+  const ok = stepMCSel['3c-A3'] === 'A'
+          || stepMCSel['3c-A3'] === 'B';
   const container = document.getElementById('smc-3c-A3');
   if (container) {
     const chosen = stepMCSel['3c-A3'];
     container.querySelectorAll('.step-mc-option').forEach(o => {
       o.classList.remove('correct','incorrect');
-      if (o.dataset.val === chosen) {
+      if (o.dataset.val === chosen)
         o.classList.add(ok ? 'correct' : 'incorrect');
-      }
     });
     saveResult('smc_3c-A3_chosen', chosen);
     saveResult('smc_3c-A3_result', ok ? 'correct' : 'incorrect');
   }
-  recordStepScore('3c-stepA3', ok);
   showInlineFB('3c-A3', ok,
     ok ? '' :
-    'Es gibt zwei gültige Wege: alle günstigen Pfade direkt berechnen '
-    + 'oder das Gegenereignis nutzen.');
+    'Es gibt zwei gültige Wege: alle günstigen Pfade direkt '
+    + 'berechnen oder das Gegenereignis nutzen.');
   if (ok) unlockStep('3c-stepA4');
   updateScoreDisplay();
 }
 
-function check3c_stepB1() {
+function check3c_pA() {
+  /* P(A) = 76/91 → 1 P */
+  const raw = document.getElementById('ans-3c-pA').value;
+  const ok  = fractionCheck(raw, 76, 91)
+           || fractionCheck(raw, 152, 182);
+  clearInputStyle('ans-3c-pA');
+  applyInputStyle('ans-3c-pA', ok);
+  recordScore('3c-pA', 1, ok);
+  showInlineFB('3c-A4', ok,
+    ok ? '' :
+    'Berechne P(A) mit der gewählten Methode vollständig '
+    + 'und kürze den Bruch.');
+  updateNotice('3c-pA');
+  updateScoreDisplay();
+}
+
+function check3c_product1() {
+  /* First product 8/14·7/13 analysis → 1 P */
   if (!stepMCSel['3c-B1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B1'] === 'B';
   markStepMC('3c-B1','B');
-  recordStepScore('3c-stepB1', ok);
+  recordScore('3c-prod1', 1, ok);
   showInlineFB('3c-B1', ok,
     ok ? '' :
-    'Schau dir den ersten Bruch an: 8 ist die Anzahl der weißen Zwiebeln '
-    + 'bei 14\u00a0insgesamt. Was sagt der zweite Bruch 7/13 aus?');
+    'Schau dir den ersten Bruch an: 8\u00a0ist die Anzahl der '
+    + 'weißen Zwiebeln bei 14\u00a0insgesamt. '
+    + 'Was sagt der zweite Bruch 7/13 aus?');
   if (ok) unlockStep('3c-stepB2');
+  updateNotice('3c-prod1');
   updateScoreDisplay();
 }
 
-function check3c_stepB2() {
+function check3c_product2() {
+  /* Second product 6/14·5/13 analysis → 1 P */
   if (!stepMCSel['3c-B2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B2'] === 'C';
   markStepMC('3c-B2','C');
-  recordStepScore('3c-stepB2', ok);
+  recordScore('3c-prod2', 1, ok);
   showInlineFB('3c-B2', ok,
     ok ? '' :
-    'Schau dir den ersten Bruch des zweiten Terms an: 6\u00a0ist die '
-    + 'Anzahl der lila Zwiebeln. '
-    + 'Was sagt 5/13 über die zweite gezogene Zwiebel aus?');
+    'Schau dir den ersten Bruch des zweiten Terms an: '
+    + '6\u00a0ist die Anzahl der lila Zwiebeln. '
+    + 'Was sagt 5/13 über die zweite Zwiebel aus?');
   if (ok) unlockStep('3c-stepB3');
+  updateNotice('3c-prod2');
   updateScoreDisplay();
 }
 
-function check3c_stepB3() {
+function check3c_eventB() {
+  /* Event B identification → 1 P */
   if (!stepMCSel['3c-B3']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B3'] === 'C';
   markStepMC('3c-B3','C');
-  recordStepScore('3c-stepB3', ok);
+  recordScore('3c-eventB', 1, ok);
   showInlineFB('3c-B3', ok,
     ok ? '' :
-    'Der Term addiert zwei Produkte: das erste für weiß+weiß, '
-    + 'das zweite für lila+lila. '
+    'Der Term addiert zwei Produkte: weiß+weiß und lila+lila. '
     + 'Was haben diese beiden Fälle gemeinsam?');
-  updateScoreDisplay();
-}
-
-function check3c_final() {
-  /* P(A) = 76/91 or equivalently 152/182 */
-  const pAraw = document.getElementById('ans-3c-pA').value;
-  const pAok  = fractionCheck(pAraw, 76, 91)
-             || fractionCheck(pAraw, 152, 182);
-  clearInputStyle('ans-3c-pA');
-  applyInputStyle('ans-3c-pA', pAok);
-
-  /* Scoring (5 P):
-     1 P – mindestens understood     (3c-A1 = C)
-     1 P – 3 combinations correct   (3c-A2 = 3)
-     1 P – P(A) correct
-     1 P – both products analysed   (B1=B and B2=C)
-     1 P – event B identified       (B3=C)              */
-  let earned = 0;
-  if (stepMCSel['3c-A1'] === 'C')               earned += 1;
-  if (stepMCSel['3c-A2'] === '3')               earned += 1;
-  if (pAok)                                      earned += 1;
-  if (stepMCSel['3c-B1'] === 'B'
-   && stepMCSel['3c-B2'] === 'C')               earned += 1;
-  if (stepMCSel['3c-B3'] === 'C')               earned += 1;
-
-  recordPartialScore('3c', earned, 5);
-
-  const cssClass = (earned === 5) ? 'correct' : 'incorrect';
-  let html;
-  if (earned === 5) {
-    html = '<span class="feedback-icon">✅</span>'
-      + '<strong>Vollständig richtig!</strong> (5/5\u00a0Punkte)';
-  } else {
-    const hints = [];
-    if (stepMCSel['3c-A1'] !== 'C')
-      hints.push('Überlege nochmals, was „mindestens eine" bedeutet.');
-    if (stepMCSel['3c-A2'] !== '3')
-      hints.push('Überprüfe, welche Paare zu Ereignis\u00a0A gehören.');
-    if (!pAok)
-      hints.push('Berechne P(A) vollständig – bearbeite alle Schritte '
-        + 'in Teil\u00a01.');
-    if (stepMCSel['3c-B1'] !== 'B' || stepMCSel['3c-B2'] !== 'C')
-      hints.push('Analysiere jeden der beiden Terme in Teil\u00a02 einzeln.');
-    if (stepMCSel['3c-B3'] !== 'C')
-      hints.push('Überlege, was die Summe der beiden Terme insgesamt '
-        + 'beschreibt.');
-    html = `<span class="feedback-icon">⚠️</span>`
-      + `<strong>${earned}/5\u00a0Punkte.</strong>`
-      + `<div class="hint-text">💡 ${hints.join('<br>')}</div>`;
-  }
-  const fb = document.getElementById('feedback-3c');
-  fb.className = `feedback-box show ${cssClass}`;
-  fb.innerHTML = html;
-  saveFeedback('3c', html, cssClass);
-
+  updateNotice('3c-eventB');
   markTaskCompleted('task3');
-  updateNotice('3c');
   updateScoreDisplay();
 }
 
-/* ── Restore full visual state on page load ── */
+/* ── Restore on page load ── */
 (function init() {
-  /* MC selections (blue) */
   ['3a-2','3b-1','3b-3',
    '3c-A1','3c-A2','3c-A3',
    '3c-B1','3c-B2','3c-B3']
     .forEach(id => restoreStepMC(id));
 
-  /* MC evaluation colours */
-  ['3a-2','3b-1','3b-3',
+  ['3a-2','3b-1',
    '3c-A1','3c-A2','3c-A3',
    '3c-B1','3c-B2','3c-B3']
     .forEach(id => restoreStepMCResult(id));
 
-  /* Unlock states */
   ['3a-step2',
    '3b-step2','3b-step3','3b-step4',
    '3c-stepA2','3c-stepA3','3c-stepA4',
    '3c-stepB2','3c-stepB3']
     .forEach(id => restoreUnlocked(id));
 
-  /* Inline feedbacks */
   ['3a-1','3a-2',
-   '3b-1','3b-2','3b-3',
-   '3c-A1','3c-A2','3c-A3',
+   '3b-1','3b-2','3b-3','3b-result',
+   '3c-A1','3c-A2','3c-A3','3c-A4',
    '3c-B1','3c-B2','3c-B3']
     .forEach(id => restoreInlineFeedback(id));
 
@@ -1348,17 +1303,17 @@ function check3c_final() {
    'tree-p-rg','tree-p-gg']
     .forEach(id => {
       const r = loadResult(id);
-      if (r) {
-        const el = document.getElementById(id);
-        if (el) { el.classList.remove('correct','incorrect'); el.classList.add(r); }
-      }
+      if (!r) return;
+      const el = document.getElementById(id);
+      if (el) { el.classList.remove('correct','incorrect'); el.classList.add(r); }
     });
 
-  /* Main feedback boxes + notices */
-  ['3a','3b','3c'].forEach(id => {
-    restoreFeedback(id);
-    updateNotice(id);
-  });
+  /* Scored step notices */
+  ['3a',
+   '3b-tree','3b-product','3b-result',
+   '3c-combo','3c-pA',
+   '3c-prod1','3c-prod2','3c-eventB']
+    .forEach(id => updateNotice(id));
 
   updateScoreDisplay();
 })();
