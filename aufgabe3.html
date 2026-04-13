@@ -930,13 +930,8 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 3 – Tulpenzwiebeln  (9 Punkte)
-
-   3a: Anteil 5/14 begründen              (1 P)
-   3b: Baumdiagramm + P(beide gelb)       (3 P)
-   3c*: Ereignis A + Ereignis B           (5 P)
+   No module-level state.
    ══════════════════════════════════════════ */
-
-
 
 /* ── Step MC ── */
 const stepMCSel = {};
@@ -970,6 +965,37 @@ function restoreStepMC(groupId) {
   });
 }
 
+/*
+  markStepMC: wrong → chosen red only, correct neutral
+              right  → chosen green
+*/
+function markStepMC(groupId, correctVal) {
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  const chosen = stepMCSel[groupId];
+  const ok     = (chosen === correctVal);
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosen) {
+      o.classList.add(ok ? 'correct' : 'incorrect');
+    }
+  });
+  saveResult(`smc_${groupId}_chosen`, chosen);
+  saveResult(`smc_${groupId}_result`, ok ? 'correct' : 'incorrect');
+}
+
+function restoreStepMCResult(groupId) {
+  const chosen = loadResult(`smc_${groupId}_chosen`);
+  const result = loadResult(`smc_${groupId}_result`);
+  if (!chosen || !result) return;
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosen) o.classList.add(result);
+  });
+}
+
 /* ── Unlock ── */
 function unlockStep(id) {
   const el = document.getElementById(id);
@@ -986,38 +1012,17 @@ function restoreUnlocked(id) {
 function showInlineFB(id, ok, hint) {
   const el = document.getElementById(`ifb-${id}`);
   if (!el) return;
-  el.classList.add('show');
-  if (ok) {
-    el.className = 'inline-feedback show correct';
-    el.innerHTML = '✅ Richtig!';
-  } else {
-    el.className = 'inline-feedback show incorrect';
-    el.innerHTML = '❌ Noch nicht richtig.'
-      + (hint ? `<br><span style="font-style:italic;font-size:13px;">
-         ${hint}</span>` : '');
-  }
-}
-
-/*
-  markStepMC: wrong → only chosen turns red, correct stays neutral
-              right  → chosen turns green
-*/
-function markStepMC(groupId, correctVal) {
-  const container = document.getElementById(`smc-${groupId}`);
-  if (!container) return;
-  const chosen = stepMCSel[groupId];
-  const ok = (chosen === correctVal);
-  container.querySelectorAll('.step-mc-option').forEach(o => {
-    o.classList.remove('correct','incorrect');
-    if (o.dataset.val === chosen) {
-      o.classList.add(ok ? 'correct' : 'incorrect');
-    }
-  });
-}
-
-/* ── Fraction check helper ── */
-function fracOk(str, num, den) {
-  return fractionCheck(str, num, den);
+  const cssClass = ok ? 'correct' : 'incorrect';
+  const html     = ok
+    ? '✅ Richtig!'
+    : '❌ Noch nicht richtig.'
+      + (hint
+          ? `<br><span style="font-style:italic;font-size:13px;">`
+            + `${hint}</span>`
+          : '');
+  el.className = `inline-feedback show ${cssClass}`;
+  el.innerHTML = html;
+  saveInlineFeedback(id, html, cssClass);
 }
 
 /* ══════════════════════════════════════════
@@ -1025,11 +1030,12 @@ function fracOk(str, num, den) {
    ══════════════════════════════════════════ */
 
 function check3a_step1() {
-  const val = parseNum(document.getElementById('ans-3a-total').value);
+  const val = parseNum(
+    document.getElementById('ans-3a-total').value);
   const ok  = Math.abs(val - 14) < 0.5;
   clearInputStyle('ans-3a-total');
   applyInputStyle('ans-3a-total', ok);
-  recordStepScore('3a-step1', 0, ok);
+  recordStepScore('3a-step1', ok);
   showInlineFB('3a-1', ok,
     ok ? '' :
     'Zähle alle Zwiebeln in der Packung: rote und gelbe zusammen.');
@@ -1041,11 +1047,11 @@ function check3a_step2() {
   if (!stepMCSel['3a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3a-2'] === 'B';
   markStepMC('3a-2','B');
-  recordStepScore('3a-step2', 0, ok);
+  recordStepScore('3a-step2', ok);
   showInlineFB('3a-2', ok,
     ok ? '' :
-    'Ein Anteil wird berechnet, indem man den betrachteten Teil ' +
-    'durch die Gesamtmenge teilt.');
+    'Ein Anteil wird berechnet, indem man den betrachteten Teil '
+    + 'durch die Gesamtmenge teilt.');
   updateScoreDisplay();
 }
 
@@ -1055,20 +1061,20 @@ function check3a_final() {
   const mcOk    = stepMCSel['3a-2'] === 'B';
   const ok      = totalOk && mcOk;
   recordScore('3a', 1, ok);
+  const cssClass = ok ? 'correct' : 'incorrect';
+  const html     = ok
+    ? '<span class="feedback-icon">✅</span>'
+      + '<strong>Richtig!</strong> (1/1\u00a0Punkt)'
+    : '<span class="feedback-icon">❌</span>'
+      + '<strong>Leider falsch.</strong>'
+      + '<div class="hint-text">💡 Bearbeite zuerst beide '
+      + 'Schritte oben vollständig.</div>';
   const fb = document.getElementById('feedback-3a');
-  fb.classList.add('show');
-  if (ok) {
-    fb.className = 'feedback-box show correct';
-    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
-      '<strong>Richtig!</strong> (1/1 Punkt)';
-  } else {
-    fb.className = 'feedback-box show incorrect';
-    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
-      '<strong>Leider falsch.</strong>' +
-      '<div class="hint-text">💡 Bearbeite zuerst beide ' +
-      'Schritte oben vollständig.</div>';
-  }
-  updateNotice('3a'); updateScoreDisplay();
+  fb.className = `feedback-box show ${cssClass}`;
+  fb.innerHTML = html;
+  saveFeedback('3a', html, cssClass);
+  updateNotice('3a');
+  updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
@@ -1079,43 +1085,42 @@ function check3b_step1() {
   if (!stepMCSel['3b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3b-1'] === 'B';
   markStepMC('3b-1','B');
-  recordStepScore('3b-step1', 0, ok);
+  recordStepScore('3b-step1', ok);
   showInlineFB('3b-1', ok,
     ok ? '' :
-    'Die Aufgabe sagt „ohne Zurücklegen". Was bedeutet das ' +
-    'für die Anzahl der verbleibenden Zwiebeln beim zweiten Zug?');
+    'Die Aufgabe sagt „ohne Zurücklegen". Was bedeutet das '
+    + 'für die Anzahl der verbleibenden Zwiebeln beim zweiten Zug?');
   if (ok) unlockStep('3b-step2');
   updateScoreDisplay();
 }
 
 function check3b_step2() {
-  /* Check all 5 empty tree inputs */
-  const inputs = {
-    'tree-p-gelb1': { num: 9,  den: 14 }, /* P(gelb) first draw  */
-    'tree-p-rr':    { num: 4,  den: 13 }, /* P(r|r)              */
-    'tree-p-gr':    { num: 9,  den: 13 }, /* P(g|r)              */
-    'tree-p-rg':    { num: 5,  den: 13 }, /* P(r|g)              */
-    'tree-p-gg':    { num: 8,  den: 13 }, /* P(g|g)              */
+  /* Expected fractions for the 5 empty tree inputs */
+  const checks = {
+    'tree-p-gelb1': { num: 9,  den: 14 },
+    'tree-p-rr':    { num: 4,  den: 13 },
+    'tree-p-gr':    { num: 9,  den: 13 },
+    'tree-p-rg':    { num: 5,  den: 13 },
+    'tree-p-gg':    { num: 8,  den: 13 },
   };
-
   let allOk = true;
-  Object.keys(inputs).forEach(id => {
+  Object.keys(checks).forEach(id => {
     const el  = document.getElementById(id);
-    const cfg = inputs[id];
-    const ok  = el && fracOk(el.value, cfg.num, cfg.den);
+    const cfg = checks[id];
+    const ok  = el && fractionCheck(el.value, cfg.num, cfg.den);
     if (el) {
       el.classList.remove('correct','incorrect');
       el.classList.add(ok ? 'correct' : 'incorrect');
+      saveResult(id, ok ? 'correct' : 'incorrect');
     }
     if (!ok) allOk = false;
   });
-
-  recordStepScore('3b-step2', 0, allOk);
+  recordStepScore('3b-step2', allOk);
   showInlineFB('3b-2', allOk,
     allOk ? '' :
-    'Bedenke: Nach dem ersten Zug sind noch 13 Zwiebeln übrig. ' +
-    'Die Anzahl der jeweiligen Farbe hängt davon ab, ' +
-    'welche Farbe zuerst gezogen wurde.');
+    'Nach dem ersten Zug sind noch 13\u00a0Zwiebeln übrig. '
+    + 'Die Anzahl der jeweiligen Farbe hängt davon ab, '
+    + 'welche Farbe zuerst gezogen wurde.');
   if (allOk) unlockStep('3b-step3');
   updateScoreDisplay();
 }
@@ -1124,11 +1129,11 @@ function check3b_step3() {
   if (!stepMCSel['3b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3b-3'] === 'B';
   markStepMC('3b-3','B');
-  recordStepScore('3b-step3', 0, ok);
+  recordStepScore('3b-step3', ok);
   showInlineFB('3b-3', ok,
     ok ? '' :
-    'Um die Wahrscheinlichkeit eines vollständigen Pfades zu berechnen, ' +
-    'werden die Wahrscheinlichkeiten entlang dieses Pfades verknüpft.');
+    'Um die Wahrscheinlichkeit eines vollständigen Pfades zu berechnen, '
+    + 'werden die Wahrscheinlichkeiten entlang dieses Pfades verknüpft.');
   if (ok) unlockStep('3b-step4');
   updateScoreDisplay();
 }
@@ -1136,24 +1141,25 @@ function check3b_step3() {
 function check3b_final() {
   const raw = document.getElementById('ans-3b-result').value;
   /* P(beide gelb) = 9/14 · 8/13 = 72/182 = 36/91 */
-  const ok = fracOk(raw, 36, 91) || fracOk(raw, 72, 182);
+  const ok  = fractionCheck(raw, 36, 91) || fractionCheck(raw, 72, 182);
   clearInputStyle('ans-3b-result');
   applyInputStyle('ans-3b-result', ok);
   recordScore('3b', 3, ok);
+  const cssClass = ok ? 'correct' : 'incorrect';
+  const html     = ok
+    ? '<span class="feedback-icon">✅</span>'
+      + '<strong>Richtig!</strong> (3/3\u00a0Punkte)'
+    : '<span class="feedback-icon">❌</span>'
+      + '<strong>Leider falsch.</strong>'
+      + '<div class="hint-text">💡 Suche im Baumdiagramm den Pfad, '
+      + 'der zu „beide gelb" führt, und wende die richtige Regel an.'
+      + '</div>';
   const fb = document.getElementById('feedback-3b');
-  fb.classList.add('show');
-  if (ok) {
-    fb.className = 'feedback-box show correct';
-    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
-      '<strong>Richtig!</strong> (3/3 Punkte)';
-  } else {
-    fb.className = 'feedback-box show incorrect';
-    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
-      '<strong>Leider falsch.</strong>' +
-      '<div class="hint-text">💡 Suche im Baumdiagramm den Pfad, ' +
-      'der zu „beide gelb" führt, und wende die richtige Regel an.</div>';
-  }
-  updateNotice('3b'); updateScoreDisplay();
+  fb.className = `feedback-box show ${cssClass}`;
+  fb.innerHTML = html;
+  saveFeedback('3b', html, cssClass);
+  updateNotice('3b');
+  updateScoreDisplay();
 }
 
 /* ══════════════════════════════════════════
@@ -1164,11 +1170,11 @@ function check3c_stepA1() {
   if (!stepMCSel['3c-A1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-A1'] === 'C';
   markStepMC('3c-A1','C');
-  recordStepScore('3c-stepA1', 0, ok);
+  recordStepScore('3c-stepA1', ok);
   showInlineFB('3c-A1', ok,
     ok ? '' :
-    'Das Wort „mindestens" schließt mehrere Fälle ein. ' +
-    'Überlege, was der einzige Fall wäre, der NICHT zu A gehört.');
+    'Das Wort „mindestens" schließt mehrere Fälle ein. '
+    + 'Überlege, was der einzige Fall wäre, der NICHT zu\u00a0A gehört.');
   if (ok) unlockStep('3c-stepA2');
   updateScoreDisplay();
 }
@@ -1177,27 +1183,37 @@ function check3c_stepA2() {
   if (!stepMCSel['3c-A2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-A2'] === '3';
   markStepMC('3c-A2','3');
-  recordStepScore('3c-stepA2', 0, ok);
+  recordStepScore('3c-stepA2', ok);
   showInlineFB('3c-A2', ok,
     ok ? '' :
-    'Überlege: Welches der vier Paare gehört NICHT zu Ereignis A ' +
-    'und warum?');
+    'Überlege: Welches der vier Paare gehört NICHT zu Ereignis\u00a0A '
+    + 'und warum?');
   if (ok) unlockStep('3c-stepA3');
   updateScoreDisplay();
 }
 
 function check3c_stepA3() {
   if (!stepMCSel['3c-A3']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  /* Both A and B are accepted as valid strategies */
-  const ok = stepMCSel['3c-A3'] === 'A' ||
-             stepMCSel['3c-A3'] === 'B';
-  markStepMC('3c-A3', stepMCSel['3c-A3']);
-  recordStepScore('3c-stepA3', 0, ok);
+  /* Both direct calculation (A) and complement (B) are valid */
+  const ok = stepMCSel['3c-A3'] === 'A' || stepMCSel['3c-A3'] === 'B';
+  /* Mark only the chosen option */
+  const container = document.getElementById('smc-3c-A3');
+  if (container) {
+    const chosen = stepMCSel['3c-A3'];
+    container.querySelectorAll('.step-mc-option').forEach(o => {
+      o.classList.remove('correct','incorrect');
+      if (o.dataset.val === chosen) {
+        o.classList.add(ok ? 'correct' : 'incorrect');
+      }
+    });
+    saveResult('smc_3c-A3_chosen', chosen);
+    saveResult('smc_3c-A3_result', ok ? 'correct' : 'incorrect');
+  }
+  recordStepScore('3c-stepA3', ok);
   showInlineFB('3c-A3', ok,
     ok ? '' :
-    'Es gibt zwei gültige Wege: direkt alle günstigen Pfade berechnen ' +
-    'oder das Gegenereignis nutzen. ' +
-    'Welcher der Ansätze klingt für dich nach weniger Aufwand?');
+    'Es gibt zwei gültige Wege: alle günstigen Pfade direkt berechnen '
+    + 'oder das Gegenereignis nutzen.');
   if (ok) unlockStep('3c-stepA4');
   updateScoreDisplay();
 }
@@ -1206,11 +1222,11 @@ function check3c_stepB1() {
   if (!stepMCSel['3c-B1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B1'] === 'B';
   markStepMC('3c-B1','B');
-  recordStepScore('3c-stepB1', 0, ok);
+  recordStepScore('3c-stepB1', ok);
   showInlineFB('3c-B1', ok,
     ok ? '' :
-    'Schau dir den ersten Bruch an: 8 ist die Anzahl der weißen Zwiebeln ' +
-    'bei 14 insgesamt. Was sagt der zweite Bruch 7/13 aus?');
+    'Schau dir den ersten Bruch an: 8 ist die Anzahl der weißen Zwiebeln '
+    + 'bei 14\u00a0insgesamt. Was sagt der zweite Bruch 7/13 aus?');
   if (ok) unlockStep('3c-stepB2');
   updateScoreDisplay();
 }
@@ -1219,11 +1235,12 @@ function check3c_stepB2() {
   if (!stepMCSel['3c-B2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B2'] === 'C';
   markStepMC('3c-B2','C');
-  recordStepScore('3c-stepB2', 0, ok);
+  recordStepScore('3c-stepB2', ok);
   showInlineFB('3c-B2', ok,
     ok ? '' :
-    'Schau dir den ersten Bruch des zweiten Terms an: 6 ist die Anzahl ' +
-    'der lila Zwiebeln. Was sagt 5/13 über die zweite gezogene Zwiebel aus?');
+    'Schau dir den ersten Bruch des zweiten Terms an: 6\u00a0ist die '
+    + 'Anzahl der lila Zwiebeln. '
+    + 'Was sagt 5/13 über die zweite gezogene Zwiebel aus?');
   if (ok) unlockStep('3c-stepB3');
   updateScoreDisplay();
 }
@@ -1232,88 +1249,117 @@ function check3c_stepB3() {
   if (!stepMCSel['3c-B3']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['3c-B3'] === 'C';
   markStepMC('3c-B3','C');
-  recordStepScore('3c-stepB3', 0, ok);
+  recordStepScore('3c-stepB3', ok);
   showInlineFB('3c-B3', ok,
     ok ? '' :
-    'Der Term addiert zwei Produkte: das erste für weiß+weiß, ' +
-    'das zweite für lila+lila. ' +
-    'Was haben diese beiden Fälle gemeinsam?');
+    'Der Term addiert zwei Produkte: das erste für weiß+weiß, '
+    + 'das zweite für lila+lila. '
+    + 'Was haben diese beiden Fälle gemeinsam?');
   updateScoreDisplay();
 }
 
 function check3c_final() {
-  /* P(A) = 76/91 */
+  /* P(A) = 76/91 or equivalently 152/182 */
   const pAraw = document.getElementById('ans-3c-pA').value;
-  const pAok  = fracOk(pAraw, 76, 91) ||
-                fracOk(pAraw, 152, 182);
-
+  const pAok  = fractionCheck(pAraw, 76, 91)
+             || fractionCheck(pAraw, 152, 182);
   clearInputStyle('ans-3c-pA');
   applyInputStyle('ans-3c-pA', pAok);
 
   /* Scoring (5 P):
-     1 P – stepA1 (mindestens understood)
-     1 P – stepA2 (3 combinations correct)
+     1 P – mindestens understood     (3c-A1 = C)
+     1 P – 3 combinations correct   (3c-A2 = 3)
      1 P – P(A) correct
-     1 P – stepB1+B2 (both products analysed correctly)
-     1 P – stepB3 (event B correctly identified)
-  */
+     1 P – both products analysed   (B1=B and B2=C)
+     1 P – event B identified       (B3=C)              */
   let earned = 0;
-  if (stepMCSel['3c-A1'] === 'C')  earned += 1;
-  if (stepMCSel['3c-A2'] === '3')  earned += 1;
-  if (pAok)                         earned += 1;
-  if (stepMCSel['3c-B1'] === 'B' &&
-      stepMCSel['3c-B2'] === 'C')   earned += 1;
-  if (stepMCSel['3c-B3'] === 'C')   earned += 1;
+  if (stepMCSel['3c-A1'] === 'C')               earned += 1;
+  if (stepMCSel['3c-A2'] === '3')               earned += 1;
+  if (pAok)                                      earned += 1;
+  if (stepMCSel['3c-B1'] === 'B'
+   && stepMCSel['3c-B2'] === 'C')               earned += 1;
+  if (stepMCSel['3c-B3'] === 'C')               earned += 1;
 
   recordPartialScore('3c', earned, 5);
 
-  const fb = document.getElementById('feedback-3c');
-  fb.classList.add('show');
+  const cssClass = (earned === 5) ? 'correct' : 'incorrect';
+  let html;
   if (earned === 5) {
-    fb.className = 'feedback-box show correct';
-    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
-      '<strong>Vollständig richtig!</strong> (5/5 Punkte)';
+    html = '<span class="feedback-icon">✅</span>'
+      + '<strong>Vollständig richtig!</strong> (5/5\u00a0Punkte)';
   } else {
     const hints = [];
     if (stepMCSel['3c-A1'] !== 'C')
       hints.push('Überlege nochmals, was „mindestens eine" bedeutet.');
     if (stepMCSel['3c-A2'] !== '3')
-      hints.push('Überprüfe, welche Paare zu Ereignis A gehören.');
+      hints.push('Überprüfe, welche Paare zu Ereignis\u00a0A gehören.');
     if (!pAok)
-      hints.push('Berechne P(A) vollständig – ' +
-        'bearbeite alle Schritte in Teil 1.');
+      hints.push('Berechne P(A) vollständig – bearbeite alle Schritte '
+        + 'in Teil\u00a01.');
     if (stepMCSel['3c-B1'] !== 'B' || stepMCSel['3c-B2'] !== 'C')
-      hints.push('Analysiere jeden der beiden Terme in Teil 2 einzeln.');
+      hints.push('Analysiere jeden der beiden Terme in Teil\u00a02 einzeln.');
     if (stepMCSel['3c-B3'] !== 'C')
-      hints.push('Überlege, was die Summe der beiden Terme insgesamt beschreibt.');
-    fb.className = 'feedback-box show incorrect';
-    fb.innerHTML = `<span class="feedback-icon">⚠️</span>
-      <strong>${earned}/5 Punkte.</strong>
-      <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
+      hints.push('Überlege, was die Summe der beiden Terme insgesamt '
+        + 'beschreibt.');
+    html = `<span class="feedback-icon">⚠️</span>`
+      + `<strong>${earned}/5\u00a0Punkte.</strong>`
+      + `<div class="hint-text">💡 ${hints.join('<br>')}</div>`;
   }
+  const fb = document.getElementById('feedback-3c');
+  fb.className = `feedback-box show ${cssClass}`;
+  fb.innerHTML = html;
+  saveFeedback('3c', html, cssClass);
 
   markTaskCompleted('task3');
-  updateNotice('3c'); updateScoreDisplay();
+  updateNotice('3c');
+  updateScoreDisplay();
 }
 
-/* ── Restore on page load ── */
+/* ── Restore full visual state on page load ── */
 (function init() {
-  const mcGroups = [
-    '3a-2','3b-1','3b-3',
-    '3c-A1','3c-A2','3c-A3',
-    '3c-B1','3c-B2','3c-B3'
-  ];
-  mcGroups.forEach(id => restoreStepMC(id));
+  /* MC selections (blue) */
+  ['3a-2','3b-1','3b-3',
+   '3c-A1','3c-A2','3c-A3',
+   '3c-B1','3c-B2','3c-B3']
+    .forEach(id => restoreStepMC(id));
 
-  const lockIds = [
-    '3a-step2',
-    '3b-step2','3b-step3','3b-step4',
-    '3c-stepA2','3c-stepA3','3c-stepA4',
-    '3c-stepB2','3c-stepB3'
-  ];
-  lockIds.forEach(id => restoreUnlocked(id));
+  /* MC evaluation colours */
+  ['3a-2','3b-1','3b-3',
+   '3c-A1','3c-A2','3c-A3',
+   '3c-B1','3c-B2','3c-B3']
+    .forEach(id => restoreStepMCResult(id));
 
-  ['3a','3b','3c'].forEach(id => updateNotice(id));
+  /* Unlock states */
+  ['3a-step2',
+   '3b-step2','3b-step3','3b-step4',
+   '3c-stepA2','3c-stepA3','3c-stepA4',
+   '3c-stepB2','3c-stepB3']
+    .forEach(id => restoreUnlocked(id));
+
+  /* Inline feedbacks */
+  ['3a-1','3a-2',
+   '3b-1','3b-2','3b-3',
+   '3c-A1','3c-A2','3c-A3',
+   '3c-B1','3c-B2','3c-B3']
+    .forEach(id => restoreInlineFeedback(id));
+
+  /* Tree input colours */
+  ['tree-p-gelb1','tree-p-rr','tree-p-gr',
+   'tree-p-rg','tree-p-gg']
+    .forEach(id => {
+      const r = loadResult(id);
+      if (r) {
+        const el = document.getElementById(id);
+        if (el) { el.classList.remove('correct','incorrect'); el.classList.add(r); }
+      }
+    });
+
+  /* Main feedback boxes + notices */
+  ['3a','3b','3c'].forEach(id => {
+    restoreFeedback(id);
+    updateNotice(id);
+  });
+
   updateScoreDisplay();
 })();
 </script>

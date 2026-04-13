@@ -19,6 +19,7 @@ const ExamState = {
       studentClass: '',
       scores:    {},
       inputs:    {},
+      results:   {},   // NEW: stores per-subId evaluation state
       completed: {}
     };
   },
@@ -58,7 +59,7 @@ function stringCheck(userAnswer, correctList) {
 }
 
 function fractionCheck(userAnswer, numerator, denominator) {
-  const cleaned = userAnswer.replace(/\s/g, '');
+  const cleaned = String(userAnswer).replace(/\s/g, '');
   const fracMatch = cleaned.match(/^(-?\d+)\/(\d+)$/);
   if (fracMatch) {
     const n = parseInt(fracMatch[1]);
@@ -79,53 +80,15 @@ function parseNum(str) {
   );
 }
 
-/* ── Input style helpers ── */
-
-function applyInputStyle(id, isCorrect) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('correct', 'incorrect');
-  el.classList.add(isCorrect ? 'correct' : 'incorrect');
-}
-
-function clearInputStyle(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('correct', 'incorrect');
-}
-
-/* ── Feedback box ── */
-
-function showFeedback(subId, isCorrect, hintText = '') {
-  const box = document.getElementById(`feedback-${subId}`);
-  if (!box) return;
-  box.className = `feedback-box show ${isCorrect ? 'correct' : 'incorrect'}`;
-  if (isCorrect) {
-    box.innerHTML = `<span class="feedback-icon">✅</span>
-      <strong>Richtig!</strong>`;
-  } else {
-    box.innerHTML = `<span class="feedback-icon">❌</span>
-      <strong>Leider falsch.</strong>
-      ${hintText
-        ? `<div class="hint-text">💡 Hinweis: ${hintText}</div>`
-        : ''}`;
-  }
-}
-
-/* ══════════════════════════════════════════
+/* ═══════════════════════════════════════════
    SCORING
-   Rules:
-   - Points awarded ONLY on the first attempt.
-   - Attempts and earned points are persisted
-     in localStorage.
-   - From attempt 2 onwards: feedback only,
-     no points change.
-   ══════════════════════════════════════════ */
-
-/* ── Points recording ── */
+   All functions load fresh from storage,
+   modify exactly what they need,
+   and save back immediately.
+   No return value — callers do not hold state.
+   ═══════════════════════════════════════════ */
 
 function recordScore(subId, maxPoints, isCorrect) {
-  // Always load fresh from storage
   const state = ExamState.load();
   if (!state.scores[subId]) {
     state.scores[subId] = { earned: 0, max: maxPoints, attempts: 0 };
@@ -136,7 +99,6 @@ function recordScore(subId, maxPoints, isCorrect) {
   }
   entry.attempts += 1;
   ExamState.save(state);
-  return state; // return for chaining if needed
 }
 
 function recordPartialScore(subId, earned, maxPoints) {
@@ -150,38 +112,171 @@ function recordPartialScore(subId, earned, maxPoints) {
   }
   entry.attempts += 1;
   ExamState.save(state);
-  return state;
 }
 
-function recordStepScore(stepKey, maxPoints, isCorrect) {
+function recordStepScore(stepKey, isCorrect) {
+  /* Step scores are structural (no points awarded).
+     We only track attempts for persistence of step state. */
   const state = ExamState.load();
   const key = `step_${stepKey}`;
   if (!state.scores[key]) {
-    state.scores[key] = { earned: 0, max: maxPoints, attempts: 0 };
+    state.scores[key] = { earned: 0, max: 0, attempts: 0 };
   }
-  const entry = state.scores[key];
-  if (entry.attempts === 0 && isCorrect) {
-    entry.earned = maxPoints;
-  }
-  entry.attempts += 1;
+  state.scores[key].attempts += 1;
   ExamState.save(state);
-  return state;
 }
 
-function isFirstAttempt(subId) {
+function getAttempts(subId) {
   const state = ExamState.load();
-  return !state.scores[subId] || state.scores[subId].attempts === 0;
+  return state.scores[subId] ? state.scores[subId].attempts : 0;
 }
 
-function isFirstStepAttempt(stepKey) {
+function getStepAttempts(stepKey) {
   const state = ExamState.load();
   const key = `step_${stepKey}`;
-  return !state.scores[key] || state.scores[key].attempts === 0;
+  return state.scores[key] ? state.scores[key].attempts : 0;
+}
+
+/* ═══════════════════════════════════════════
+   RESULT PERSISTENCE
+   Stores the last evaluation result per element:
+     'correct' | 'incorrect' | null
+   Also stores feedback HTML per subId.
+   ═══════════════════════════════════════════ */
+
+function saveResult(elementId, result) {
+  /* result: 'correct' | 'incorrect' */
+  const state = ExamState.load();
+  if (!state.results) state.results = {};
+  state.results[elementId] = result;
+  ExamState.save(state);
+}
+
+function loadResult(elementId) {
+  const state = ExamState.load();
+  return state.results ? (state.results[elementId] || null) : null;
+}
+
+function saveFeedback(subId, html, cssClass) {
+  const state = ExamState.load();
+  if (!state.results) state.results = {};
+  state.results[`fb_${subId}`] = { html, cssClass };
+  ExamState.save(state);
+}
+
+function restoreFeedback(subId) {
+  const state = ExamState.load();
+  if (!state.results) return;
+  const fb = state.results[`fb_${subId}`];
+  if (!fb) return;
+  const box = document.getElementById(`feedback-${subId}`);
+  if (!box) return;
+  box.className = `feedback-box show ${fb.cssClass}`;
+  box.innerHTML = fb.html;
+}
+
+function saveInlineFeedback(fbId, html, cssClass) {
+  const state = ExamState.load();
+  if (!state.results) state.results = {};
+  state.results[`ifb_${fbId}`] = { html, cssClass };
+  ExamState.save(state);
+}
+
+function restoreInlineFeedback(fbId) {
+  const state = ExamState.load();
+  if (!state.results) return;
+  const fb = state.results[`ifb_${fbId}`];
+  if (!fb) return;
+  const el = document.getElementById(`ifb-${fbId}`);
+  if (!el) return;
+  el.className = `inline-feedback show ${fb.cssClass}`;
+  el.innerHTML = fb.html;
+}
+
+/* ── Updated showFeedback — also persists ── */
+function showFeedback(subId, isCorrect, hintText = '') {
+  const box = document.getElementById(`feedback-${subId}`);
+  if (!box) return;
+  const cssClass = isCorrect ? 'correct' : 'incorrect';
+  let html;
+  if (isCorrect) {
+    html = `<span class="feedback-icon">✅</span><strong>Richtig!</strong>`;
+  } else {
+    html = `<span class="feedback-icon">❌</span><strong>Leider falsch.</strong>`
+      + (hintText ? `<div class="hint-text">💡 Hinweis: ${hintText}</div>` : '');
+  }
+  box.className = `feedback-box show ${cssClass}`;
+  box.innerHTML = html;
+  saveFeedback(subId, html, cssClass);
+}
+
+/* ── Input style helpers — also persist ── */
+
+function applyInputStyle(id, isCorrect) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('correct', 'incorrect');
+  const cls = isCorrect ? 'correct' : 'incorrect';
+  el.classList.add(cls);
+  saveResult(id, cls);
+}
+
+function clearInputStyle(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('correct', 'incorrect');
+}
+
+function restoreInputStyles() {
+  /* Re-apply saved correct/incorrect classes to all inputs */
+  const state = ExamState.load();
+  if (!state.results) return;
+  Object.keys(state.results).forEach(id => {
+    /* Skip feedback entries */
+    if (id.startsWith('fb_') || id.startsWith('ifb_')) return;
+    const result = state.results[id];
+    if (result !== 'correct' && result !== 'incorrect') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('correct','incorrect');
+    el.classList.add(result);
+  });
+}
+
+/* ── MC feedback rule (no green reveal on wrong) ── */
+
+function markMCResult(containerId, chosenVal, isCorrect) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.mc-option, .step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosenVal) {
+      o.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+  });
+  /* Persist MC result state */
+  saveResult(`mc_${containerId}_chosen`, chosenVal);
+  saveResult(`mc_${containerId}_result`, isCorrect ? 'correct' : 'incorrect');
+}
+
+function restoreMCResults(containerId) {
+  const chosenVal = loadResult(`mc_${containerId}_chosen`);
+  const result    = loadResult(`mc_${containerId}_result`);
+  if (!chosenVal || !result) return;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.mc-option, .step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosenVal) {
+      o.classList.add(result);
+    }
+  });
 }
 
 /* ── Score display ── */
+
 function updateScoreDisplay() {
-  const state = ExamState.load();
+  const state  = ExamState.load();
   const earned = ExamState.totalEarned(state);
   document.querySelectorAll('.score-display').forEach(d => {
     d.textContent = `Punkte: ${earned} / 60`;
@@ -189,9 +284,10 @@ function updateScoreDisplay() {
 }
 
 /* ── scored-notice ── */
+
 function updateNotice(subId) {
   const state = ExamState.load();
-  const el = document.getElementById(`notice-${subId}`);
+  const el    = document.getElementById(`notice-${subId}`);
   if (!el) return;
   const s = state.scores[subId];
   if (!s || s.attempts === 0) { el.textContent = ''; return; }
@@ -204,40 +300,11 @@ function updateNotice(subId) {
   }
 }
 
-
-/* ══════════════════════════════════════════
-   MC FEEDBACK RULE
-   Wrong answer: only the chosen option turns red.
-   The correct answer is NOT revealed (no green).
-   Correct answer: chosen option turns green.
-   From attempt 2 onwards: same visual rule,
-   but the scored-notice already shows 0 pts.
-   ══════════════════════════════════════════ */
-
-/*
-  markMCResult(container, chosenVal, correctVal, isCorrect)
-  - If correct: chosen option → green
-  - If wrong:   chosen option → red only
-                correct option stays neutral
-*/
-function markMCResult(container, chosenVal, correctVal, isCorrect) {
-  if (!container) return;
-  container.querySelectorAll('.mc-option, .step-mc-option').forEach(o => {
-    o.classList.remove('correct', 'incorrect');
-    /* Only colour the chosen option */
-    if (o.dataset.val === chosenVal) {
-      o.classList.add(isCorrect ? 'correct' : 'incorrect');
-    }
-  });
-}
-
 /* ── Input Persistence ── */
 
-/* ── saveInput: merge don't overwrite ── */
 function saveInput(inputId) {
   const el = document.getElementById(inputId);
   if (!el) return;
-  // Always load fresh, update only inputs key, save back
   const state = ExamState.load();
   if (!state.inputs) state.inputs = {};
   if (el.type === 'checkbox' || el.type === 'radio') {
@@ -247,8 +314,6 @@ function saveInput(inputId) {
   }
   ExamState.save(state);
 }
-
-
 
 function restoreInputs() {
   const state = ExamState.load();
@@ -274,7 +339,6 @@ function bindInputPersistence() {
 }
 
 function saveCustom(key, value) {
-  // Always load fresh, update one key, save back
   const state = ExamState.load();
   if (!state.inputs) state.inputs = {};
   state.inputs[key] = value;
@@ -288,9 +352,7 @@ function loadCustom(key) {
 
 /* ── Navigation ── */
 
-function navigateTo(url) {
-  window.location.href = url;
-}
+function navigateTo(url) { window.location.href = url; }
 
 function markTaskCompleted(taskId) {
   const state = ExamState.load();
@@ -314,9 +376,8 @@ function updateTaskCards() {
 
 document.addEventListener('DOMContentLoaded', () => {
   restoreInputs();
+  restoreInputStyles();
   bindInputPersistence();
   updateScoreDisplay();
-  if (document.querySelector('.task-grid')) {
-    updateTaskCards();
-  }
+  if (document.querySelector('.task-grid')) updateTaskCards();
 });
