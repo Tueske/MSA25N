@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Aufgabe 1 – Basisaufgaben</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    /* ── MC inline layout (horizontal for short options) ── */
+    .mc-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .mc-inline .mc-option {
+      flex: 0 0 auto;
+      min-width: 120px;
+    }
+
+    /* ── Circle diagram for 1c ── */
+    .circle-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0;
+    }
+
+    /* ── Rhombus diagram for 1e ── */
+    .diagram-inline {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .diagram-inline .exercise-text {
+      flex: 1; min-width: 200px;
+    }
+
+    /* ── Two-part row for f ── */
+    .two-part-vert {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 10px 0;
+    }
+
+    /* ── Scientific notation input ── */
+    .sci-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 18px;
+      margin: 8px 0;
+    }
+    .sci-input {
+      border: 2px solid #999;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 18px;
+      font-family: Arial, sans-serif;
+      width: 70px;
+      text-align: center;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    .sci-input.correct   { border-color: #27ae60; background: #f0fff4; }
+    .sci-input.incorrect { border-color: #c0392b; background: #fff5f5; }
+
+    /* ── Rectangle diagram for 1i ── */
+    .rect-diagram-wrap {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      margin: 12px 0;
+    }
+    .rect-diagram-wrap .mc-options {
+      flex: 1;
+      min-width: 200px;
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-bar">
+    <span class="header-title">MSA 2025 Mathematik – Nachschreibtermin</span>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 14%"></div>
+    </div>
+    <span class="progress-text">Aufgabe 1 von 7</span>
+  </div>
+
+  <div class="task-header">
+    <h1>Aufgabe 1 – Basisaufgaben</h1>
+    <span class="points-badge">10 Punkte</span>
+  </div>
+
+  <div class="task-content">
+
+    <!-- ════════════════════════════════════
+         1a  Rabatt in %  (1 P)
+         40 € Hose, 8 € Rabatt → 8/40 = 20 %
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">a)</div>
+      <p class="exercise-text">
+        Auf eine Hose, die <strong>40 €</strong> kostet, gibt es
+        <strong>8 € Rabatt</strong>.<br>
+        Gib den Rabatt in % an.
+      </p>
+      <div class="answer-unit-row">
+        <input class="unit-input" id="ans-1a" type="text"
+               inputmode="decimal" placeholder="" autocomplete="off">
+        <span class="unit-label">%</span>
+      </div>
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1a()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1a"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1a"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1b  Einheiten cm² → mm²  (1 P)
+         1,3 cm² = 130 mm²
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">b)</div>
+      <p class="exercise-text">
+        Gib <strong>1,3 cm²</strong> in mm² an.
+      </p>
+      <div class="answer-unit-row">
+        <input class="unit-input" id="ans-1b" type="text"
+               inputmode="decimal" placeholder="" autocomplete="off">
+        <span class="unit-label">mm²</span>
+      </div>
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1b()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1b"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1b"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1c  Drei Viertel des Kreises  (1 P)
+         MC: Which image shows 3/4 shaded?
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">c)</div>
+      <p class="exercise-text">
+        Kennzeichne in dem abgebildeten Kreis
+        <strong>drei Viertel</strong> der Fläche.<br>
+        Welches Bild zeigt drei Viertel korrekt?
+      </p>
+
+      <div class="mc-inline" id="mc-1c">
+        <!-- Option A: 1/4 shaded -->
+        <div class="mc-option" data-val="A" onclick="selectMC('1c', this)">
+          <div class="mc-checkbox" id="cb-1c-A"></div>
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="28" fill="white" stroke="#1a1a1a" stroke-width="2"/>
+            <path d="M30,30 L30,2 A28,28 0 0,1 58,30 Z" fill="#bbb"/>
+          </svg>
+        </div>
+        <!-- Option B: 1/2 shaded -->
+        <div class="mc-option" data-val="B" onclick="selectMC('1c', this)">
+          <div class="mc-checkbox" id="cb-1c-B"></div>
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="28" fill="white" stroke="#1a1a1a" stroke-width="2"/>
+            <path d="M30,30 L30,2 A28,28 0 0,1 30,58 Z" fill="#bbb"/>
+          </svg>
+        </div>
+        <!-- Option C: 3/4 shaded (CORRECT) -->
+        <div class="mc-option" data-val="C" onclick="selectMC('1c', this)">
+          <div class="mc-checkbox" id="cb-1c-C"></div>
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="28" fill="#bbb" stroke="#1a1a1a" stroke-width="2"/>
+            <path d="M30,30 L30,2 A28,28 0 0,0 2,30 Z" fill="white"/>
+          </svg>
+        </div>
+        <!-- Option D: full circle -->
+        <div class="mc-option" data-val="D" onclick="selectMC('1c', this)">
+          <div class="mc-checkbox" id="cb-1c-D"></div>
+          <svg width="60" height="60" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="28" fill="#bbb" stroke="#1a1a1a" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1c()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1c"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1c"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1d  Term ausmultiplizieren  (1 P)
+         4·(3x − 7) = 12x − 28
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">d)</div>
+      <p class="exercise-text">
+        Einer der folgenden Terme entspricht
+        <strong>4 · (3x − 7)</strong>.<br>
+        Kreuze an.
+      </p>
+
+      <div class="mc-options" id="mc-1d">
+        <div class="mc-option" data-val="A" onclick="selectMC('1d', this)">
+          <div class="mc-checkbox" id="cb-1d-A"></div>
+          <span>7x − 3</span>
+        </div>
+        <div class="mc-option" data-val="B" onclick="selectMC('1d', this)">
+          <div class="mc-checkbox" id="cb-1d-B"></div>
+          <span>12x − 28</span>
+        </div>
+        <div class="mc-option" data-val="C" onclick="selectMC('1d', this)">
+          <div class="mc-checkbox" id="cb-1d-C"></div>
+          <span>12x − 7</span>
+        </div>
+        <div class="mc-option" data-val="D" onclick="selectMC('1d', this)">
+          <div class="mc-checkbox" id="cb-1d-D"></div>
+          <span>16x</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1d()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1d"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1d"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1e  Winkel in der Raute  (1 P)
+         Opposite angles in a rhombus are equal.
+         Adjacent angles are supplementary: α + 100° = 180°
+         α = 80°
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">e)</div>
+
+      <div class="diagram-inline">
+        <div>
+          <p class="exercise-text">
+            Gib in der abgebildeten Raute die Größe
+            des Winkels α an.
+          </p>
+          <div class="answer-unit-row">
+            <span style="font-size:18px;">α =</span>
+            <input class="unit-input" id="ans-1e" type="text"
+                   inputmode="decimal" placeholder=""
+                   style="width:90px;" autocomplete="off">
+            <span class="unit-label">°</span>
+          </div>
+        </div>
+        <!-- Rhombus SVG -->
+        <svg width="140" height="150" viewBox="0 0 140 150"
+             aria-label="Raute mit Winkel 100° und α">
+          <!-- Rhombus shape -->
+          <polygon points="70,10 130,75 70,140 10,75"
+                   fill="#f0f0f0" stroke="#1a1a1a" stroke-width="2"/>
+          <!-- 100° angle arc (bottom) -->
+          <path d="M60,75 A15,15 0 0,1 80,75"
+                fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+          <text x="70" y="82" text-anchor="middle"
+                font-family="Arial" font-size="12">100°</text>
+          <!-- α angle arc (top) -->
+          <path d="M60,30 A18,18 0 0,1 80,30"
+                fill="none" stroke="#c0392b" stroke-width="1.5"/>
+          <text x="70" y="26" text-anchor="middle"
+                font-family="Arial" font-size="12"
+                fill="#c0392b" font-weight="bold">α</text>
+        </svg>
+      </div>
+      <p class="text-small">(Abbildung nicht maßstabsgerecht)</p>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1e()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1e"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1e"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1f  Würfel: Kante + Oberfläche  (2 P)
+         V = 27 cm³ → a = 3 cm
+         O = 6 · 3² = 54 cm²
+         1 P for correct edge, 1 P for surface area
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">f)</div>
+      <p class="exercise-text">
+        Ein Würfel hat ein Volumen von <strong>27 cm³</strong>.
+      </p>
+
+      <div class="two-part-vert">
+        <div>
+          <p class="exercise-text">
+            Kreuze die Länge einer Kante an.
+          </p>
+          <div class="mc-inline" id="mc-1f-edge">
+            <div class="mc-option" data-val="27" onclick="selectMC('1f-edge', this)">
+              <div class="mc-checkbox" id="cb-1f-edge-27"></div>
+              <span>27 cm</span>
+            </div>
+            <div class="mc-option" data-val="8" onclick="selectMC('1f-edge', this)">
+              <div class="mc-checkbox" id="cb-1f-edge-8"></div>
+              <span>8 cm</span>
+            </div>
+            <div class="mc-option" data-val="9" onclick="selectMC('1f-edge', this)">
+              <div class="mc-checkbox" id="cb-1f-edge-9"></div>
+              <span>9 cm</span>
+            </div>
+            <div class="mc-option" data-val="3" onclick="selectMC('1f-edge', this)">
+              <div class="mc-checkbox" id="cb-1f-edge-3"></div>
+              <span>3 cm</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="exercise-text">
+            Ermittle den Oberflächeninhalt des Würfels.
+          </p>
+          <div class="answer-unit-row">
+            <input class="unit-input" id="ans-1f-surface" type="text"
+                   inputmode="decimal" placeholder="" autocomplete="off">
+            <span class="unit-label">cm²</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1f()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1f"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1f"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1g  Trigonometrie MC  (1 P)
+         Right triangle with sides c (hypotenuse),
+         d (opposite to ε), e (adjacent to ε).
+         ε is at bottom-right.
+         tan ε = d/e? sin ε = c/d? etc.
+
+         Looking at the diagram:
+         - angle ε is at bottom-right
+         - side d is vertical (opposite ε)
+         - side e is horizontal (adjacent to ε)
+         - side c is hypotenuse
+
+         sin ε = opposite/hypotenuse = d/c
+         cos ε = adjacent/hypotenuse = e/c
+         tan ε = opposite/adjacent = d/e
+
+         Options given:
+         tan ε = c/d  → WRONG
+         sin ε = c/d  → WRONG (inverted)
+         tan ε = d/e  → CORRECT
+         cos ε = d/c  → WRONG (that would be sin)
+
+         Answer: tan ε = d/e
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">g)</div>
+
+      <div class="diagram-inline">
+        <div>
+          <p class="exercise-text">
+            Kreuze an, mit welcher Gleichung die Größe
+            des Winkels ε des abgebildeten Dreiecks
+            berechnet werden kann.
+          </p>
+        </div>
+        <!-- Right triangle SVG -->
+        <svg width="150" height="110" viewBox="0 0 150 110"
+             aria-label="Rechtwinkliges Dreieck mit Seiten c, d, e und Winkel ε">
+          <!-- Triangle -->
+          <polygon points="10,100 140,100 140,15"
+                   fill="#f0f0f0" stroke="#1a1a1a" stroke-width="2"/>
+          <!-- Right angle marker -->
+          <rect x="126" y="86" width="14" height="14"
+                fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+          <!-- Labels -->
+          <!-- e = bottom side (adjacent) -->
+          <text x="75" y="98" text-anchor="middle"
+                font-family="Arial" font-size="14"
+                font-weight="bold" font-style="italic">e</text>
+          <!-- d = right side (opposite) -->
+          <text x="146" y="60" text-anchor="start"
+                font-family="Arial" font-size="14"
+                font-weight="bold" font-style="italic">d</text>
+          <!-- c = hypotenuse -->
+          <text x="65" y="50" text-anchor="middle"
+                font-family="Arial" font-size="14"
+                font-weight="bold" font-style="italic"
+                transform="rotate(-33,65,50)">c</text>
+          <!-- ε angle arc at bottom-left -->
+          <path d="M30,100 A20,20 0 0,0 24,85"
+                fill="none" stroke="#c0392b" stroke-width="1.5"/>
+          <text x="36" y="90" font-family="Arial"
+                font-size="12" fill="#c0392b"
+                font-weight="bold" font-style="italic">ε</text>
+        </svg>
+      </div>
+
+      <div class="mc-options" id="mc-1g">
+        <div class="mc-option" data-val="A" onclick="selectMC('1g', this)">
+          <div class="mc-checkbox" id="cb-1g-A"></div>
+          <span>tan ε = c / d</span>
+        </div>
+        <div class="mc-option" data-val="B" onclick="selectMC('1g', this)">
+          <div class="mc-checkbox" id="cb-1g-B"></div>
+          <span>sin ε = c / d</span>
+        </div>
+        <div class="mc-option" data-val="C" onclick="selectMC('1g', this)">
+          <div class="mc-checkbox" id="cb-1g-C"></div>
+          <span>tan ε = d / e</span>
+        </div>
+        <div class="mc-option" data-val="D" onclick="selectMC('1g', this)">
+          <div class="mc-checkbox" id="cb-1g-D"></div>
+          <span>cos ε = d / c</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1g()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1g"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1g"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1h  Zehnerpotenzschreibweise  (1 P)
+         5 470 000 000 = 5,47 × 10⁹
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">h)</div>
+      <p class="exercise-text">
+        Gib die Zahl <strong>5 470 000 000</strong> in der
+        Zehnerpotenzschreibweise (wissenschaftlichen Schreibweise) an.
+      </p>
+
+      <div class="sci-row">
+        <input class="sci-input" id="ans-1h-base" type="text"
+               inputmode="decimal" placeholder="a"
+               autocomplete="off">
+        <span>×&nbsp;10</span>
+        <sup>
+          <input class="sci-input" id="ans-1h-exp" type="text"
+                 inputmode="numeric" placeholder="n"
+                 style="width:50px; font-size:16px;"
+                 autocomplete="off">
+        </sup>
+      </div>
+      <p class="input-hint">
+        Gib den Vorfaktor (z.&thinsp;B. 5,47) und den Exponenten
+        (z.&thinsp;B. 9) getrennt ein.
+      </p>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1h()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1h"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1h"></div>
+    </div>
+
+    <!-- ════════════════════════════════════
+         1i  Graue Fläche im Rechteck MC  (1 P)
+         Rectangle has width a, height b.
+         White rectangle cut out on the right has width c.
+         Grey area = total − white = a·b − c·b = b·(a−c)
+         Answer: A = b·(a − c)
+         ════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">i)</div>
+      <p class="exercise-text">
+        Die Abbildung zeigt ein Rechteck.<br>
+        Kreuze die Gleichung an, mit der man den Flächeninhalt
+        der <strong>grauen Fläche</strong> berechnen kann.
+      </p>
+
+      <div class="rect-diagram-wrap">
+        <!-- Rectangle SVG -->
+        <svg width="200" height="100" viewBox="0 0 200 100"
+             aria-label="Rechteck mit grauer und weißer Fläche">
+          <!-- full rectangle outline -->
+          <rect x="5" y="5" width="190" height="80"
+                fill="#ccc" stroke="#1a1a1a" stroke-width="2"/>
+          <!-- white cut-out on the right -->
+          <rect x="130" y="5" width="65" height="80"
+                fill="white" stroke="#1a1a1a" stroke-width="2"/>
+          <!-- label a (full width, top) -->
+          <line x1="5" y1="0" x2="195" y2="0"
+                stroke="#c0392b" stroke-width="1.5"
+                marker-start="url(#arrowL)"
+                marker-end="url(#arrowR)"/>
+          <text x="100" y="-2" text-anchor="middle"
+                font-family="Arial" font-size="13"
+                font-style="italic" fill="#c0392b">a</text>
+          <!-- label b (right side) -->
+          <text x="198" y="48" text-anchor="start"
+                font-family="Arial" font-size="13"
+                font-style="italic">b</text>
+          <!-- label c (bottom, cut-out width) -->
+          <line x1="130" y1="92" x2="195" y2="92"
+                stroke="#c0392b" stroke-width="1.5"/>
+          <text x="162" y="100" text-anchor="middle"
+                font-family="Arial" font-size="13"
+                font-style="italic" fill="#c0392b">c</text>
+
+          <!-- Arrow markers -->
+          <defs>
+            <marker id="arrowL" markerWidth="6" markerHeight="6"
+                    refX="6" refY="3" orient="auto">
+              <polygon points="6,0 6,6 0,3" fill="#c0392b"/>
+            </marker>
+            <marker id="arrowR" markerWidth="6" markerHeight="6"
+                    refX="0" refY="3" orient="auto">
+              <polygon points="0,0 0,6 6,3" fill="#c0392b"/>
+            </marker>
+          </defs>
+        </svg>
+
+        <div class="mc-options" id="mc-1i" style="flex:1; min-width:200px;">
+          <div class="mc-option" data-val="A" onclick="selectMC('1i', this)">
+            <div class="mc-checkbox" id="cb-1i-A"></div>
+            <span>A = a · b</span>
+          </div>
+          <div class="mc-option" data-val="B" onclick="selectMC('1i', this)">
+            <div class="mc-checkbox" id="cb-1i-B"></div>
+            <span>A = b · (a − c)</span>
+          </div>
+          <div class="mc-option" data-val="C" onclick="selectMC('1i', this)">
+            <div class="mc-checkbox" id="cb-1i-C"></div>
+            <span>A = b · c − a · b</span>
+          </div>
+          <div class="mc-option" data-val="D" onclick="selectMC('1i', this)">
+            <div class="mc-checkbox" id="cb-1i-D"></div>
+            <span>A = 2a + 2b</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <button class="submit-btn" onclick="check1i()">Antwort prüfen</button>
+        <span class="scored-notice" id="notice-1i"></span>
+      </div>
+      <div class="feedback-box" id="feedback-1i"></div>
+    </div>
+
+  </div><!-- /task-content -->
+
+  <div class="nav-footer">
+    <button class="nav-btn" onclick="navigateTo('index.html')">← Übersicht</button>
+    <span class="score-display">Punkte: 0 / 60</span>
+    <button class="nav-btn next" onclick="navigateTo('aufgabe2.html')">Weiter →</button>
+  </div>
+
+</div><!-- /page -->
+
+<script src="exam.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   Aufgabe 1 – Basisaufgaben (10 Punkte)
+   a) 20 %           (1 P)
+   b) 130 mm²        (1 P)
+   c) 3/4 circle     (1 P)  MC → C
+   d) 12x − 28       (1 P)  MC → B
+   e) α = 80°        (1 P)
+   f) edge=3, O=54   (2 P)
+   g) tan ε = d/e    (1 P)  MC → C
+   h) 5,47 × 10⁹    (1 P)
+   i) A = b·(a−c)    (1 P)  MC → B
+   ══════════════════════════════════════════ */
+
+let state = ExamState.load();
+function saveAndRefresh() { ExamState.save(state); updateScoreDisplay(); }
+
+/* ── Generic MC handler with persistence ── */
+const mcSelections = {};
+
+function selectMC(groupId, el) {
+  const container = el.closest('.mc-options, .mc-inline');
+  container.querySelectorAll('.mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.mc-checkbox');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.mc-checkbox');
+  if (cb) cb.textContent = '✓';
+  mcSelections[groupId] = el.dataset.val;
+  saveCustom(`mc-${groupId}`, el.dataset.val);
+}
+
+function restoreMC(groupId) {
+  const val = loadCustom(`mc-${groupId}`);
+  if (!val) return;
+  mcSelections[groupId] = val;
+  const container = document.getElementById(`mc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.mc-option').forEach(o => {
+    if (o.dataset.val === val) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.mc-checkbox');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+
+function checkMC(groupId, correctVal, subId, maxPoints, hintText) {
+  if (!mcSelections[groupId]) {
+    alert('Bitte wähle eine Antwort aus.');
+    return;
+  }
+  const ok = (mcSelections[groupId] === correctVal);
+  const container = document.getElementById(`mc-${groupId}`);
+  container.querySelectorAll('.mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === correctVal) o.classList.add('correct');
+    else if (o.dataset.val === mcSelections[groupId] && !ok)
+      o.classList.add('incorrect');
+  });
+  state = recordScore(subId, maxPoints, ok, state);
+  showFeedback(subId, ok, ok ? '' : hintText);
+  updateNotice(subId);
+  saveAndRefresh();
+}
+
+/* ── 1a ── */
+function check1a() {
+  const ok = numericCheck(document.getElementById('ans-1a').value, 20, 0.5);
+  clearInputStyle('ans-1a');
+  applyInputStyle('ans-1a', ok);
+  state = recordScore('1a', 1, ok, state);
+  showFeedback('1a', ok, ok ? '' :
+    'Prozentsatz = Rabatt ÷ Gesamtpreis × 100. Also: 8 ÷ 40 × 100 = ?');
+  updateNotice('1a'); saveAndRefresh();
+}
+
+/* ── 1b ── */
+function check1b() {
+  const ok = numericCheck(document.getElementById('ans-1b').value, 130, 0.5);
+  clearInputStyle('ans-1b');
+  applyInputStyle('ans-1b', ok);
+  state = recordScore('1b', 1, ok, state);
+  showFeedback('1b', ok, ok ? '' :
+    '1 cm² = 100 mm² (nicht 10!). Also: 1,3 × 100 = ?');
+  updateNotice('1b'); saveAndRefresh();
+}
+
+/* ── 1c ── */
+function check1c() {
+  checkMC('1c', 'C', '1c', 1,
+    'Drei Viertel = 3/4 = 75 % der Kreisfläche müssen grau sein. ' +
+    'Es darf nur 1/4 weiß bleiben.');
+}
+
+/* ── 1d ── */
+function check1d() {
+  checkMC('1d', 'B', '1d', 1,
+    'Multipliziere aus: 4 · 3x = 12x und 4 · (−7) = −28. ' +
+    'Also: 4 · (3x − 7) = 12x − 28.');
+}
+
+/* ── 1e ── */
+function check1e() {
+  const ok = numericCheck(document.getElementById('ans-1e').value, 80, 0.5);
+  clearInputStyle('ans-1e');
+  applyInputStyle('ans-1e', ok);
+  state = recordScore('1e', 1, ok, state);
+  showFeedback('1e', ok, ok ? '' :
+    'In einer Raute sind gegenüberliegende Winkel gleich groß. ' +
+    'Benachbarte Winkel ergänzen sich zu 180°: α + 100° = 180°.');
+  updateNotice('1e'); saveAndRefresh();
+}
+
+/* ── 1f ── */
+function check1f() {
+  const edgeOk   = (mcSelections['1f-edge'] === '3');
+  const surfVal  = parseNum(document.getElementById('ans-1f-surface').value);
+  const surfOk   = Math.abs(surfVal - 54) < 0.5;
+
+  // MC visual feedback
+  const container = document.getElementById('mc-1f-edge');
+  container.querySelectorAll('.mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === '3') o.classList.add('correct');
+    else if (o.dataset.val === mcSelections['1f-edge'] && !edgeOk)
+      o.classList.add('incorrect');
+  });
+
+  clearInputStyle('ans-1f-surface');
+  applyInputStyle('ans-1f-surface', surfOk);
+
+  const earned = (edgeOk ? 1 : 0) + (surfOk ? 1 : 0);
+  state = recordPartialScore('1f', earned, 2, state);
+
+  const fb = document.getElementById('feedback-1f');
+  fb.classList.add('show');
+  if (edgeOk && surfOk) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span><strong>Richtig!</strong> (2/2 Punkte)';
+  } else {
+    const hints = [];
+    if (!edgeOk) hints.push('V = a³ → a = ∛27 = 3 cm.');
+    if (!surfOk) hints.push('Oberfläche = 6 · a² = 6 · 9 = 54 cm².');
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = `<span class="feedback-icon">⚠️</span>
+      <strong>${earned}/2 Punkte.</strong>
+      <div class="hint-text">💡 ${hints.join(' ')}</div>`;
+  }
+  updateNotice('1f'); saveAndRefresh();
+}
+
+/* ── 1g ── */
+function check1g() {
+  checkMC('1g', 'C', '1g', 1,
+    'Im rechtwinkligen Dreieck: tan(ε) = Gegenkathete / Ankathete. ' +
+    'Die Gegenkathete von ε ist d, die Ankathete ist e. ' +
+    'Also: tan ε = d / e.');
+}
+
+/* ── 1h ── */
+function check1h() {
+  const baseVal = parseNum(document.getElementById('ans-1h-base').value);
+  const expVal  = parseNum(document.getElementById('ans-1h-exp').value);
+
+  // 5 470 000 000 = 5.47 × 10^9
+  // Accept any equivalent: base × 10^exp ≈ 5.47e9
+  const userResult = baseVal * Math.pow(10, expVal);
+  const ok = Math.abs(userResult - 5470000000) < 1000 &&
+             baseVal >= 1 && baseVal < 10;
+
+  clearInputStyle('ans-1h-base');
+  clearInputStyle('ans-1h-exp');
+  applyInputStyle('ans-1h-base', ok);
+  applyInputStyle('ans-1h-exp', ok);
+
+  state = recordScore('1h', 1, ok, state);
+  showFeedback('1h', ok, ok ? '' :
+    'Schiebe das Komma so, dass eine Zahl zwischen 1 und 10 entsteht. ' +
+    '5 470 000 000 → 5,47. Zähle, wie viele Stellen das Komma gewandert ist: 9. ' +
+    'Also: 5,47 × 10⁹.');
+  updateNotice('1h'); saveAndRefresh();
+}
+
+/* ── 1i ── */
+function check1i() {
+  checkMC('1i', 'B', '1i', 1,
+    'Die graue Fläche = gesamtes Rechteck minus weiße Fläche. ' +
+    'Gesamtes Rechteck: a · b. Weiße Fläche: c · b. ' +
+    'Grau = a·b − c·b = b·(a − c).');
+}
+
+/* ── Restore MC selections + notices on page load ── */
+(function init() {
+  ['1c','1d','1f-edge','1g','1i'].forEach(id => restoreMC(id));
+  ['1a','1b','1c','1d','1e','1f','1g','1h','1i'].forEach(id => updateNotice(id));
+  markTaskCompleted('task1');
+  updateScoreDisplay();
+})();
+</script>
+</body>
+</html>
