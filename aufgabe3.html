@@ -1292,6 +1292,40 @@ function check3c_stepB3() {
   updateScoreDisplay();
 }
 
+function check3a_final() {
+  const state = ExamState.load();
+  const earned = (state.scores['3a-s2']?.earned || 0);
+  const maxPoints = 1;
+  const isCorrect = earned === maxPoints;
+  const hint = isCorrect ? '' : 'Überprüfe deine Berechnung in Schritt 2.';
+  showFeedback('3a', isCorrect, hint, earned, maxPoints);
+  updateNotice('3a-final');
+}
+
+function check3b_final() {
+  const state = ExamState.load();
+  const earned = (state.scores['3b-s2']?.earned || 0) + (state.scores['3b-s3']?.earned || 0) +
+                 (state.scores['3b-s4']?.earned || 0);
+  const maxPoints = 3;
+  const isCorrect = earned === maxPoints;
+  const hint = isCorrect ? '' : 'Überprüfe deine Berechnungen in den Schritten 2, 3 und 4.';
+  showFeedback('3b', isCorrect, hint, earned, maxPoints);
+  updateNotice('3b-final');
+}
+
+function check3c_final() {
+  const state = ExamState.load();
+  const earned = (state.scores['3c-sA']?.earned || 0) + (state.scores['3c-sB']?.earned || 0) +
+                 (state.scores['3c-sC']?.earned || 0) + (state.scores['3c-sD']?.earned || 0) +
+                 (state.scores['3c-sE']?.earned || 0) + (state.scores['3c-sF']?.earned || 0) +
+                 (state.scores['3c-sG']?.earned || 0);
+  const maxPoints = 4;
+  const isCorrect = earned === maxPoints;
+  const hint = isCorrect ? '' : 'Überprüfe deine Berechnungen und Auswahlen in beiden Teilen.';
+  showFeedback('3c', isCorrect, hint, earned, maxPoints);
+  updateNotice('3c-final');
+}
+
 /* ── Restore on page load ── */
 (function init() {
   ['3a-2','3b-1','3b-3',

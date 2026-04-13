@@ -161,6 +161,7 @@ body {
 }
 .feedback-icon { font-size: 18px; margin-right: 6px; }
 .hint-text { margin-top: 6px; font-style: italic; color: #666; }
+.points-info { margin-top: 8px; font-weight: bold; color: #1a5276; }
 
 /* scored-notice */
 .scored-notice {

@@ -194,7 +194,7 @@ function restoreInlineFeedback(fbId) {
 }
 
 /* ── Updated showFeedback — also persists ── */
-function showFeedback(subId, isCorrect, hintText = '') {
+function showFeedback(subId, isCorrect, hintText = '', earnedPoints = null, maxPoints = null) {
   const box = document.getElementById(`feedback-${subId}`);
   if (!box) return;
   const cssClass = isCorrect ? 'correct' : 'incorrect';
@@ -204,6 +204,9 @@ function showFeedback(subId, isCorrect, hintText = '') {
   } else {
     html = `<span class="feedback-icon">❌</span><strong>Leider falsch.</strong>`
       + (hintText ? `<div class="hint-text">💡 Hinweis: ${hintText}</div>` : '');
+  }
+  if (earnedPoints !== null && maxPoints !== null) {
+    html += `<div class="points-info">Erhaltene Punkte: ${earnedPoints} / ${maxPoints}</div>`;
   }
   box.className = `feedback-box show ${cssClass}`;
   box.innerHTML = html;
