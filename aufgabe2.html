@@ -1203,6 +1203,14 @@ function check2a_final() {
 }
 
 function check2b_final() {
+  // Check step 6 percentage
+  const pctVal = parseNum(document.getElementById('ans-2b-pct').value);
+  const ok6 = !isNaN(pctVal) && Math.abs(pctVal - PCT) < 1;
+  clearInputStyle('ans-2b-pct');
+  applyInputStyle('ans-2b-pct', ok6);
+  recordPartialScore('2b-calc3', ok6 ? 0.5 : 0, 0.5);
+
+  // Load state and calculate earned
   const state = ExamState.load();
   const earned = (state.scores['2b-w1']?.earned || 0) + (state.scores['2b-calc1']?.earned || 0) +
                  (state.scores['2b-w2']?.earned || 0) + (state.scores['2b-calc2']?.earned || 0) +

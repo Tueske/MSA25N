@@ -1304,6 +1304,14 @@ function check3a_final() {
 }
 
 function check3b_final() {
+  // Check step 4 result
+  const resultVal = document.getElementById('ans-3b-result').value;
+  const ok4 = fractionCheck(resultVal, 36, 91);
+  clearInputStyle('ans-3b-result');
+  applyInputStyle('ans-3b-result', ok4);
+  recordPartialScore('3b-s4', ok4 ? 0.5 : 0, 0.5);
+
+  // Load state
   const state = ExamState.load();
   const earned = (state.scores['3b-s2']?.earned || 0) + (state.scores['3b-s3']?.earned || 0) +
                  (state.scores['3b-s4']?.earned || 0);
@@ -1316,6 +1324,14 @@ function check3b_final() {
 }
 
 function check3c_final() {
+  // Check step A4 P(A)
+  const paVal = document.getElementById('ans-3c-pA').value;
+  const okA4 = fractionCheck(paVal, 76, 91);
+  clearInputStyle('ans-3c-pA');
+  applyInputStyle('ans-3c-pA', okA4);
+  recordScore('3c-sD', 1, okA4);
+
+  // Load state
   const state = ExamState.load();
   const earned = (state.scores['3c-sA']?.earned || 0) + (state.scores['3c-sB']?.earned || 0) +
                  (state.scores['3c-sC']?.earned || 0) + (state.scores['3c-sD']?.earned || 0) +
