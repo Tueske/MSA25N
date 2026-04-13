@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Aufgabe 3 – Tulpenzwiebeln</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    /* ── Intro ── */
+    .tulip-intro {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .tulip-intro img {
+      width: 80px;
+      height: auto;
+      object-fit: contain;
+    }
+    .tulip-intro-text {
+      font-size: 16px;
+      line-height: 1.7;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* ── Step block with blur ── */
+    .step-block {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+    .step-block.locked {
+      filter: blur(5px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a5276;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    /* ── Step MC ── */
+    .step-mc {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .step-mc-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .step-mc-option.selected  { border-color: #2471a3; background: #eaf4fb; }
+    .step-mc-option.correct   { border-color: #27ae60; background: #f0fff4; }
+    .step-mc-option.incorrect { border-color: #c0392b; background: #fff5f5; }
+    .step-mc-cb {
+      width: 22px; height: 22px;
+      border: 2px solid #999; border-radius: 4px;
+      display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    /* ── Small check button ── */
+    .check-btn-sm {
+      background: #2471a3; color: white; border: none;
+      border-radius: 6px; padding: 9px 18px;
+      font-size: 14px; font-family: Arial, sans-serif;
+      font-weight: bold; cursor: pointer;
+      min-height: 40px; transition: background 0.2s;
+      -webkit-appearance: none; margin-top: 8px;
+    }
+    .check-btn-sm:active { background: #1a5276; }
+
+    /* ── Inline feedback ── */
+    .inline-feedback {
+      margin-top: 8px; padding: 8px 12px;
+      border-radius: 6px; font-size: 14px;
+      line-height: 1.5; display: none;
+    }
+    .inline-feedback.show  { display: block; }
+    .inline-feedback.correct {
+      background: #eafaf1; border: 1.5px solid #27ae60; color: #1e8449;
+    }
+    .inline-feedback.incorrect {
+      background: #fdedec; border: 1.5px solid #c0392b; color: #922b21;
+    }
+
+    /* ── Tree diagram SVG inputs ── */
+    .tree-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 14px 0;
+    }
+    .tree-input {
+      border: 2px solid #2471a3;
+      border-radius: 5px;
+      background: white;
+      font-size: 13px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2px 4px;
+      -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    .tree-input.correct   { border-color: #27ae60; background: #f0fff4; }
+    .tree-input.incorrect { border-color: #c0392b; background: #fff5f5; }
+
+    /* ── Colour chips ── */
+    .color-chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid;
+      margin: 0 2px;
+    }
+    .chip-rot  { background:#ffebee; border-color:#c0392b; color:#c0392b; }
+    .chip-gelb { background:#fffde7; border-color:#f9a825; color:#7d6608; }
+    .chip-weiss{ background:#f5f5f5; border-color:#888; color:#333; }
+    .chip-lila { background:#f3e5f5; border-color:#7b1fa2; color:#7b1fa2; }
+
+    /* ── Combination table for 3c ── */
+    .combo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      margin: 12px 0;
+    }
+    .combo-table th {
+      background: #1a5276;
+      color: white;
+      padding: 9px 10px;
+      text-align: center;
+    }
+    .combo-table td {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .combo-table tr:nth-child(even) td { background: #fafafa; }
+
+    /* ── Gap selects ── */
+    .gap-select {
+      border: 2px solid #2471a3;
+      border-radius: 6px;
+      padding: 8px 28px 8px 10px;
+      font-size: 15px;
+      font-family: Arial, sans-serif;
+      background: white;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 130px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%232471a3' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 0.2s;
+    }
+    .gap-select.correct   { border-color:#27ae60; background-color:#f0fff4; }
+    .gap-select.incorrect { border-color:#c0392b; background-color:#fff5f5; }
+
+    .two-part-vert {
+      display: flex; flex-direction: column;
+      gap: 14px; margin: 8px 0;
+    }
+    .part-block {
+      padding: 14px; border: 1px solid #e0e0e0;
+      border-radius: 8px; background: #fafafa;
+      margin-bottom: 12px;
+    }
+    .next-step-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-bar">
+    <span class="header-title">MSA 2025 Mathematik – Nachschreibtermin</span>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 42%"></div>
+    </div>
+    <span class="progress-text">Aufgabe 3 von 7</span>
+  </div>
+
+  <div class="task-header">
+    <h1>Aufgabe 3 – Tulpenzwiebeln</h1>
+    <span class="points-badge">9 Punkte</span>
+  </div>
+
+  <div class="task-content">
+
+    <!-- ── Intro ── -->
+    <div class="tulip-intro">
+      <img src="images/tulpe.png" alt="Tulpe und Tulpenzwiebel">
+      <div class="tulip-intro-text">
+        Frau Lehmann kauft eine Packung Tulpenzwiebeln.<br>
+        In der Packung sind Tulpenzwiebeln, die zu
+        <span class="color-chip chip-rot">5 rote</span> und
+        <span class="color-chip chip-gelb">9 gelbe</span>
+        Tulpen werden können.<br>
+        An der Tulpenzwiebel ist die Farbe der Tulpe
+        noch nicht erkennbar.
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         3a  Anteil begründen  (1 P)
+         5 rot von 5+9=14 gesamt → 5/14
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">a)</div>
+      <p class="exercise-text">
+        Begründe, dass der Anteil der Tulpenzwiebeln,
+        die zu roten Tulpen werden können,
+        <strong>5/14</strong> beträgt.
+      </p>
+
+      <!-- Step 1: How many bulbs total? -->
+      <div class="step-block" id="3a-step1">
+        <div class="step-title">
+          Schritt 1 – Wie viele Tulpenzwiebeln sind insgesamt in der Packung?
+        </div>
+        <div class="answer-unit-row">
+          <input class="unit-input" id="ans-3a-total"
+                 type="number" inputmode="numeric"
+                 placeholder="" autocomplete="off"
+                 style="width:100px;">
+          <span class="unit-label">Tulpenzwiebeln</span>
+        </div>
+        <button class="check-btn-sm" onclick="check3a_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-3a-1"></div>
+      </div>
+
+      <!-- Step 2: Which fraction? -->
+      <div class="step-block locked" id="3a-step2">
+        <div class="step-title">
+          Schritt 2 – Welcher Term beschreibt den Anteil der roten Zwiebeln?
+        </div>
+        <div class="step-mc" id="smc-3a-2">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('3a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Anzahl roter Zwiebeln ÷ Anzahl gelber Zwiebeln</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('3a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Anzahl roter Zwiebeln ÷ Gesamtanzahl Zwiebeln</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('3a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Gesamtanzahl Zwiebeln ÷ Anzahl roter Zwiebeln</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('3a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Anzahl gelber Zwiebeln ÷ Gesamtanzahl Zwiebeln</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check3a_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-3a-2"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check3a_final()">
+          Antwort prüfen
+        </button>
+        <span class="scored-notice" id="notice-3a"></span>
+      </div>
+      <div class="feedback-box" id="feedback-3a"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         3b  Baumdiagramm + P(beide gelb)  (3 P)
+         WITHOUT replacement, 14 bulbs total (5r, 9g)
+
+         First draw:
+           P(rot)  = 5/14
+           P(gelb) = 9/14
+
+         Second draw after rot (13 remain: 4r, 9g):
+           P(rot|rot)  = 4/13
+           P(gelb|rot) = 9/13
+
+         Second draw after gelb (13 remain: 5r, 8g):
+           P(rot|gelb)  = 5/13
+           P(gelb|gelb) = 8/13
+
+         P(beide gelb) = 9/14 · 8/13 = 72/182 = 36/91
+
+         Tree has empty boxes for:
+           - P(rot) first branch      = 5/14
+           - P(gelb) first branch     = 9/14
+           - P(rot|rot) second branch  = 4/13
+           - P(gelb|rot)              = 9/13
+           - P(rot|gelb)              = 5/13
+           - P(gelb|gelb)             = 8/13
+         We give P(rot)=5/14 and leave the rest empty.
+
+         Scoring (3 P):
+           1 P – tree correctly completed
+           1 P – correct calculation shown
+           1 P – correct final result 36/91
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">b)</div>
+      <p class="exercise-text">
+        Frau Lehmann zieht aus der Packung
+        <strong>nacheinander zwei Tulpenzwiebeln</strong>
+        (ohne Zurücklegen).<br>
+        Ergänze das Baumdiagramm und ermittle die Wahrscheinlichkeit
+        dafür, dass beide Tulpen
+        <span class="color-chip chip-gelb">gelb</span>
+        werden können.
+      </p>
+
+      <!-- Step 1: Type of experiment -->
+      <div class="step-block" id="3b-step1">
+        <div class="step-title">
+          Schritt 1 – Was gilt nach dem ersten Zug für den zweiten Zug?
+        </div>
+        <div class="step-mc" id="smc-3b-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('3b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Die Wahrscheinlichkeiten bleiben gleich,
+              da die Zwiebel zurückgelegt wird.</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('3b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Es sind nur noch 13 Zwiebeln übrig,
+              daher ändern sich die Wahrscheinlichkeiten.</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('3b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Es sind nur noch 13 Zwiebeln übrig,
+              aber die Wahrscheinlichkeiten bleiben gleich.</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('3b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Der zweite Zug ist vollständig unabhängig
+              vom ersten Zug.</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check3b_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-3b-1"></div>
+      </div>
+
+      <!-- Step 2: Complete the tree -->
+      <div class="step-block locked" id="3b-step2">
+        <div class="step-title">
+          Schritt 2 – Ergänze das Baumdiagramm
+        </div>
+        <p class="exercise-text" style="font-size:14px;">
+          Trage die fehlenden Wahrscheinlichkeiten als Bruch ein
+          (z.&thinsp;B. 5/14).
+          P(<span class="color-chip chip-rot" style="font-size:12px;">rot</span>)
+          beim ersten Zug ist bereits gegeben.
+        </p>
+
+        <!-- Tree diagram SVG with foreignObject inputs -->
+        <div class="tree-wrap">
+          <svg width="580" height="280" viewBox="0 0 580 280"
+               aria-label="Baumdiagramm Tulpenzwiebeln">
+
+            <!-- Root -->
+            <circle cx="40" cy="140" r="5" fill="#1a1a1a"/>
+
+            <!-- ── FIRST LEVEL ── -->
+            <!-- Branch to ROT -->
+            <line x1="40" y1="140" x2="180" y2="60"
+                  stroke="#1a1a1a" stroke-width="1.8"/>
+            <!-- Branch to GELB -->
+            <line x1="40" y1="140" x2="180" y2="220"
+                  stroke="#1a1a1a" stroke-width="1.8"/>
+
+            <!-- P(rot) = 5/14 (given) -->
+            <text x="95" y="88" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  fill="#c0392b" font-weight="bold">5/14</text>
+            <!-- P(gelb) = empty -->
+            <text x="88" y="200" text-anchor="middle"
+                  font-family="Arial" font-size="12" fill="#555">P(gelb)=</text>
+            <foreignObject x="148" y="185" width="58" height="26">
+              <input xmlns="http://www.w3.org/1999/xhtml"
+                     class="tree-input" id="tree-p-gelb1"
+                     type="text" maxlength="6"
+                     placeholder="?"
+                     autocomplete="off"
+                     style="width:54px;height:22px;">
+            </foreignObject>
+
+            <!-- First level nodes -->
+            <circle cx="180" cy="60"  r="4" fill="#1a1a1a"/>
+            <circle cx="180" cy="220" r="4" fill="#1a1a1a"/>
+
+            <!-- First level labels -->
+            <rect x="186" y="48" width="36" height="22"
+                  rx="4" fill="#ffebee" stroke="#c0392b" stroke-width="1.5"/>
+            <text x="204" y="63" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#c0392b">rot</text>
+            <rect x="186" y="208" width="40" height="22"
+                  rx="4" fill="#fffde7" stroke="#f9a825" stroke-width="1.5"/>
+            <text x="206" y="223" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#7d6608">gelb</text>
+
+            <!-- ── SECOND LEVEL – after ROT ── -->
+            <!-- rot→rot -->
+            <line x1="180" y1="60" x2="340" y2="20"
+                  stroke="#1a1a1a" stroke-width="1.5"/>
+            <!-- rot→gelb -->
+            <line x1="180" y1="60" x2="340" y2="100"
+                  stroke="#1a1a1a" stroke-width="1.5"/>
+
+            <!-- P(rot|rot) empty -->
+            <text x="244" y="30" text-anchor="middle"
+                  font-family="Arial" font-size="11" fill="#555">P(r|r)=</text>
+            <foreignObject x="278" y="14" width="58" height="26">
+              <input xmlns="http://www.w3.org/1999/xhtml"
+                     class="tree-input" id="tree-p-rr"
+                     type="text" maxlength="6"
+                     placeholder="?"
+                     autocomplete="off"
+                     style="width:54px;height:22px;">
+            </foreignObject>
+
+            <!-- P(gelb|rot) empty -->
+            <text x="244" y="84" text-anchor="middle"
+                  font-family="Arial" font-size="11" fill="#555">P(g|r)=</text>
+            <foreignObject x="278" y="68" width="58" height="26">
+              <input xmlns="http://www.w3.org/1999/xhtml"
+                     class="tree-input" id="tree-p-gr"
+                     type="text" maxlength="6"
+                     placeholder="?"
+                     autocomplete="off"
+                     style="width:54px;height:22px;">
+            </foreignObject>
+
+            <!-- Second level labels after rot -->
+            <rect x="346" y="8"  width="36" height="22"
+                  rx="4" fill="#ffebee" stroke="#c0392b" stroke-width="1.5"/>
+            <text x="364" y="23" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#c0392b">rot</text>
+            <rect x="346" y="88" width="40" height="22"
+                  rx="4" fill="#fffde7" stroke="#f9a825" stroke-width="1.5"/>
+            <text x="366" y="103" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#7d6608">gelb</text>
+
+            <!-- ── SECOND LEVEL – after GELB ── -->
+            <!-- gelb→rot -->
+            <line x1="180" y1="220" x2="340" y2="180"
+                  stroke="#1a1a1a" stroke-width="1.5"/>
+            <!-- gelb→gelb -->
+            <line x1="180" y1="220" x2="340" y2="260"
+                  stroke="#1a1a1a" stroke-width="1.5"/>
+
+            <!-- P(rot|gelb) empty -->
+            <text x="244" y="190" text-anchor="middle"
+                  font-family="Arial" font-size="11" fill="#555">P(r|g)=</text>
+            <foreignObject x="278" y="174" width="58" height="26">
+              <input xmlns="http://www.w3.org/1999/xhtml"
+                     class="tree-input" id="tree-p-rg"
+                     type="text" maxlength="6"
+                     placeholder="?"
+                     autocomplete="off"
+                     style="width:54px;height:22px;">
+            </foreignObject>
+
+            <!-- P(gelb|gelb) empty -->
+            <text x="244" y="252" text-anchor="middle"
+                  font-family="Arial" font-size="11" fill="#555">P(g|g)=</text>
+            <foreignObject x="278" y="236" width="58" height="26">
+              <input xmlns="http://www.w3.org/1999/xhtml"
+                     class="tree-input" id="tree-p-gg"
+                     type="text" maxlength="6"
+                     placeholder="?"
+                     autocomplete="off"
+                     style="width:54px;height:22px;">
+            </foreignObject>
+
+            <!-- Second level labels after gelb -->
+            <rect x="346" y="168" width="36" height="22"
+                  rx="4" fill="#ffebee" stroke="#c0392b" stroke-width="1.5"/>
+            <text x="364" y="183" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#c0392b">rot</text>
+            <rect x="346" y="248" width="40" height="22"
+                  rx="4" fill="#fffde7" stroke="#f9a825" stroke-width="1.5"/>
+            <text x="366" y="263" text-anchor="middle"
+                  font-family="Arial" font-size="13"
+                  font-weight="bold" fill="#7d6608">gelb</text>
+
+          </svg>
+        </div>
+        <p class="input-hint">
+          Gib Brüche in der Form Zähler/Nenner ein, z.&thinsp;B. 5/14.
+        </p>
+        <button class="check-btn-sm" onclick="check3b_step2()">
+          Baumdiagramm prüfen
+        </button>
+        <div class="inline-feedback" id="ifb-3b-2"></div>
+      </div>
+
+      <!-- Step 3: Which rule to use? -->
+      <div class="step-block locked" id="3b-step3">
+        <div class="step-title">
+          Schritt 3 – Welche Regel verwendest du für P(beide gelb)?
+        </div>
+        <div class="step-mc" id="smc-3b-3">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('3b-3',this)">
+            <div class="step-mc-cb"></div>
+            <span>Summenregel: Wahrscheinlichkeiten
+              entlang des Pfades addieren</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('3b-3',this)">
+            <div class="step-mc-cb"></div>
+            <span>Produktregel: Wahrscheinlichkeiten
+              entlang des Pfades multiplizieren</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('3b-3',this)">
+            <div class="step-mc-cb"></div>
+            <span>Den größten Wert entlang des Pfades nehmen</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('3b-3',this)">
+            <div class="step-mc-cb"></div>
+            <span>Beide Wahrscheinlichkeiten subtrahieren</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check3b_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-3b-3"></div>
+      </div>
+
+      <!-- Step 4: Final result -->
+      <div class="step-block locked" id="3b-step4">
+        <div class="step-title">
+          Schritt 4 – Berechne P(beide gelb)
+        </div>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">P(beide gelb) =</span>
+          <input class="unit-input" id="ans-3b-result"
+                 type="text" placeholder="Zähler/Nenner"
+                 style="width:140px;" autocomplete="off">
+        </div>
+        <p class="input-hint">
+          Gib das Ergebnis als Bruch ein.
+        </p>
+      </div>
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check3b_final()">
+          Antwort prüfen
+        </button>
+        <span class="scored-notice" id="notice-3b"></span>
+      </div>
+      <div class="feedback-box" id="feedback-3b"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         3c*  Herrn Lehmanns Packung  (5 P)
+         8 weiß, 6 lila, total 14 WITHOUT replacement
+
+         Ereignis A: mindestens eine weiße
+         All combinations (ordered pairs, 2 draws):
+           ww, wl, lw, ll  (where w=weiß, l=lila)
+         A = {ww, wl, lw}  (mindestens eine weiße)
+
+         P(A):
+         Method via complement:
+           P(A) = 1 − P(ll)
+           P(ll) = 6/14 · 5/13 = 30/182 = 15/91
+           P(A)  = 1 − 15/91 = 76/91
+
+         OR direct:
+           P(ww) = 8/14 · 7/13 = 56/182
+           P(wl) = 8/14 · 6/13 = 48/182
+           P(lw) = 6/14 · 8/13 = 48/182
+           P(A)  = (56+48+48)/182 = 152/182 = 76/91
+
+         Term for B:
+           8/14 · 7/13 + 6/14 · 5/13
+           = 56/182 + 30/182 = 86/182 = 43/91
+         This is P(both same colour):
+           P(ww) + P(ll) = 56/182 + 30/182 = 86/182 = 43/91
+         → Answer: "zwei gleichfarbige Tulpen"
+
+         Scoring (5 P):
+           1 P – all combinations for A listed
+           1 P – correct P(A) method (complement or direct)
+           1 P – correct P(A) = 76/91
+           1 P – correct MC for event B
+           1 P – correct reasoning for B
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">c) <span class="star-label">(*)</span></div>
+
+      <!-- Context switch -->
+      <div style="background:#f0f4ff; border:1px solid #b0bfff;
+                  border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <p class="exercise-text" style="margin:0;">
+          Herr Lehmann kauft eine andere Packung Tulpenzwiebeln.<br>
+          In der Packung sind Zwiebeln für
+          <span class="color-chip chip-weiss">8 weiße</span> und
+          <span class="color-chip chip-lila">6 lila</span>
+          Tulpen. Er zieht nacheinander zwei Zwiebeln
+          (ohne Zurücklegen).
+        </p>
+      </div>
+
+      <!-- Part 1: Event A combinations -->
+      <div class="part-block">
+        <p class="exercise-text">
+          <strong>Teil 1:</strong>
+          Ereignis A: <em>„Mindestens eine Zwiebel kann zu einer
+          <span class="color-chip chip-weiss">weißen</span> Tulpe werden."</em>
+        </p>
+
+        <!-- Step A1: What does "mindestens eine" mean? -->
+        <div class="step-block" id="3c-stepA1">
+          <div class="step-title">
+            Schritt A – Was bedeutet „mindestens eine weiße"?
+          </div>
+          <div class="step-mc" id="smc-3c-A1">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('3c-A1',this)">
+              <div class="step-mc-cb"></div>
+              <span>Genau eine der beiden Zwiebeln ist weiß.</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('3c-A1',this)">
+              <div class="step-mc-cb"></div>
+              <span>Beide Zwiebeln sind weiß.</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('3c-A1',this)">
+              <div class="step-mc-cb"></div>
+              <span>Eine oder beide Zwiebeln sind weiß –
+                also nicht der Fall, dass beide lila sind.</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('3c-A1',this)">
+              <div class="step-mc-cb"></div>
+              <span>Keine der Zwiebeln ist lila.</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepA1()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-A1"></div>
+        </div>
+
+        <!-- Step A2: Combinations for A -->
+        <div class="step-block locked" id="3c-stepA2">
+          <div class="step-title">
+            Schritt B – Wie viele günstige Kombinationen gibt es für Ereignis A?
+          </div>
+          <p class="exercise-text" style="font-size:14px;">
+            Verwende W = weiß und L = lila.
+            Wie viele der vier möglichen Paare (WW, WL, LW, LL)
+            gehören zu Ereignis A?
+          </p>
+          <div class="step-mc" id="smc-3c-A2">
+            <div class="step-mc-option" data-val="1"
+                 onclick="selectStepMC('3c-A2',this)">
+              <div class="step-mc-cb"></div>
+              <span>1 Kombination: nur WW</span>
+            </div>
+            <div class="step-mc-option" data-val="2"
+                 onclick="selectStepMC('3c-A2',this)">
+              <div class="step-mc-cb"></div>
+              <span>2 Kombinationen: WW und WL</span>
+            </div>
+            <div class="step-mc-option" data-val="3"
+                 onclick="selectStepMC('3c-A2',this)">
+              <div class="step-mc-cb"></div>
+              <span>3 Kombinationen: WW, WL und LW</span>
+            </div>
+            <div class="step-mc-option" data-val="4"
+                 onclick="selectStepMC('3c-A2',this)">
+              <div class="step-mc-cb"></div>
+              <span>4 Kombinationen: WW, WL, LW und LL</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepA2()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-A2"></div>
+        </div>
+
+        <!-- Step A3: Strategy for P(A) -->
+        <div class="step-block locked" id="3c-stepA3">
+          <div class="step-title">
+            Schritt C – Welche Strategie ist am einfachsten für P(A)?
+          </div>
+          <div class="step-mc" id="smc-3c-A3">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('3c-A3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Alle drei günstigen Pfade direkt berechnen
+                und addieren</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('3c-A3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Gegenereignis: P(A) = 1 − P(beide lila)</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('3c-A3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Nur den wahrscheinlichsten Pfad berechnen</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('3c-A3',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(A) = Anzahl günstiger Kombinationen ÷ 4</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepA3()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-A3"></div>
+        </div>
+
+        <!-- Step A4: Calculate P(A) -->
+        <div class="step-block locked" id="3c-stepA4">
+          <div class="step-title">
+            Schritt D – Berechne P(A)
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">P(A) =</span>
+            <input class="unit-input" id="ans-3c-pA"
+                   type="text" placeholder="Zähler/Nenner"
+                   style="width:140px;" autocomplete="off">
+          </div>
+          <p class="input-hint">
+            Gib das Ergebnis als gekürzten Bruch ein.
+          </p>
+        </div>
+      </div><!-- /part 1 -->
+
+      <!-- Part 2: Event B -->
+      <div class="part-block">
+        <p class="exercise-text">
+          <strong>Teil 2:</strong>
+          Herr Lehmann berechnet die Wahrscheinlichkeit
+          eines Ereignisses B mit dem folgenden Term:
+        </p>
+        <div class="formula-box" style="font-size:17px; text-align:center;">
+          <span class="frac"><span class="num">8</span>
+          <span class="den">14</span></span>
+          &nbsp;·&nbsp;
+          <span class="frac"><span class="num">7</span>
+          <span class="den">13</span></span>
+          &nbsp;+&nbsp;
+          <span class="frac"><span class="num">6</span>
+          <span class="den">14</span></span>
+          &nbsp;·&nbsp;
+          <span class="frac"><span class="num">5</span>
+          <span class="den">13</span></span>
+        </div>
+
+        <!-- Step B1: Analyse the first product -->
+        <div class="step-block" id="3c-stepB1">
+          <div class="step-title">
+            Schritt E – Was beschreibt der erste Term 8/14 · 7/13?
+          </div>
+          <div class="step-mc" id="smc-3c-B1">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('3c-B1',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel weiß UND zweite Zwiebel lila)</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('3c-B1',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel weiß UND zweite Zwiebel weiß)</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('3c-B1',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel lila UND zweite Zwiebel lila)</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('3c-B1',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel lila UND zweite Zwiebel weiß)</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepB1()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-B1"></div>
+        </div>
+
+        <!-- Step B2: Analyse the second product -->
+        <div class="step-block locked" id="3c-stepB2">
+          <div class="step-title">
+            Schritt F – Was beschreibt der zweite Term 6/14 · 5/13?
+          </div>
+          <div class="step-mc" id="smc-3c-B2">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('3c-B2',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel weiß UND zweite Zwiebel weiß)</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('3c-B2',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel weiß UND zweite Zwiebel lila)</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('3c-B2',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel lila UND zweite Zwiebel lila)</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('3c-B2',this)">
+              <div class="step-mc-cb"></div>
+              <span>P(erste Zwiebel lila UND zweite Zwiebel weiß)</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepB2()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-B2"></div>
+        </div>
+
+        <!-- Step B3: Which event is B? -->
+        <div class="step-block locked" id="3c-stepB3">
+          <div class="step-title">
+            Schritt G – Für welches Ereignis B gilt der Term?
+          </div>
+          <div class="step-mc" id="smc-3c-B3">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('3c-B3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Herr Lehmann zieht genau eine Zwiebel,
+                die zu einer weißen Tulpe werden kann.</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('3c-B3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Herr Lehmann zieht genau eine Zwiebel,
+                die zu einer lila Tulpe werden kann.</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('3c-B3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Herr Lehmann zieht zwei Zwiebeln,
+                die zu gleichfarbigen Tulpen werden können.</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('3c-B3',this)">
+              <div class="step-mc-cb"></div>
+              <span>Herr Lehmann zieht zwei Zwiebeln,
+                die zu verschiedenfarbigen Tulpen werden können.</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check3c_stepB3()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-3c-B3"></div>
+        </div>
+      </div><!-- /part 2 -->
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check3c_final()">
+          Antwort prüfen
+        </button>
+        <span class="scored-notice" id="notice-3c"></span>
+      </div>
+      <div class="feedback-box" id="feedback-3c"></div>
+    </div>
+
+  </div><!-- /task-content -->
+
+  <div class="nav-footer">
+    <button class="nav-btn"
+            onclick="navigateTo('aufgabe2.html')">← Zurück</button>
+    <span class="score-display">Punkte: 0 / 60</span>
+    <button class="nav-btn next"
+            onclick="navigateTo('aufgabe4.html')">Weiter →</button>
+  </div>
+
+</div><!-- /page -->
+
+<script src="exam.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   Aufgabe 3 – Tulpenzwiebeln  (9 Punkte)
+
+   3a: Anteil 5/14 begründen              (1 P)
+   3b: Baumdiagramm + P(beide gelb)       (3 P)
+   3c*: Ereignis A + Ereignis B           (5 P)
+   ══════════════════════════════════════════ */
+
+let state = ExamState.load();
+function saveAndRefresh() { ExamState.save(state); updateScoreDisplay(); }
+
+/* ── Step MC ── */
+const stepMCSel = {};
+
+function selectStepMC(groupId, el) {
+  const container = el.closest('.step-mc');
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.step-mc-cb');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.step-mc-cb');
+  if (cb) cb.textContent = '✓';
+  stepMCSel[groupId] = el.dataset.val;
+  saveCustom(`stepmcs-${groupId}`, el.dataset.val);
+}
+
+function restoreStepMC(groupId) {
+  const val = loadCustom(`stepmcs-${groupId}`);
+  if (!val) return;
+  stepMCSel[groupId] = val;
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    if (o.dataset.val === val) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.step-mc-cb');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+
+/* ── Unlock ── */
+function unlockStep(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
+}
+function restoreUnlocked(id) {
+  if (loadCustom(`unlocked-${id}`)) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('locked');
+  }
+}
+
+/* ── Inline feedback ── */
+function showInlineFB(id, ok, hint) {
+  const el = document.getElementById(`ifb-${id}`);
+  if (!el) return;
+  el.classList.add('show');
+  if (ok) {
+    el.className = 'inline-feedback show correct';
+    el.innerHTML = '✅ Richtig!';
+  } else {
+    el.className = 'inline-feedback show incorrect';
+    el.innerHTML = '❌ Noch nicht richtig.'
+      + (hint ? `<br><span style="font-style:italic;font-size:13px;">
+         ${hint}</span>` : '');
+  }
+}
+
+/*
+  markStepMC: wrong → only chosen turns red, correct stays neutral
+              right  → chosen turns green
+*/
+function markStepMC(groupId, correctVal) {
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  const chosen = stepMCSel[groupId];
+  const ok = (chosen === correctVal);
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosen) {
+      o.classList.add(ok ? 'correct' : 'incorrect');
+    }
+  });
+}
+
+/* ── Fraction check helper ── */
+function fracOk(str, num, den) {
+  return fractionCheck(str, num, den);
+}
+
+/* ══════════════════════════════════════════
+   3a
+   ══════════════════════════════════════════ */
+
+function check3a_step1() {
+  const val = parseNum(document.getElementById('ans-3a-total').value);
+  const ok  = Math.abs(val - 14) < 0.5;
+  clearInputStyle('ans-3a-total');
+  applyInputStyle('ans-3a-total', ok);
+  state = recordStepScore('3a-step1', 0, ok, state);
+  showInlineFB('3a-1', ok,
+    ok ? '' :
+    'Zähle alle Zwiebeln in der Packung: rote und gelbe zusammen.');
+  if (ok) unlockStep('3a-step2');
+  saveAndRefresh();
+}
+
+function check3a_step2() {
+  if (!stepMCSel['3a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3a-2'] === 'B';
+  markStepMC('3a-2','B');
+  state = recordStepScore('3a-step2', 0, ok, state);
+  showInlineFB('3a-2', ok,
+    ok ? '' :
+    'Ein Anteil wird berechnet, indem man den betrachteten Teil ' +
+    'durch die Gesamtmenge teilt.');
+  saveAndRefresh();
+}
+
+function check3a_final() {
+  const totalOk = Math.abs(
+    parseNum(document.getElementById('ans-3a-total').value) - 14) < 0.5;
+  const mcOk    = stepMCSel['3a-2'] === 'B';
+  const ok      = totalOk && mcOk;
+  state = recordScore('3a', 1, ok, state);
+  const fb = document.getElementById('feedback-3a');
+  fb.classList.add('show');
+  if (ok) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Richtig!</strong> (1/1 Punkt)';
+  } else {
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
+      '<strong>Leider falsch.</strong>' +
+      '<div class="hint-text">💡 Bearbeite zuerst beide ' +
+      'Schritte oben vollständig.</div>';
+  }
+  updateNotice('3a'); saveAndRefresh();
+}
+
+/* ══════════════════════════════════════════
+   3b
+   ══════════════════════════════════════════ */
+
+function check3b_step1() {
+  if (!stepMCSel['3b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3b-1'] === 'B';
+  markStepMC('3b-1','B');
+  state = recordStepScore('3b-step1', 0, ok, state);
+  showInlineFB('3b-1', ok,
+    ok ? '' :
+    'Die Aufgabe sagt „ohne Zurücklegen". Was bedeutet das ' +
+    'für die Anzahl der verbleibenden Zwiebeln beim zweiten Zug?');
+  if (ok) unlockStep('3b-step2');
+  saveAndRefresh();
+}
+
+function check3b_step2() {
+  /* Check all 5 empty tree inputs */
+  const inputs = {
+    'tree-p-gelb1': { num: 9,  den: 14 }, /* P(gelb) first draw  */
+    'tree-p-rr':    { num: 4,  den: 13 }, /* P(r|r)              */
+    'tree-p-gr':    { num: 9,  den: 13 }, /* P(g|r)              */
+    'tree-p-rg':    { num: 5,  den: 13 }, /* P(r|g)              */
+    'tree-p-gg':    { num: 8,  den: 13 }, /* P(g|g)              */
+  };
+
+  let allOk = true;
+  Object.keys(inputs).forEach(id => {
+    const el  = document.getElementById(id);
+    const cfg = inputs[id];
+    const ok  = el && fracOk(el.value, cfg.num, cfg.den);
+    if (el) {
+      el.classList.remove('correct','incorrect');
+      el.classList.add(ok ? 'correct' : 'incorrect');
+    }
+    if (!ok) allOk = false;
+  });
+
+  state = recordStepScore('3b-step2', 0, allOk, state);
+  showInlineFB('3b-2', allOk,
+    allOk ? '' :
+    'Bedenke: Nach dem ersten Zug sind noch 13 Zwiebeln übrig. ' +
+    'Die Anzahl der jeweiligen Farbe hängt davon ab, ' +
+    'welche Farbe zuerst gezogen wurde.');
+  if (allOk) unlockStep('3b-step3');
+  saveAndRefresh();
+}
+
+function check3b_step3() {
+  if (!stepMCSel['3b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3b-3'] === 'B';
+  markStepMC('3b-3','B');
+  state = recordStepScore('3b-step3', 0, ok, state);
+  showInlineFB('3b-3', ok,
+    ok ? '' :
+    'Um die Wahrscheinlichkeit eines vollständigen Pfades zu berechnen, ' +
+    'werden die Wahrscheinlichkeiten entlang dieses Pfades verknüpft.');
+  if (ok) unlockStep('3b-step4');
+  saveAndRefresh();
+}
+
+function check3b_final() {
+  const raw = document.getElementById('ans-3b-result').value;
+  /* P(beide gelb) = 9/14 · 8/13 = 72/182 = 36/91 */
+  const ok = fracOk(raw, 36, 91) || fracOk(raw, 72, 182);
+  clearInputStyle('ans-3b-result');
+  applyInputStyle('ans-3b-result', ok);
+  state = recordScore('3b', 3, ok, state);
+  const fb = document.getElementById('feedback-3b');
+  fb.classList.add('show');
+  if (ok) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Richtig!</strong> (3/3 Punkte)';
+  } else {
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
+      '<strong>Leider falsch.</strong>' +
+      '<div class="hint-text">💡 Suche im Baumdiagramm den Pfad, ' +
+      'der zu „beide gelb" führt, und wende die richtige Regel an.</div>';
+  }
+  updateNotice('3b'); saveAndRefresh();
+}
+
+/* ══════════════════════════════════════════
+   3c
+   ══════════════════════════════════════════ */
+
+function check3c_stepA1() {
+  if (!stepMCSel['3c-A1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3c-A1'] === 'C';
+  markStepMC('3c-A1','C');
+  state = recordStepScore('3c-stepA1', 0, ok, state);
+  showInlineFB('3c-A1', ok,
+    ok ? '' :
+    'Das Wort „mindestens" schließt mehrere Fälle ein. ' +
+    'Überlege, was der einzige Fall wäre, der NICHT zu A gehört.');
+  if (ok) unlockStep('3c-stepA2');
+  saveAndRefresh();
+}
+
+function check3c_stepA2() {
+  if (!stepMCSel['3c-A2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3c-A2'] === '3';
+  markStepMC('3c-A2','3');
+  state = recordStepScore('3c-stepA2', 0, ok, state);
+  showInlineFB('3c-A2', ok,
+    ok ? '' :
+    'Überlege: Welches der vier Paare gehört NICHT zu Ereignis A ' +
+    'und warum?');
+  if (ok) unlockStep('3c-stepA3');
+  saveAndRefresh();
+}
+
+function check3c_stepA3() {
+  if (!stepMCSel['3c-A3']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  /* Both A and B are accepted as valid strategies */
+  const ok = stepMCSel['3c-A3'] === 'A' ||
+             stepMCSel['3c-A3'] === 'B';
+  markStepMC('3c-A3', stepMCSel['3c-A3']);
+  state = recordStepScore('3c-stepA3', 0, ok, state);
+  showInlineFB('3c-A3', ok,
+    ok ? '' :
+    'Es gibt zwei gültige Wege: direkt alle günstigen Pfade berechnen ' +
+    'oder das Gegenereignis nutzen. ' +
+    'Welcher der Ansätze klingt für dich nach weniger Aufwand?');
+  if (ok) unlockStep('3c-stepA4');
+  saveAndRefresh();
+}
+
+function check3c_stepB1() {
+  if (!stepMCSel['3c-B1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3c-B1'] === 'B';
+  markStepMC('3c-B1','B');
+  state = recordStepScore('3c-stepB1', 0, ok, state);
+  showInlineFB('3c-B1', ok,
+    ok ? '' :
+    'Schau dir den ersten Bruch an: 8 ist die Anzahl der weißen Zwiebeln ' +
+    'bei 14 insgesamt. Was sagt der zweite Bruch 7/13 aus?');
+  if (ok) unlockStep('3c-stepB2');
+  saveAndRefresh();
+}
+
+function check3c_stepB2() {
+  if (!stepMCSel['3c-B2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3c-B2'] === 'C';
+  markStepMC('3c-B2','C');
+  state = recordStepScore('3c-stepB2', 0, ok, state);
+  showInlineFB('3c-B2', ok,
+    ok ? '' :
+    'Schau dir den ersten Bruch des zweiten Terms an: 6 ist die Anzahl ' +
+    'der lila Zwiebeln. Was sagt 5/13 über die zweite gezogene Zwiebel aus?');
+  if (ok) unlockStep('3c-stepB3');
+  saveAndRefresh();
+}
+
+function check3c_stepB3() {
+  if (!stepMCSel['3c-B3']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['3c-B3'] === 'C';
+  markStepMC('3c-B3','C');
+  state = recordStepScore('3c-stepB3', 0, ok, state);
+  showInlineFB('3c-B3', ok,
+    ok ? '' :
+    'Der Term addiert zwei Produkte: das erste für weiß+weiß, ' +
+    'das zweite für lila+lila. ' +
+    'Was haben diese beiden Fälle gemeinsam?');
+  saveAndRefresh();
+}
+
+function check3c_final() {
+  /* P(A) = 76/91 */
+  const pAraw = document.getElementById('ans-3c-pA').value;
+  const pAok  = fracOk(pAraw, 76, 91) ||
+                fracOk(pAraw, 152, 182);
+
+  clearInputStyle('ans-3c-pA');
+  applyInputStyle('ans-3c-pA', pAok);
+
+  /* Scoring (5 P):
+     1 P – stepA1 (mindestens understood)
+     1 P – stepA2 (3 combinations correct)
+     1 P – P(A) correct
+     1 P – stepB1+B2 (both products analysed correctly)
+     1 P – stepB3 (event B correctly identified)
+  */
+  let earned = 0;
+  if (stepMCSel['3c-A1'] === 'C')  earned += 1;
+  if (stepMCSel['3c-A2'] === '3')  earned += 1;
+  if (pAok)                         earned += 1;
+  if (stepMCSel['3c-B1'] === 'B' &&
+      stepMCSel['3c-B2'] === 'C')   earned += 1;
+  if (stepMCSel['3c-B3'] === 'C')   earned += 1;
+
+  state = recordPartialScore('3c', earned, 5, state);
+
+  const fb = document.getElementById('feedback-3c');
+  fb.classList.add('show');
+  if (earned === 5) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Vollständig richtig!</strong> (5/5 Punkte)';
+  } else {
+    const hints = [];
+    if (stepMCSel['3c-A1'] !== 'C')
+      hints.push('Überlege nochmals, was „mindestens eine" bedeutet.');
+    if (stepMCSel['3c-A2'] !== '3')
+      hints.push('Überprüfe, welche Paare zu Ereignis A gehören.');
+    if (!pAok)
+      hints.push('Berechne P(A) vollständig – ' +
+        'bearbeite alle Schritte in Teil 1.');
+    if (stepMCSel['3c-B1'] !== 'B' || stepMCSel['3c-B2'] !== 'C')
+      hints.push('Analysiere jeden der beiden Terme in Teil 2 einzeln.');
+    if (stepMCSel['3c-B3'] !== 'C')
+      hints.push('Überlege, was die Summe der beiden Terme insgesamt beschreibt.');
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = `<span class="feedback-icon">⚠️</span>
+      <strong>${earned}/5 Punkte.</strong>
+      <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
+  }
+
+  markTaskCompleted('task3');
+  updateNotice('3c'); saveAndRefresh();
+}
+
+/* ── Restore on page load ── */
+(function init() {
+  const mcGroups = [
+    '3a-2','3b-1','3b-3',
+    '3c-A1','3c-A2','3c-A3',
+    '3c-B1','3c-B2','3c-B3'
+  ];
+  mcGroups.forEach(id => restoreStepMC(id));
+
+  const lockIds = [
+    '3a-step2',
+    '3b-step2','3b-step3','3b-step4',
+    '3c-stepA2','3c-stepA3','3c-stepA4',
+    '3c-stepB2','3c-stepB3'
+  ];
+  lockIds.forEach(id => restoreUnlocked(id));
+
+  ['3a','3b','3c'].forEach(id => updateNotice(id));
+  updateScoreDisplay();
+})();
+</script>
+</body>
+</html>
