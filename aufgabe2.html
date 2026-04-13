@@ -28,39 +28,89 @@
       min-width: 200px;
     }
 
-    /* ── Box dimensions display ── */
-    .box-dims {
-      display: inline-flex;
-      gap: 4px;
-      font-weight: bold;
-      background: #f0f4ff;
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid #b0bfff;
-      font-size: 15px;
-      margin: 4px 0;
-    }
-
-    /* ── Two-part vertical layout ── */
-    .two-part-vert {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin: 10px 0;
-    }
-
-    /* ── Proof work area ── */
-    .proof-area {
+    /* ── Step block ── */
+    .step-block {
       background: #fafafa;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 14px;
-      margin: 10px 0;
+      padding: 14px 16px;
+      margin: 12px 0;
     }
-    .proof-area p {
+    .step-block.locked {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a5276;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 8px;
     }
 
+    /* ── MC step options ── */
+    .step-mc {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .step-mc-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .step-mc-option.selected  { border-color: #2471a3; background: #eaf4fb; }
+    .step-mc-option.correct   { border-color: #27ae60; background: #f0fff4; }
+    .step-mc-option.incorrect { border-color: #c0392b; background: #fff5f5; }
+    .step-mc-cb {
+      width: 22px; height: 22px;
+      border: 2px solid #999; border-radius: 4px;
+      display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    /* ── Inline check button (smaller) ── */
+    .check-btn-sm {
+      background: #2471a3; color: white; border: none;
+      border-radius: 6px; padding: 9px 18px;
+      font-size: 14px; font-family: Arial, sans-serif;
+      font-weight: bold; cursor: pointer;
+      min-height: 40px; transition: background 0.2s;
+      -webkit-appearance: none; margin-top: 8px;
+    }
+    .check-btn-sm:active { background: #1a5276; }
+
+    /* small feedback inline */
+    .inline-feedback {
+      margin-top: 8px; padding: 8px 12px;
+      border-radius: 6px; font-size: 14px;
+      line-height: 1.5; display: none;
+    }
+    .inline-feedback.show { display: block; }
+    .inline-feedback.correct  {
+      background: #eafaf1; border: 1.5px solid #27ae60; color: #1e8449;
+    }
+    .inline-feedback.incorrect {
+      background: #fdedec; border: 1.5px solid #c0392b; color: #922b21;
+    }
+
+    /* answer-unit-row already in style.css */
+    .two-part-vert {
+      display: flex; flex-direction: column; gap: 14px; margin: 8px 0;
+    }
+
+    /* scored-notice already in style.css */
   </style>
 </head>
 <body>
@@ -86,8 +136,7 @@
 
     <!-- ── Intro ── -->
     <div class="candle-intro">
-      <img src="images/kugelkerze.png"
-           alt="Kugelkerze mit Docht">
+      <img src="images/kugelkerze.png" alt="Kugelkerze mit Docht">
       <div class="candle-intro-text">
         Eine Firma stellt Kerzen in Kugelform her.<br>
         Ein Modell dieser Kerzen hat einen Radius von
@@ -96,13 +145,13 @@
     </div>
 
 
-    <!-- ════════════════════════════════════
+    <!-- ══════════════════════════════════════════
          2a  Volumen nachweisen  (2 P)
-         V = 4/3 · π · r³ = 4/3 · π · 125
-           = 500π/3 ≈ 523,6 cm³
-         1 P for correct formula + substitution
-         1 P for correct result ≈ 523,6
-         ════════════════════════════════════ -->
+
+         Step 1 (MC): Which formula is correct?
+         Step 2 (MC): Which substitution is correct?
+         Step 3 (input): Final result ≈ ?
+         ══════════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">a)</div>
       <p class="exercise-text">
@@ -110,13 +159,71 @@
         von ungefähr <strong>523,6 cm³</strong> hat.
       </p>
 
-      <div class="formula-box">
-        Volumen einer Kugel:&nbsp;
-        <strong>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · r³</strong>
+      <!-- Step 1: Correct formula -->
+      <div class="step-block" id="2a-step1">
+        <div class="step-title">Schritt 1 – Welche Formel verwendest du?</div>
+        <div class="step-mc" id="smc-2a-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('2a-1', this)">
+            <div class="step-mc-cb" id="scb-2a-1-A"></div>
+            <span>V = π · r²</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('2a-1', this)">
+            <div class="step-mc-cb" id="scb-2a-1-B"></div>
+            <span>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · r³</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('2a-1', this)">
+            <div class="step-mc-cb" id="scb-2a-1-C"></div>
+            <span>V = 4 · π · r²</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('2a-1', this)">
+            <div class="step-mc-cb" id="scb-2a-1-D"></div>
+            <span>V = π · r³</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check2a_step1()">
+          Prüfen
+        </button>
+        <div class="inline-feedback" id="ifb-2a-1"></div>
       </div>
 
-      <div class="proof-area">
-        <p class="exercise-text">Dein Ergebnis:</p>
+      <!-- Step 2: Correct substitution (unlocked after step 1) -->
+      <div class="step-block locked" id="2a-step2">
+        <div class="step-title">Schritt 2 – Welchen Term erhältst du nach dem Einsetzen?</div>
+        <div class="step-mc" id="smc-2a-2">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('2a-2', this)">
+            <div class="step-mc-cb" id="scb-2a-2-A"></div>
+            <span>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · 5</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('2a-2', this)">
+            <div class="step-mc-cb" id="scb-2a-2-B"></div>
+            <span>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · 25</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('2a-2', this)">
+            <div class="step-mc-cb" id="scb-2a-2-C"></div>
+            <span>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · 125</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('2a-2', this)">
+            <div class="step-mc-cb" id="scb-2a-2-D"></div>
+            <span>V = <span class="frac"><span class="num">4</span><span class="den">3</span></span> · π · 15</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check2a_step2()">
+          Prüfen
+        </button>
+        <div class="inline-feedback" id="ifb-2a-2"></div>
+      </div>
+
+      <!-- Step 3: Final result (unlocked after step 2) -->
+      <div class="step-block locked" id="2a-step3">
+        <div class="step-title">Schritt 3 – Berechne das Ergebnis</div>
         <div class="answer-unit-row">
           <span style="font-size:16px;">V ≈</span>
           <input class="unit-input" id="ans-2a" type="text"
@@ -126,162 +233,423 @@
         </div>
       </div>
 
-      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
-        <button class="submit-btn" onclick="check2a()">Antwort prüfen</button>
+      <div style="display:flex; align-items:center; flex-wrap:wrap;
+                  gap:8px; margin-top:16px;">
+        <button class="submit-btn" onclick="check2a_final()">
+          Antwort prüfen
+        </button>
         <span class="scored-notice" id="notice-2a"></span>
       </div>
       <div class="feedback-box" id="feedback-2a"></div>
     </div>
 
 
-    <!-- ════════════════════════════════════
+    <!-- ══════════════════════════════════════════
          2b  Prozent Verpackung  (3 P)
-         Box: 20,5 × 10,5 × 10,5 cm
-         V_box = 20,5 · 10,5 · 10,5 = 2260,125 cm³
-         V_2_candles = 2 · 523,6 = 1047,2 cm³
-         Percent = 1047,2 / 2260,125 · 100 ≈ 46,3 %
 
-         Scoring:
-           1 P – correct box volume
-           1 P – correct 2-candle volume
-           1 P – correct percentage
-         We check only the final percentage but
-         give partial for intermediate values.
-         ════════════════════════════════════ -->
+         Step 1 (MC): Which formula for box volume?
+         Step 2 (input): Box volume
+         Step 3 (MC): How to find candle volume?
+         Step 4 (input): Two-candle volume
+         Step 5 (MC): Which formula for percentage?
+         Step 6 (input): Final percentage
+         ══════════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">b)</div>
       <p class="exercise-text">
-        Jeweils <strong>zwei Kerzen</strong> sollen in einer
-        quaderförmigen Schachtel mit den Maßen
-        <span class="box-dims">20,5 cm × 10,5 cm × 10,5 cm</span>
-        verpackt werden.
-      </p>
-      <p class="exercise-text">
-        Berechne, zu wie viel Prozent die Verpackung durch
-        die beiden Kerzen ausgefüllt ist.
+        Jeweils <strong>zwei Kerzen</strong> sollen in einer quaderförmigen
+        Schachtel mit den Maßen
+        <strong>20,5 cm × 10,5 cm × 10,5 cm</strong>
+        verpackt werden.<br>
+        Berechne, zu wie viel Prozent die Verpackung durch die beiden
+        Kerzen ausgefüllt ist.
       </p>
 
-      <div class="two-part-vert">
-        <div class="proof-area">
-          <p class="exercise-text">Volumen der Schachtel:</p>
-          <div class="answer-unit-row">
-            <input class="unit-input" id="ans-2b-box" type="text"
-                   inputmode="decimal" placeholder=""
-                   autocomplete="off" style="width:180px;">
-            <span class="unit-label">cm³</span>
+      <!-- Step 1: Which formula for box? -->
+      <div class="step-block" id="2b-step1">
+        <div class="step-title">Schritt 1 – Wie berechnest du das Volumen der Schachtel?</div>
+        <div class="step-mc" id="smc-2b-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('2b-1', this)">
+            <div class="step-mc-cb" id="scb-2b-1-A"></div>
+            <span>V = a + b + c</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('2b-1', this)">
+            <div class="step-mc-cb" id="scb-2b-1-B"></div>
+            <span>V = 2 · (ab + bc + ac)</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('2b-1', this)">
+            <div class="step-mc-cb" id="scb-2b-1-C"></div>
+            <span>V = a · b · c</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('2b-1', this)">
+            <div class="step-mc-cb" id="scb-2b-1-D"></div>
+            <span>V = a² · b</span>
           </div>
         </div>
+        <button class="check-btn-sm" onclick="check2b_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-2b-1"></div>
+      </div>
 
-        <div class="proof-area">
-          <p class="exercise-text">Volumen beider Kerzen zusammen:</p>
-          <div class="answer-unit-row">
-            <input class="unit-input" id="ans-2b-candles" type="text"
-                   inputmode="decimal" placeholder=""
-                   autocomplete="off" style="width:180px;">
-            <span class="unit-label">cm³</span>
+      <!-- Step 2: Box volume (unlocked after step 1) -->
+      <div class="step-block locked" id="2b-step2">
+        <div class="step-title">Schritt 2 – Berechne das Volumen der Schachtel</div>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">V<sub>Schachtel</sub> =</span>
+          <input class="unit-input" id="ans-2b-box" type="text"
+                 inputmode="decimal" placeholder=""
+                 autocomplete="off" style="width:170px;">
+          <span class="unit-label">cm³</span>
+        </div>
+        <button class="check-btn-sm" onclick="check2b_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-2b-2"></div>
+      </div>
+
+      <!-- Step 3: How to get candle volume? (unlocked after step 2) -->
+      <div class="step-block locked" id="2b-step3">
+        <div class="step-title">Schritt 3 – Wie erhältst du das Volumen der zwei Kerzen?</div>
+        <div class="step-mc" id="smc-2b-3">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('2b-3', this)">
+            <div class="step-mc-cb" id="scb-2b-3-A"></div>
+            <span>Das Volumen einer Kerze plus das Volumen der Schachtel</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('2b-3', this)">
+            <div class="step-mc-cb" id="scb-2b-3-B"></div>
+            <span>Das Volumen einer Kerze dividiert durch 2</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('2b-3', this)">
+            <div class="step-mc-cb" id="scb-2b-3-C"></div>
+            <span>Das Volumen einer Kerze multipliziert mit 2</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('2b-3', this)">
+            <div class="step-mc-cb" id="scb-2b-3-D"></div>
+            <span>Das Volumen der Schachtel dividiert durch 2</span>
           </div>
         </div>
+        <button class="check-btn-sm" onclick="check2b_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-2b-3"></div>
+      </div>
 
-        <div class="proof-area">
-          <p class="exercise-text">Prozentsatz:</p>
-          <div class="answer-unit-row">
-            <input class="unit-input" id="ans-2b-pct" type="text"
-                   inputmode="decimal" placeholder=""
-                   autocomplete="off">
-            <span class="unit-label">%</span>
+      <!-- Step 4: Two-candle volume (unlocked after step 3) -->
+      <div class="step-block locked" id="2b-step4">
+        <div class="step-title">Schritt 4 – Berechne das Gesamtvolumen der zwei Kerzen</div>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">V<sub>2 Kerzen</sub> =</span>
+          <input class="unit-input" id="ans-2b-candles" type="text"
+                 inputmode="decimal" placeholder=""
+                 autocomplete="off" style="width:170px;">
+          <span class="unit-label">cm³</span>
+        </div>
+        <button class="check-btn-sm" onclick="check2b_step4()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-2b-4"></div>
+      </div>
+
+      <!-- Step 5: Which formula for percent? (unlocked after step 4) -->
+      <div class="step-block locked" id="2b-step5">
+        <div class="step-title">Schritt 5 – Welchen Term verwendest du für den Prozentsatz?</div>
+        <div class="step-mc" id="smc-2b-5">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('2b-5', this)">
+            <div class="step-mc-cb" id="scb-2b-5-A"></div>
+            <span>p = V<sub>Kerzen</sub> + V<sub>Schachtel</sub></span>
           </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('2b-5', this)">
+            <div class="step-mc-cb" id="scb-2b-5-B"></div>
+            <span>p = (V<sub>Kerzen</sub> ÷ V<sub>Schachtel</sub>) · 100</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('2b-5', this)">
+            <div class="step-mc-cb" id="scb-2b-5-C"></div>
+            <span>p = (V<sub>Schachtel</sub> ÷ V<sub>Kerzen</sub>) · 100</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('2b-5', this)">
+            <div class="step-mc-cb" id="scb-2b-5-D"></div>
+            <span>p = V<sub>Kerzen</sub> − V<sub>Schachtel</sub></span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check2b_step5()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-2b-5"></div>
+      </div>
+
+      <!-- Step 6: Final percentage (unlocked after step 5) -->
+      <div class="step-block locked" id="2b-step6">
+        <div class="step-title">Schritt 6 – Berechne den Prozentsatz</div>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">p ≈</span>
+          <input class="unit-input" id="ans-2b-pct" type="text"
+                 inputmode="decimal" placeholder=""
+                 autocomplete="off">
+          <span class="unit-label">%</span>
         </div>
       </div>
 
-      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
-        <button class="submit-btn" onclick="check2b()">Antwort prüfen</button>
+      <div style="display:flex; align-items:center; flex-wrap:wrap;
+                  gap:8px; margin-top:16px;">
+        <button class="submit-btn" onclick="check2b_final()">
+          Antwort prüfen
+        </button>
         <span class="scored-notice" id="notice-2b"></span>
       </div>
       <div class="feedback-box" id="feedback-2b"></div>
     </div>
 
 
-    <!-- ════════════════════════════════════
+    <!-- ══════════════════════════════════════════
          2c*  Verdopplung des Radius  (4 P)
-         Part 1: Zahlenbeispiel (2 P)
-           Pick r=1: V₁ = 4/3·π·1 ≈ 4,19
-           r=2:      V₂ = 4/3·π·8 ≈ 33,51
-           V₂/V₁ = 8 ✓
 
-         Part 2: Allgemeiner Beweis (2 P)
-           V(r) = 4/3·π·r³
-           V(2r) = 4/3·π·(2r)³ = 4/3·π·8r³ = 8 · V(r) ✓
+         Part 1 – Zahlenbeispiel (2 P):
+           Step 1 MC: which power applies when doubling r?
+           Step 2 MC: what factor results from (2r)³?
+           Step 3 input: V(r) for chosen r
+           Step 4 input: V(2r) for doubled r
+           Step 5 MC: what is the ratio?
 
-         Input: one radius for example, two volumes,
-         then the ratio.
-         For the general proof we accept a reasoning text.
-         ════════════════════════════════════ -->
+         Part 2 – Allgemeiner Beweis (2 P):
+           Step 1 MC: what is (2r)³?
+           Step 2 MC: what can be factored out?
+           Step 3 textarea: write the full proof
+         ══════════════════════════════════════════ -->
     <div class="sub-exercise">
       <div class="sub-label">c) <span class="star-label">(*)</span></div>
       <p class="exercise-text">
         Ein Mitarbeiter behauptet, dass für alle Kugelkerzen
         folgende Aussage gilt:
       </p>
-      <div class="formula-box" style="font-style:italic;">
+      <div class="formula-box" style="font-style:italic; margin-bottom:16px;">
         „Verdoppelt man den Radius r einer Kugelkerze,
         wird die <strong>8-fache</strong> Menge an
         Kerzenwachs benötigt."
       </div>
 
-      <!-- Part 1: Numerical example -->
+      <!-- ── Part 1: Zahlenbeispiel ── -->
       <div class="part-block">
         <p class="exercise-text">
           <strong>Teil 1:</strong> Zeige anhand eines selbst
           gewählten Zahlenbeispiels, dass diese Aussage wahr ist.
         </p>
 
-        <div class="two-part-vert">
-          <div class="answer-unit-row">
-            <span style="font-size:15px;">Gewählter Radius r =</span>
-            <input class="unit-input" id="ans-2c-r" type="text"
-                   inputmode="decimal" placeholder=""
-                   style="width:80px;" autocomplete="off">
-            <span class="unit-label">cm</span>
+        <!-- Step A: Which exponent does r have in the formula? -->
+        <div class="step-block" id="2c-stepA">
+          <div class="step-title">Schritt A – Welchen Exponenten hat r in der Kugelformel?</div>
+          <div class="step-mc" id="smc-2c-A">
+            <div class="step-mc-option" data-val="1"
+                 onclick="selectStepMC('2c-A', this)">
+              <div class="step-mc-cb" id="scb-2c-A-1"></div>
+              <span>r hat den Exponenten 1</span>
+            </div>
+            <div class="step-mc-option" data-val="2"
+                 onclick="selectStepMC('2c-A', this)">
+              <div class="step-mc-cb" id="scb-2c-A-2"></div>
+              <span>r hat den Exponenten 2</span>
+            </div>
+            <div class="step-mc-option" data-val="3"
+                 onclick="selectStepMC('2c-A', this)">
+              <div class="step-mc-cb" id="scb-2c-A-3"></div>
+              <span>r hat den Exponenten 3</span>
+            </div>
+            <div class="step-mc-option" data-val="4"
+                 onclick="selectStepMC('2c-A', this)">
+              <div class="step-mc-cb" id="scb-2c-A-4"></div>
+              <span>r hat den Exponenten 4</span>
+            </div>
           </div>
-          <div class="answer-unit-row">
-            <span style="font-size:15px;">V(r) ≈</span>
-            <input class="unit-input" id="ans-2c-v1" type="text"
-                   inputmode="decimal" placeholder=""
-                   style="width:160px;" autocomplete="off">
-            <span class="unit-label">cm³</span>
-          </div>
-          <div class="answer-unit-row">
-            <span style="font-size:15px;">V(2r) ≈</span>
-            <input class="unit-input" id="ans-2c-v2" type="text"
-                   inputmode="decimal" placeholder=""
-                   style="width:160px;" autocomplete="off">
-            <span class="unit-label">cm³</span>
-          </div>
-          <div class="answer-unit-row">
-            <span style="font-size:15px;">V(2r) ÷ V(r) =</span>
-            <input class="unit-input" id="ans-2c-ratio" type="text"
-                   inputmode="decimal" placeholder=""
-                   style="width:80px;" autocomplete="off">
-          </div>
+          <button class="check-btn-sm" onclick="check2c_stepA()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-A"></div>
         </div>
-      </div>
 
-      <!-- Part 2: General proof -->
+        <!-- Step B: What factor when r → 2r? (unlocked after A) -->
+        <div class="step-block locked" id="2c-stepB">
+          <div class="step-title">Schritt B – Welchen Faktor liefert (2r)³ im Vergleich zu r³?</div>
+          <div class="step-mc" id="smc-2c-B">
+            <div class="step-mc-option" data-val="2"
+                 onclick="selectStepMC('2c-B', this)">
+              <div class="step-mc-cb" id="scb-2c-B-2"></div>
+              <span>den Faktor 2</span>
+            </div>
+            <div class="step-mc-option" data-val="4"
+                 onclick="selectStepMC('2c-B', this)">
+              <div class="step-mc-cb" id="scb-2c-B-4"></div>
+              <span>den Faktor 4</span>
+            </div>
+            <div class="step-mc-option" data-val="6"
+                 onclick="selectStepMC('2c-B', this)">
+              <div class="step-mc-cb" id="scb-2c-B-6"></div>
+              <span>den Faktor 6</span>
+            </div>
+            <div class="step-mc-option" data-val="8"
+                 onclick="selectStepMC('2c-B', this)">
+              <div class="step-mc-cb" id="scb-2c-B-8"></div>
+              <span>den Faktor 8</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check2c_stepB()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-B"></div>
+        </div>
+
+        <!-- Step C: Numerical calculation (unlocked after B) -->
+        <div class="step-block locked" id="2c-stepC">
+          <div class="step-title">Schritt C – Wähle einen Radius und berechne beide Volumina</div>
+          <div class="two-part-vert">
+            <div class="answer-unit-row">
+              <span style="font-size:15px;">Gewähltes r =</span>
+              <input class="unit-input" id="ans-2c-r" type="text"
+                     inputmode="decimal" placeholder=""
+                     style="width:80px;" autocomplete="off">
+              <span class="unit-label">cm</span>
+            </div>
+            <div class="answer-unit-row">
+              <span style="font-size:15px;">V(r) ≈</span>
+              <input class="unit-input" id="ans-2c-v1" type="text"
+                     inputmode="decimal" placeholder=""
+                     style="width:160px;" autocomplete="off">
+              <span class="unit-label">cm³</span>
+            </div>
+            <div class="answer-unit-row">
+              <span style="font-size:15px;">V(2r) ≈</span>
+              <input class="unit-input" id="ans-2c-v2" type="text"
+                     inputmode="decimal" placeholder=""
+                     style="width:160px;" autocomplete="off">
+              <span class="unit-label">cm³</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check2c_stepC()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-C"></div>
+        </div>
+
+        <!-- Step D: What is the ratio? (unlocked after C) -->
+        <div class="step-block locked" id="2c-stepD">
+          <div class="step-title">Schritt D – Welches Verhältnis ergibt sich?</div>
+          <div class="step-mc" id="smc-2c-D">
+            <div class="step-mc-option" data-val="2"
+                 onclick="selectStepMC('2c-D', this)">
+              <div class="step-mc-cb" id="scb-2c-D-2"></div>
+              <span>V(2r) ist doppelt so groß wie V(r)</span>
+            </div>
+            <div class="step-mc-option" data-val="4"
+                 onclick="selectStepMC('2c-D', this)">
+              <div class="step-mc-cb" id="scb-2c-D-4"></div>
+              <span>V(2r) ist viermal so groß wie V(r)</span>
+            </div>
+            <div class="step-mc-option" data-val="8"
+                 onclick="selectStepMC('2c-D', this)">
+              <div class="step-mc-cb" id="scb-2c-D-8"></div>
+              <span>V(2r) ist achtmal so groß wie V(r)</span>
+            </div>
+            <div class="step-mc-option" data-val="16"
+                 onclick="selectStepMC('2c-D', this)">
+              <div class="step-mc-cb" id="scb-2c-D-16"></div>
+              <span>V(2r) ist sechzehnmal so groß wie V(r)</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check2c_stepD()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-D"></div>
+        </div>
+      </div><!-- /part 1 -->
+
+      <!-- ── Part 2: Allgemeiner Beweis ── -->
       <div class="part-block">
         <p class="exercise-text">
           <strong>Teil 2:</strong> Zeige, dass die Aussage für
           jeden beliebigen Radius r gilt.
         </p>
-        <textarea class="reasoning-input" id="ans-2c-proof"
-                  placeholder="Zeige hier den allgemeinen Beweis …"
-                  rows="5"></textarea>
-        <p class="input-hint">
-          Berechne V(2r) und zeige, dass es gleich 8 · V(r) ist.
-        </p>
-      </div>
 
-      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
-        <button class="submit-btn" onclick="check2c()">Antwort prüfen</button>
+        <!-- Step E: What is (2r)³? -->
+        <div class="step-block" id="2c-stepE">
+          <div class="step-title">Schritt E – Was ist (2r)³ gleichwertig?</div>
+          <div class="step-mc" id="smc-2c-E">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('2c-E', this)">
+              <div class="step-mc-cb" id="scb-2c-E-A"></div>
+              <span>2r³</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('2c-E', this)">
+              <div class="step-mc-cb" id="scb-2c-E-B"></div>
+              <span>6r³</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('2c-E', this)">
+              <div class="step-mc-cb" id="scb-2c-E-C"></div>
+              <span>8r³</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('2c-E', this)">
+              <div class="step-mc-cb" id="scb-2c-E-D"></div>
+              <span>2³r</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check2c_stepE()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-E"></div>
+        </div>
+
+        <!-- Step F: Factor out V(r) (unlocked after E) -->
+        <div class="step-block locked" id="2c-stepF">
+          <div class="step-title">Schritt F – Welcher Ausdruck folgt daraus für V(2r)?</div>
+          <div class="step-mc" id="smc-2c-F">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('2c-F', this)">
+              <div class="step-mc-cb" id="scb-2c-F-A"></div>
+              <span>V(2r) =
+                <span class="frac"><span class="num">4</span><span class="den">3</span></span>
+                · π · 2r³
+              </span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('2c-F', this)">
+              <div class="step-mc-cb" id="scb-2c-F-B"></div>
+              <span>V(2r) = 8 ·
+                <span class="frac"><span class="num">4</span><span class="den">3</span></span>
+                · π · r³
+              </span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('2c-F', this)">
+              <div class="step-mc-cb" id="scb-2c-F-C"></div>
+              <span>V(2r) = 2 ·
+                <span class="frac"><span class="num">4</span><span class="den">3</span></span>
+                · π · r³
+              </span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('2c-F', this)">
+              <div class="step-mc-cb" id="scb-2c-F-D"></div>
+              <span>V(2r) = 6 ·
+                <span class="frac"><span class="num">4</span><span class="den">3</span></span>
+                · π · r³
+              </span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check2c_stepF()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-2c-F"></div>
+        </div>
+
+        <!-- Step G: Write the conclusion (unlocked after F) -->
+        <div class="step-block locked" id="2c-stepG">
+          <div class="step-title">Schritt G – Schreibe den vollständigen Beweis auf</div>
+          <p class="exercise-text" style="font-size:14px;">
+            Zeige den vollständigen Rechenweg und erkläre,
+            warum V(2r) = 8 · V(r) gilt.
+          </p>
+          <textarea class="reasoning-input" id="ans-2c-proof"
+                    placeholder="Schreibe hier deinen Beweis …"
+                    rows="5"></textarea>
+        </div>
+      </div><!-- /part 2 -->
+
+      <div style="display:flex; align-items:center; flex-wrap:wrap;
+                  gap:8px; margin-top:16px;">
+        <button class="submit-btn" onclick="check2c_final()">
+          Antwort prüfen
+        </button>
         <span class="scored-notice" id="notice-2c"></span>
       </div>
       <div class="feedback-box" id="feedback-2c"></div>
@@ -301,221 +669,378 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 2 – Kugelkerze  (9 Punkte)
-
-   2a: V = 4/3·π·5³ ≈ 523,6 cm³         (2 P)
-   2b: Box=2260,13; 2 candles=1047,2;
-       ≈ 46,3 %                          (3 P)
-   2c*: Zahlenbeispiel + allg. Beweis     (4 P)
+   Step-by-step guided structure.
+   No solutions disclosed in hints.
    ══════════════════════════════════════════ */
 
 let state = ExamState.load();
 function saveAndRefresh() { ExamState.save(state); updateScoreDisplay(); }
 
-/* ─────────────────────────
-   2a  Volumen nachweisen  (2 P)
-   V = 4/3·π·125 ≈ 523,599 cm³
-   2 P for correct result within ±1
-   ───────────────────────── */
-function check2a() {
+/* ── Step MC selection tracking ── */
+const stepMCSel = {};
+
+function selectStepMC(groupId, el) {
+  const container = el.closest('.step-mc');
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.step-mc-cb');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.step-mc-cb');
+  if (cb) cb.textContent = '✓';
+  stepMCSel[groupId] = el.dataset.val;
+  saveCustom(`stepmcs-${groupId}`, el.dataset.val);
+}
+
+function restoreStepMC(groupId) {
+  const val = loadCustom(`stepmcs-${groupId}`);
+  if (!val) return;
+  stepMCSel[groupId] = val;
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    if (o.dataset.val === val) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.step-mc-cb');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+
+/* ── Unlock a step block ── */
+function unlockStep(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove('locked');
+    saveCustom(`unlocked-${id}`, true);
+  }
+}
+
+function restoreUnlocked(id) {
+  if (loadCustom(`unlocked-${id}`)) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('locked');
+  }
+}
+
+/* ── Show inline feedback ── */
+function showInlineFB(id, ok, wrongHint) {
+  const el = document.getElementById(`ifb-${id}`);
+  if (!el) return;
+  el.classList.add('show');
+  if (ok) {
+    el.className = 'inline-feedback show correct';
+    el.innerHTML = '✅ Richtig!';
+  } else {
+    el.className = 'inline-feedback show incorrect';
+    el.innerHTML = '❌ Noch nicht richtig.'
+      + (wrongHint ? `<br><span style="font-style:italic;">${wrongHint}</span>` : '');
+  }
+}
+
+/* ── Mark step MC options ── */
+function markStepMC(groupId, correctVal) {
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === correctVal) {
+      o.classList.add('correct');
+    } else if (o.dataset.val === stepMCSel[groupId] &&
+               stepMCSel[groupId] !== correctVal) {
+      o.classList.add('incorrect');
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   2a Steps
+   ══════════════════════════════════════════ */
+
+function check2a_step1() {
+  if (!stepMCSel['2a-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2a-1'] === 'B';
+  markStepMC('2a-1', 'B');
+  showInlineFB('2a-1', ok,
+    ok ? '' : 'Überlege, welche Formel das Volumen eines kugelförmigen Körpers beschreibt.');
+  if (ok) unlockStep('2a-step2');
+}
+
+function check2a_step2() {
+  if (!stepMCSel['2a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2a-2'] === 'C';
+  markStepMC('2a-2', 'C');
+  showInlineFB('2a-2', ok,
+    ok ? '' : 'Setze r = 5 ein. Beachte: r³ bedeutet r hoch 3.');
+  if (ok) unlockStep('2a-step3');
+}
+
+function check2a_final() {
   const val = parseNum(document.getElementById('ans-2a').value);
-  const CORRECT = (4/3) * Math.PI * 125; // ≈ 523.599
-
-  clearInputStyle('ans-2a');
-
-  // Accept 523 – 524 (various rounding)
+  const CORRECT = (4/3) * Math.PI * 125;
   const ok = !isNaN(val) && Math.abs(val - CORRECT) < 1.5;
 
+  clearInputStyle('ans-2a');
   applyInputStyle('ans-2a', ok);
   state = recordScore('2a', 2, ok, state);
 
-  showFeedback('2a', ok, ok ? '' :
-    'Setze r = 5 in die Formel ein: V = 4/3 · π · 5³ = 4/3 · π · 125. ' +
-    'Berechne mit dem Taschenrechner.');
-
+  const fb = document.getElementById('feedback-2a');
+  fb.classList.add('show');
+  if (ok) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '<span class="feedback-icon">✅</span>' +
+      '<strong>Richtig!</strong> (2/2 Punkte)';
+  } else {
+    fb.className = 'feedback-box show incorrect';
+    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
+      '<strong>Leider falsch.</strong>' +
+      '<div class="hint-text">💡 Nutze den Taschenrechner und ' +
+      'beachte die Reihenfolge der Rechenoperationen.</div>';
+  }
   updateNotice('2a'); saveAndRefresh();
 }
 
-/* ─────────────────────────
-   2b  Prozent Verpackung  (3 P)
-   V_box = 20,5 · 10,5 · 10,5 = 2260,125
-   V_2candles = 2 · 523,599 = 1047,198
-   pct = 1047,198 / 2260,125 · 100 ≈ 46,3 %
+/* ══════════════════════════════════════════
+   2b Steps
+   ══════════════════════════════════════════ */
 
-   1 P box volume (±2)
-   1 P candle volume (±2)
-   1 P percentage (±1)
-   ───────────────────────── */
-function check2b() {
-  const boxVal     = parseNum(document.getElementById('ans-2b-box').value);
-  const candlesVal = parseNum(document.getElementById('ans-2b-candles').value);
-  const pctVal     = parseNum(document.getElementById('ans-2b-pct').value);
+const BOX_V     = 20.5 * 10.5 * 10.5;
+const CANDLES_V = 2 * (4/3) * Math.PI * 125;
+const PCT       = (CANDLES_V / BOX_V) * 100;
 
-  const BOX_V     = 20.5 * 10.5 * 10.5;        // 2260.125
-  const CANDLES_V = 2 * (4/3) * Math.PI * 125;  // ≈ 1047.198
-  const PCT       = (CANDLES_V / BOX_V) * 100;  // ≈ 46.33
+function check2b_step1() {
+  if (!stepMCSel['2b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2b-1'] === 'C';
+  markStepMC('2b-1', 'C');
+  showInlineFB('2b-1', ok,
+    ok ? '' : 'Ein Quader hat drei unterschiedliche Kantenlängen. ' +
+    'Denke daran, wie das Volumen eines Quaders berechnet wird.');
+  if (ok) unlockStep('2b-step2');
+}
 
-  const boxOk     = !isNaN(boxVal)     && Math.abs(boxVal     - BOX_V)     < 2;
-  const candlesOk = !isNaN(candlesVal) && Math.abs(candlesVal - CANDLES_V) < 2;
-  const pctOk     = !isNaN(pctVal)     && Math.abs(pctVal     - PCT)       < 1;
+function check2b_step2() {
+  const val = parseNum(document.getElementById('ans-2b-box').value);
+  const ok = !isNaN(val) && Math.abs(val - BOX_V) < 2;
+  clearInputStyle('ans-2b-box');
+  applyInputStyle('ans-2b-box', ok);
+  showInlineFB('2b-2', ok,
+    ok ? '' : 'Setze die drei Kantenlängen in die Formel ein und multipliziere.');
+  if (ok) unlockStep('2b-step3');
+}
 
-  ['ans-2b-box','ans-2b-candles','ans-2b-pct'].forEach(id => clearInputStyle(id));
-  applyInputStyle('ans-2b-box', boxOk);
-  applyInputStyle('ans-2b-candles', candlesOk);
-  applyInputStyle('ans-2b-pct', pctOk);
+function check2b_step3() {
+  if (!stepMCSel['2b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2b-3'] === 'C';
+  markStepMC('2b-3', 'C');
+  showInlineFB('2b-3', ok,
+    ok ? '' : 'Es sind zwei gleiche Kerzen in der Schachtel.');
+  if (ok) unlockStep('2b-step4');
+}
 
-  const earned = (boxOk ? 1 : 0) + (candlesOk ? 1 : 0) + (pctOk ? 1 : 0);
-  state = recordPartialScore('2b', earned, 3, state);
+function check2b_step4() {
+  const val = parseNum(document.getElementById('ans-2b-candles').value);
+  const ok = !isNaN(val) && Math.abs(val - CANDLES_V) < 2;
+  clearInputStyle('ans-2b-candles');
+  applyInputStyle('ans-2b-candles', ok);
+  showInlineFB('2b-4', ok,
+    ok ? '' : 'Das Volumen einer Kerze hast du in Aufgabe a) berechnet.');
+  if (ok) unlockStep('2b-step5');
+}
+
+function check2b_step5() {
+  if (!stepMCSel['2b-5']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2b-5'] === 'B';
+  markStepMC('2b-5', 'B');
+  showInlineFB('2b-5', ok,
+    ok ? '' : 'Der Prozentsatz gibt an, welchen Anteil das Kerzenvolumen ' +
+    'am Schachtelvolumen hat.');
+  if (ok) unlockStep('2b-step6');
+}
+
+function check2b_final() {
+  const pctVal = parseNum(document.getElementById('ans-2b-pct').value);
+  const ok = !isNaN(pctVal) && Math.abs(pctVal - PCT) < 1;
+
+  clearInputStyle('ans-2b-pct');
+  applyInputStyle('ans-2b-pct', ok);
+  state = recordScore('2b', 3, ok, state);
 
   const fb = document.getElementById('feedback-2b');
   fb.classList.add('show');
-
-  if (earned === 3) {
+  if (ok) {
     fb.className = 'feedback-box show correct';
     fb.innerHTML = '<span class="feedback-icon">✅</span>' +
       '<strong>Richtig!</strong> (3/3 Punkte)';
   } else {
-    const hints = [];
-    if (!boxOk) {
-      hints.push('Volumen der Schachtel: 20,5 · 10,5 · 10,5 = ?');
-    }
-    if (!candlesOk) {
-      hints.push('Volumen beider Kerzen: 2 · 523,6 = ?');
-    }
-    if (!pctOk) {
-      if (boxOk && candlesOk) {
-        hints.push('Prozent = Kerzenvolumen ÷ Schachtelvolumen × 100.');
-      } else {
-        hints.push('Berechne zuerst die Volumina, dann den Prozentsatz.');
-      }
-    }
     fb.className = 'feedback-box show incorrect';
-    fb.innerHTML = `<span class="feedback-icon">⚠️</span>
-      <strong>${earned}/3 Punkte.</strong>
-      <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
+    fb.innerHTML = '<span class="feedback-icon">❌</span>' +
+      '<strong>Leider falsch.</strong>' +
+      '<div class="hint-text">💡 Überprüfe deine Zwischenergebnisse ' +
+      'in den vorigen Schritten.</div>';
   }
-
   updateNotice('2b'); saveAndRefresh();
 }
 
-/* ─────────────────────────
-   2c*  Verdopplung  (4 P)
+/* ══════════════════════════════════════════
+   2c Steps
+   ══════════════════════════════════════════ */
 
-   Part 1 – Zahlenbeispiel (2 P):
-     Student picks some r > 0.
-     V(r) = 4/3·π·r³
-     V(2r) = 4/3·π·(2r)³ = 8 · V(r)
-     Ratio must be 8.
+function check2c_stepA() {
+  if (!stepMCSel['2c-A']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2c-A'] === '3';
+  markStepMC('2c-A', '3');
+  showInlineFB('2c-A', ok,
+    ok ? '' : 'Schau dir die Kugelformel noch einmal genau an.');
+  if (ok) unlockStep('2c-stepB');
+}
 
-     1 P: both V(r) and V(2r) correct for chosen r
-     1 P: ratio = 8
+function check2c_stepB() {
+  if (!stepMCSel['2c-B']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2c-B'] === '8';
+  markStepMC('2c-B', '8');
+  showInlineFB('2c-B', ok,
+    ok ? '' : 'Berechne 2³. Beachte: (2r)³ = 2³ · r³.');
+  if (ok) unlockStep('2c-stepC');
+}
 
-   Part 2 – General proof (2 P):
-     Text must contain key ideas:
-     (2r)³ = 8r³ and therefore V(2r) = 8·V(r)
+function check2c_stepC() {
+  const rVal  = parseNum(document.getElementById('ans-2c-r').value);
+  const v1Val = parseNum(document.getElementById('ans-2c-v1').value);
+  const v2Val = parseNum(document.getElementById('ans-2c-v2').value);
 
-     We check for keywords.
-   ───────────────────────── */
-function check2c() {
-  const rVal     = parseNum(document.getElementById('ans-2c-r').value);
-  const v1Val    = parseNum(document.getElementById('ans-2c-v1').value);
-  const v2Val    = parseNum(document.getElementById('ans-2c-v2').value);
-  const ratioVal = parseNum(document.getElementById('ans-2c-ratio').value);
-  const proofTxt = document.getElementById('ans-2c-proof').value;
-
-  // Part 1 checks
-  let part1Points = 0;
-
-  if (!isNaN(rVal) && rVal > 0) {
-    const correctV1 = (4/3) * Math.PI * Math.pow(rVal, 3);
-    const correctV2 = (4/3) * Math.PI * Math.pow(2 * rVal, 3);
-
-    const v1Ok = !isNaN(v1Val) && Math.abs(v1Val - correctV1) < correctV1 * 0.05;
-    const v2Ok = !isNaN(v2Val) && Math.abs(v2Val - correctV2) < correctV2 * 0.05;
-
-    clearInputStyle('ans-2c-r');
-    clearInputStyle('ans-2c-v1');
-    clearInputStyle('ans-2c-v2');
-    clearInputStyle('ans-2c-ratio');
-
-    applyInputStyle('ans-2c-r', true); // any r > 0 is fine
-    applyInputStyle('ans-2c-v1', v1Ok);
-    applyInputStyle('ans-2c-v2', v2Ok);
-
-    if (v1Ok && v2Ok) part1Points += 1;
-
-    const ratioOk = !isNaN(ratioVal) && Math.abs(ratioVal - 8) < 0.1;
-    applyInputStyle('ans-2c-ratio', ratioOk);
-    if (ratioOk) part1Points += 1;
-  } else {
-    ['ans-2c-r','ans-2c-v1','ans-2c-v2','ans-2c-ratio'].forEach(id => {
-      clearInputStyle(id);
-      applyInputStyle(id, false);
-    });
+  if (isNaN(rVal) || rVal <= 0) {
+    showInlineFB('2c-C', false, 'Bitte wähle einen positiven Radius.');
+    return;
   }
 
-  // Part 2 checks: keyword analysis
-  let part2Points = 0;
-  const proof = proofTxt.toLowerCase()
+  const correctV1 = (4/3) * Math.PI * Math.pow(rVal, 3);
+  const correctV2 = (4/3) * Math.PI * Math.pow(2 * rVal, 3);
+
+  const v1Ok = !isNaN(v1Val) && Math.abs(v1Val - correctV1) < correctV1 * 0.05;
+  const v2Ok = !isNaN(v2Val) && Math.abs(v2Val - correctV2) < correctV2 * 0.05;
+  const ok = v1Ok && v2Ok;
+
+  clearInputStyle('ans-2c-r');
+  clearInputStyle('ans-2c-v1');
+  clearInputStyle('ans-2c-v2');
+  applyInputStyle('ans-2c-r', rVal > 0);
+  applyInputStyle('ans-2c-v1', v1Ok);
+  applyInputStyle('ans-2c-v2', v2Ok);
+
+  if (!ok) {
+    const hints = [];
+    if (!v1Ok) hints.push('Prüfe dein V(r) mit der Kugelformel für deinen gewählten Radius.');
+    if (!v2Ok) hints.push('Für V(2r) verdoppelst du den Radius in der Formel.');
+    showInlineFB('2c-C', false, hints.join(' '));
+  } else {
+    showInlineFB('2c-C', true, '');
+    unlockStep('2c-stepD');
+  }
+}
+
+function check2c_stepD() {
+  if (!stepMCSel['2c-D']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2c-D'] === '8';
+  markStepMC('2c-D', '8');
+  showInlineFB('2c-D', ok,
+    ok ? '' : 'Teile V(2r) durch V(r) und schau, welchen Wert du erhältst.');
+  saveCustom('2c-part1-done', ok);
+}
+
+function check2c_stepE() {
+  if (!stepMCSel['2c-E']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2c-E'] === 'C';
+  markStepMC('2c-E', 'C');
+  showInlineFB('2c-E', ok,
+    ok ? '' : 'Wende die Potenzregel an: (a · b)³ = a³ · b³. Berechne dann 2³.');
+  if (ok) unlockStep('2c-stepF');
+}
+
+function check2c_stepF() {
+  if (!stepMCSel['2c-F']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['2c-F'] === 'B';
+  markStepMC('2c-F', 'B');
+  showInlineFB('2c-F', ok,
+    ok ? '' : 'Ersetze (2r)³ durch das Ergebnis aus Schritt E ' +
+    'und klammere den Faktor heraus.');
+  if (ok) unlockStep('2c-stepG');
+}
+
+function check2c_final() {
+  const proofTxt = document.getElementById('ans-2c-proof').value;
+  const proofEl  = document.getElementById('ans-2c-proof');
+
+  const part1Done = (stepMCSel['2c-D'] === '8');
+  const part2StepsDone = (stepMCSel['2c-E'] === 'C') &&
+                         (stepMCSel['2c-F'] === 'B');
+
+  // Proof text: must reference key structural ideas
+  const p = proofTxt.toLowerCase()
+    .replace(/\s/g,'')
     .replace(/ä/g,'ae').replace(/ö/g,'oe')
     .replace(/ü/g,'ue').replace(/ß/g,'ss');
 
-  const proofEl = document.getElementById('ans-2c-proof');
+  const has8  = p.includes('8');
+  const hasVr = p.includes('v(r)') || p.includes('v(2r)') ||
+                p.includes('vr') || p.includes('v2r');
+  const hasEq = p.includes('=') || p.includes('gleich');
+  const proofOk = proofTxt.trim().length > 20 && has8 && (hasVr || hasEq);
+
   proofEl.classList.remove('correct','incorrect');
+  proofEl.classList.add(proofOk ? 'correct' : 'incorrect');
 
-  // Key ideas: (2r)³ = 8r³ → V(2r) = 8·V(r)
-  const has2r3 = proof.includes('(2r)') || proof.includes('2r') ||
-                 proof.includes('(2·r)') || proof.includes('2 r');
-  const has8r3 = proof.includes('8r') || proof.includes('8·r') ||
-                 proof.includes('8 r') || proof.includes('8 ·');
-  const has8V  = proof.includes('8·v') || proof.includes('8 · v') ||
-                 proof.includes('8v') || proof.includes('8-fach') ||
-                 proof.includes('achtfach') || proof.includes('8 mal');
+  // Scoring:
+  // 2c Part 1: 2 P → step B (correct factor) + step D (correct ratio)
+  // 2c Part 2: 2 P → step F (correct expression) + proof text
+  let earned = 0;
+  if (stepMCSel['2c-B'] === '8')  earned += 1; // factor understood
+  if (stepMCSel['2c-D'] === '8')  earned += 1; // ratio confirmed numerically
+  if (stepMCSel['2c-F'] === 'B')  earned += 1; // algebraic step correct
+  if (proofOk)                    earned += 1; // written proof
 
-  if (proofTxt.trim().length > 20 && has2r3 && (has8r3 || has8V)) {
-    part2Points = 2;
-    proofEl.classList.add('correct');
-  } else if (proofTxt.trim().length > 15 && (has2r3 || has8r3 || has8V)) {
-    part2Points = 1;
-    proofEl.classList.add('incorrect');
-  } else {
-    proofEl.classList.add('incorrect');
-  }
-
-  const earned = part1Points + part2Points;
   state = recordPartialScore('2c', earned, 4, state);
 
   const fb = document.getElementById('feedback-2c');
   fb.classList.add('show');
-
   if (earned === 4) {
     fb.className = 'feedback-box show correct';
     fb.innerHTML = '<span class="feedback-icon">✅</span>' +
       '<strong>Vollständig richtig!</strong> (4/4 Punkte)';
   } else {
     const hints = [];
-    if (part1Points < 2) {
-      hints.push('<strong>Zahlenbeispiel:</strong> Wähle einen Radius r, ' +
-        'berechne V(r) und V(2r) mit der Kugelformel, ' +
-        'und zeige, dass V(2r) ÷ V(r) = 8.');
-    }
-    if (part2Points < 2) {
-      hints.push('<strong>Allgemeiner Beweis:</strong> ' +
-        'Setze 2r in die Formel ein: V(2r) = 4/3 · π · (2r)³. ' +
-        'Beachte: (2r)³ = 2³ · r³ = 8r³. ' +
-        'Daher: V(2r) = 4/3 · π · 8r³ = 8 · (4/3 · π · r³) = 8 · V(r).');
-    }
+    if (!part1Done)
+      hints.push('Schließe zuerst alle Schritte des Zahlenbeispiels ab.');
+    if (!part2StepsDone)
+      hints.push('Bearbeite zuerst alle Schritte des allgemeinen Beweises.');
+    if (!proofOk)
+      hints.push('Dein schriftlicher Beweis sollte den vollständigen ' +
+        'Rechenweg mit der Gleichungskette enthalten.');
     fb.className = 'feedback-box show incorrect';
     fb.innerHTML = `<span class="feedback-icon">⚠️</span>
       <strong>${earned}/4 Punkte.</strong>
-      <div class="hint-text">💡 ${hints.join('<br><br>')}</div>`;
+      <div class="hint-text">💡 ${hints.join('<br>')}</div>`;
   }
 
   markTaskCompleted('task2');
   updateNotice('2c'); saveAndRefresh();
 }
 
-/* ── Restore notices ── */
+/* ── Restore full state on page load ── */
 (function init() {
+  // Restore step MC selections
+  ['2a-1','2a-2',
+   '2b-1','2b-3','2b-5',
+   '2c-A','2c-B','2c-D','2c-E','2c-F']
+    .forEach(id => restoreStepMC(id));
+
+  // Restore unlocked steps
+  ['2a-step2','2a-step3',
+   '2b-step2','2b-step3','2b-step4','2b-step5','2b-step6',
+   '2c-stepB','2c-stepC','2c-stepD',
+   '2c-stepF','2c-stepG']
+    .forEach(id => restoreUnlocked(id));
+
   ['2a','2b','2c'].forEach(id => updateNotice(id));
   updateScoreDisplay();
 })();
