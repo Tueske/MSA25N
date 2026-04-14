@@ -173,12 +173,10 @@
 
     <!-- ════════════════════════════════════════
          5b  Parallele Gerade g  (3 P)
-         Parallel → same slope ⅔, different y-intercept.
-         S1: what property must g have? → same slope (MC) → 1P
-         S2: give equation g(x) = ⅔x + b where b ≠ 1 → 1P
-         S3: draw it (we skip drawing, award for equation) → 1P
-         Simplified: S1 MC (1P) + S2 equation (2P)
+         S1: Draw a parallel line using the tool → 1.5 P
+         S2: Write the equation g(x) = mx + b   → 1.5 P
          ════════════════════════════════════════ -->
+
     <div class="sub-exercise">
       <div class="sub-label">b)</div>
       <p class="exercise-text">
@@ -186,83 +184,58 @@
         Geraden <em>f</em>.
       </p>
 
-      <!-- S1: What does parallel mean? → 1P -->
+      <!-- S1: Draw parallel line → 1.5 P -->
       <div class="step-block" id="5b-step1">
         <div class="step-title">
-          Schritt 1 – Was muss für eine parallele Gerade gelten?
+          Schritt 1 – Zeichne eine parallele Gerade g in das Koordinatensystem
         </div>
-        <div class="step-mc" id="smc-5b-1">
-          <div class="step-mc-option" data-val="A"
-               onclick="selectStepMC('5b-1',this)">
-            <div class="step-mc-cb"></div>
-            <span>Gleiche Steigung, gleicher y-Achsenabschnitt</span>
-          </div>
-          <div class="step-mc-option" data-val="B"
-               onclick="selectStepMC('5b-1',this)">
-            <div class="step-mc-cb"></div>
-            <span>Gleiche Steigung, anderer y-Achsenabschnitt</span>
-          </div>
-          <div class="step-mc-option" data-val="C"
-               onclick="selectStepMC('5b-1',this)">
-            <div class="step-mc-cb"></div>
-            <span>Andere Steigung, gleicher y-Achsenabschnitt</span>
-          </div>
-          <div class="step-mc-option" data-val="D"
-               onclick="selectStepMC('5b-1',this)">
-            <div class="step-mc-cb"></div>
-            <span>Die Steigungen multipliziert ergeben −1</span>
-          </div>
-        </div>
-        <button class="check-btn-sm" onclick="check5b_step1()">Prüfen</button>
+        <p style="font-size:14px; margin-bottom:8px;">
+          Verwende das Zeichenwerkzeug oben: setze zwei Punkte,
+          um eine Gerade zu zeichnen, die parallel zu <em>f</em> verläuft.
+          Du kannst die Punkte nachträglich verschieben.
+        </p>
+        <button class="check-btn-sm" onclick="check5b_step1()">
+          Gerade prüfen
+        </button>
         <div class="inline-feedback" id="ifb-5b-1"></div>
       </div>
 
-      <!-- S2: Give the slope → 1P -->
+      <!-- S2: Write equation → 1.5 P -->
       <div class="step-block locked" id="5b-step2">
         <div class="step-title">
-          Schritt 2 – Welche Steigung hat g?
-        </div>
-        <div class="answer-unit-row">
-          <span style="font-size:15px;">Steigung m =</span>
-          <input class="unit-input" id="ans-5b-m"
-                 type="text" inputmode="decimal"
-                 placeholder="" autocomplete="off"
-                 style="width:100px;">
-        </div>
-        <p class="input-hint">
-          Gib die Steigung als Bruch (z.B. 2/3) oder Dezimalzahl an.
-        </p>
-        <button class="check-btn-sm" onclick="check5b_step2()">Prüfen</button>
-        <div class="inline-feedback" id="ifb-5b-2"></div>
-      </div>
-
-      <!-- S3: Give the equation → 1P -->
-      <div class="step-block locked" id="5b-step3">
-        <div class="step-title">
-          Schritt 3 – Gib eine Gleichung für g an
+          Schritt 2 – Gib die Funktionsgleichung der Geraden g an
         </div>
         <p style="font-size:14px; margin-bottom:8px;">
-          Wähle einen y-Achsenabschnitt, der sich von 1 unterscheidet.
+          Schreibe die Steigung als Bruch oder Dezimalzahl
+          und den y-Achsenabschnitt.
         </p>
         <div class="func-eq-row">
           <span>g(x) =</span>
-          <span>⅔·x +</span>
+          <input class="coord-field" id="ans-5b-m"
+                 type="text" inputmode="decimal"
+                 placeholder="m" autocomplete="off"
+                 style="width:80px;">
+          <span>· x +</span>
           <input class="coord-field" id="ans-5b-b"
                  type="text" inputmode="decimal"
                  placeholder="b" autocomplete="off"
                  style="width:80px;">
         </div>
-        <button class="check-btn-sm" onclick="check5b_step3()">Prüfen</button>
-        <div class="inline-feedback" id="ifb-5b-3"></div>
+        <button class="check-btn-sm" onclick="check5b_step2()">
+          Prüfen
+        </button>
+        <div class="inline-feedback" id="ifb-5b-2"></div>
       </div>
 
-      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;">
-        <button class="submit-btn" onclick="check5b_final()">Zusammenfassung</button>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;
+                  gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check5b_final()">
+          Zusammenfassung
+        </button>
         <span class="scored-notice" id="notice-5b"></span>
       </div>
       <div class="feedback-box" id="feedback-5b"></div>
     </div>
-
 
     <!-- ════════════════════════════════════════
          5c  Parabel p  (3 P)
@@ -878,55 +851,109 @@ function check5a_final() {
 
 /* ══════════════════════════════════════════
    5b  (3 P)
-   S1: parallel = same slope, diff b → 1P
-   S2: slope = 2/3 → 1P
-   S3: b ≠ 1 → 1P
+   S1: drawn line must be parallel to f
+       (same slope ⅔, different y-intercept)  → 1.5 P
+   S2: equation g(x) = m·x + b
+       m must = ⅔, b must ≠ 1                 → 1.5 P
    ══════════════════════════════════════════ */
+
+function getUserLineParams() {
+  /* Returns { m, b } from the two user-placed points,
+     or null if fewer than 2 points */
+  if (userPoints.length < 2) return null;
+  const p0 = userPoints[0], p1 = userPoints[1];
+  if (Math.abs(p1.x - p0.x) < 0.001) return null; /* vertical */
+  const m = (p1.y - p0.y) / (p1.x - p0.x);
+  const b = p0.y - m * p0.x;
+  return { m, b };
+}
+
 function check5b_step1() {
-  if (!stepMCSel['5b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['5b-1'] === 'B';
-  markStepMC('5b-1','B');
-  const stored = recordScore('5b-s1', 1, ok);
-  showInlineFB('5b-1', ok,
-    ok ? '' :
-    'Parallele Geraden haben eine besondere Eigenschaft bezüglich ihrer Steigung.',
-    stored, 1);
+  /* Check drawn line: slope must be ≈ ⅔, y-intercept must ≠ 1 */
+  const params = getUserLineParams();
+
+  if (!params) {
+    showInlineFB('5b-1', false,
+      'Setze zuerst zwei Punkte im Koordinatensystem, '
+      + 'um eine Gerade zu zeichnen.');
+    return;
+  }
+
+  const slopeOk = Math.abs(params.m - 2/3) < 0.05;
+  const diffB   = Math.abs(params.b - 1) > 0.05;
+  const ok      = slopeOk && diffB;
+
+  const stored = recordPartialScore('5b-s1', ok ? 1.5 : 0, 1.5);
+
+  let hint = '';
+  if (!slopeOk) {
+    hint = 'Die gezeichnete Gerade hat nicht dieselbe Steigung wie f. '
+      + 'Parallele Geraden haben eine gemeinsame Eigenschaft – '
+      + 'überprüfe die Steigung deiner Geraden.';
+  } else if (!diffB) {
+    hint = 'Deine Gerade hat die richtige Steigung, liegt aber '
+      + 'genau auf f. Verschiebe einen Punkt nach oben oder unten.';
+  }
+
+  showInlineFB('5b-1', ok, hint, stored, 1.5);
   if (ok) unlockStep('5b-step2');
   updateNotice('5b-s1');
   updateScoreDisplay();
 }
+
 function check5b_step2() {
-  const raw = document.getElementById('ans-5b-m').value;
-  /* Accept 2/3, 0.667, 0,667 etc. */
-  const ok = fractionCheck(raw, 2, 3)
-    || (Math.abs(parseNum(raw) - 2/3) < 0.01);
+  /* Check equation: m = ⅔, b ≠ 1 */
+  const mRaw = document.getElementById('ans-5b-m').value;
+  const bRaw = document.getElementById('ans-5b-b').value;
+
+  /* Accept 2/3, 0.667, 0,667 etc. for m */
+  const mVal = fractionCheck(mRaw, 2, 3)
+    ? 2/3
+    : parseNum(mRaw);
+  const bVal = parseNum(bRaw);
+
+  const mOk = !isNaN(mVal) && Math.abs(mVal - 2/3) < 0.02;
+  const bOk = !isNaN(bVal) && Math.abs(bVal - 1) > 0.01;
+  const ok  = mOk && bOk;
+
+  /* Additionally check consistency with drawn line if available */
+  const params = getUserLineParams();
+  let consistentHint = '';
+  if (ok && params) {
+    const drawnMOk = Math.abs(params.m - 2/3) < 0.05;
+    const drawnBClose = Math.abs(params.b - bVal) < 0.1;
+    if (!drawnMOk || !drawnBClose) {
+      consistentHint = ' (Hinweis: Deine Gleichung und die gezeichnete '
+        + 'Gerade stimmen nicht überein – überprüfe beides.)';
+    }
+  }
+
   clearInputStyle('ans-5b-m');
-  applyInputStyle('ans-5b-m', ok);
-  const stored = recordScore('5b-s2', 1, ok);
+  clearInputStyle('ans-5b-b');
+  applyInputStyle('ans-5b-m', mOk);
+  applyInputStyle('ans-5b-b', bOk);
+
+  const stored = recordPartialScore('5b-s2', ok ? 1.5 : 0, 1.5);
+
+  let hint = '';
+  if (!mOk) {
+    hint = 'Die Steigung einer parallelen Geraden ist identisch '
+      + 'mit der Steigung von f.';
+  } else if (!bOk) {
+    hint = 'Die Steigung stimmt. Der y-Achsenabschnitt muss sich '
+      + 'von dem der Geraden f unterscheiden.';
+  }
+
   showInlineFB('5b-2', ok,
-    ok ? '' :
-    'Die Steigung von f ist der Koeffizient vor x in f(x).',
-    stored, 1);
-  if (ok) unlockStep('5b-step3');
+    ok ? consistentHint : hint,
+    stored, 1.5);
   updateNotice('5b-s2');
   updateScoreDisplay();
 }
-function check5b_step3() {
-  const bVal = parseNum(document.getElementById('ans-5b-b').value);
-  const ok = !isNaN(bVal) && Math.abs(bVal - 1) > 0.01;
-  clearInputStyle('ans-5b-b');
-  applyInputStyle('ans-5b-b', ok);
-  const stored = recordScore('5b-s3', 1, ok);
-  showInlineFB('5b-3', ok,
-    ok ? '' :
-    'Der y-Achsenabschnitt muss sich von dem der Geraden f unterscheiden (b ≠ 1).',
-    stored, 1);
-  updateNotice('5b-s3');
-  updateScoreDisplay();
-}
+
 function check5b_final() {
   showSubExerciseSummary('feedback-5b','notice-5b',
-    ['5b-s1','5b-s2','5b-s3'], 3);
+    ['5b-s1','5b-s2'], 3);
 }
 
 /* ══════════════════════════════════════════
@@ -1060,28 +1087,28 @@ function check5d_final() {
    ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
 
-  ['5b-1','5c-1','5d-1','5d-2']
+  ['5c-1','5d-1','5d-2']
     .forEach(id => restoreStepMC(id));
-  ['5b-1','5c-1','5d-1','5d-2']
+  ['5c-1','5d-1','5d-2']
     .forEach(id => restoreStepMCResult(id));
-  ['5b-step2','5b-step3',
+  ['5b-step2',
    '5c-step2',
    '5d-step2','5d-step3','5d-step4']
     .forEach(id => restoreUnlocked(id));
-  ['5a','5b-1','5b-2','5b-3',
+  ['5a','5b-1','5b-2',
    '5c-1','5c-2',
    '5d-1','5d-2','5d-3','5d-4']
     .forEach(id => restoreInlineFeedback(id));
   ['5a','5b','5c','5d'].forEach(id => restoreFeedback(id));
   ['5a-s1',
-   '5b-s1','5b-s2','5b-s3',
+   '5b-s1','5b-s2',
    '5c-s1','5c-s2',
    '5d-s1','5d-s2','5d-s3','5d-s4']
     .forEach(id => updateNotice(id));
 
   const keyMap = {
     '5a': { keys: ['5a-s1'], max: 1 },
-    '5b': { keys: ['5b-s1','5b-s2','5b-s3'], max: 3 },
+    '5b': { keys: ['5b-s1','5b-s2'], max: 3 },
     '5c': { keys: ['5c-s1','5c-s2'], max: 3 },
     '5d': { keys: ['5d-s1','5d-s2','5d-s3','5d-s4'], max: 4 }
   };
