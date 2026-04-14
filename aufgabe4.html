@@ -460,44 +460,69 @@ const BC_CM    = AC * Math.sin(39 * DEG) / Math.sin(36 * DEG); // ≈ 6.745
 
 /* ══════════════════════════════════════════
    Interactive quadrilateral canvas
-   5 clickable angle zones, only ε is correct
+   6 clickable angle zones, only ε is correct.
+   All unlabelled except the three given angles.
    ══════════════════════════════════════════ */
 
 const cv  = document.getElementById('viereck-canvas');
 const ctx = cv.getContext('2d');
 
-/* Vertex positions */
-const VA = { x: 60,  y: 270 };
+/*
+  Vertex positions – D directly above A so ADC = 90°
+  A = bottom-left
+  D = top-left (directly above A)
+  C = top-right (shifted right from D)
+  B = bottom-right
+*/
+const VA = { x: 80,  y: 270 };
+const VD = { x: 80,  y: 70  };   /* directly above A */
+const VC = { x: 310, y: 70  };
 const VB = { x: 380, y: 270 };
-const VC = { x: 320, y: 60  };
-const VD = { x: 80,  y: 60  };
 
-/* Angle zones: { vertex, label, startAngle, endAngle, correct } */
-/* Angles measured in canvas coordinates (y-down) */
 function angleTo(from, to) {
   return Math.atan2(to.y - from.y, to.x - from.x);
 }
 
+/*
+  6 angle zones:
+  1. ∠ADC at D (right angle, 90°)          — labelled "90°"
+  2. ∠DAC at A (between AD and AC = 49°)   — labelled "49°"
+  3. ∠CAB at A (between AC and AB)         — NO label (selectable)
+  4. ∠ACB at C (between AC and CB = 105°)  — labelled "105°"
+  5. ∠ACD at C (between AC and CD = ε)     — NO label (selectable, CORRECT)
+  6. ∠ABC at B (36°)                        — labelled "36°"
+*/
 const ANGLES = [
   { id: 'D-right', vertex: VD, label: '90°',
     a1: angleTo(VD, VA), a2: angleTo(VD, VC), correct: false },
   { id: 'A-49', vertex: VA, label: '49°',
     a1: angleTo(VA, VD), a2: angleTo(VA, VC), correct: false },
+  { id: 'A-cab', vertex: VA, label: '',
+    a1: angleTo(VA, VC), a2: angleTo(VA, VB), correct: false },
   { id: 'C-105', vertex: VC, label: '105°',
     a1: angleTo(VC, VA), a2: angleTo(VC, VB), correct: false },
+  { id: 'epsilon', vertex: VC, label: '',
+    a1: angleTo(VC, VD), a2: angleTo(VC, VA), correct: true },
   { id: 'B-36', vertex: VB, label: '36°',
     a1: angleTo(VB, VC), a2: angleTo(VB, VA), correct: false },
-  /* ε = ∠ACD at vertex C between AC and CD */
-  { id: 'epsilon', vertex: VC, label: 'ε',
-    a1: angleTo(VC, VD), a2: angleTo(VC, VA), correct: true },
 ];
 
-let selectedAngle = loadCustom('4a-selected-angle') || null;
+let selectedAngle = null; /* populated in init */
+
+function normalizeArc(a1, a2) {
+  /* Returns [start, end] so we draw the smaller arc, always CCW in canvas */
+  let s = a1, e = a2;
+  let diff = e - s;
+  while (diff < -Math.PI) { e += 2 * Math.PI; diff = e - s; }
+  while (diff >  Math.PI) { s += 2 * Math.PI; diff = e - s; }
+  if (s > e) { const t = s; s = e; e = t; }
+  return [s, e];
+}
 
 function drawQuad() {
-  ctx.clearRect(0, 0, 440, 340);
+  ctx.clearRect(0, 0, cv.width, cv.height);
 
-  /* Fill */
+  /* Fill quadrilateral */
   ctx.beginPath();
   ctx.moveTo(VA.x, VA.y);
   ctx.lineTo(VB.x, VB.y);
@@ -511,6 +536,7 @@ function drawQuad() {
   ctx.stroke();
 
   /* Diagonal AC (dashed) */
+  ctx.save();
   ctx.setLineDash([6, 4]);
   ctx.beginPath();
   ctx.moveTo(VA.x, VA.y);
@@ -518,113 +544,116 @@ function drawQuad() {
   ctx.strokeStyle = '#1a5276';
   ctx.lineWidth = 1.8;
   ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.restore();
 
-  /* Right angle marker at D */
+  /* Right angle marker at D (small square) */
   const sz = 14;
   ctx.strokeStyle = '#1a1a1a';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
+  /* D is top-left, angle between DA (down) and DC (right) */
   ctx.moveTo(VD.x, VD.y + sz);
   ctx.lineTo(VD.x + sz, VD.y + sz);
   ctx.lineTo(VD.x + sz, VD.y);
   ctx.stroke();
 
   /* Draw angle arcs */
-  const R = 28;
+  const R_ARC = 28;
   ANGLES.forEach(a => {
     const isSelected = (selectedAngle === a.id);
-    const isCurve = true;
+    const [s, e] = normalizeArc(a.a1, a.a2);
+
     ctx.beginPath();
-    /* Normalize angles for arc drawing */
-    let s = a.a1, e = a.a2;
-    /* Ensure we draw the smaller arc */
-    let diff = e - s;
-    if (diff < -Math.PI) e += 2 * Math.PI;
-    if (diff > Math.PI) s += 2 * Math.PI;
-    if (s > e) { const t = s; s = e; e = t; }
-    ctx.arc(a.vertex.x, a.vertex.y, R, s, e);
-    ctx.strokeStyle = isSelected ? '#c0392b' : '#555';
-    ctx.lineWidth = isSelected ? 3 : 1.5;
+    ctx.arc(a.vertex.x, a.vertex.y, R_ARC, s, e);
+    ctx.strokeStyle = isSelected ? '#c0392b' : '#777';
+    ctx.lineWidth   = isSelected ? 3.5 : 1.5;
     ctx.stroke();
 
-    /* Label */
-    const mid = (s + e) / 2;
-    const lx = a.vertex.x + (R + 14) * Math.cos(mid);
-    const ly = a.vertex.y + (R + 14) * Math.sin(mid);
-    ctx.font = isSelected
-      ? 'bold 14px Arial' : '12px Arial';
-    ctx.fillStyle = isSelected ? '#c0392b' : '#333';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(a.label, lx, ly);
+    /* Label (only for labelled angles) */
+    if (a.label) {
+      const mid = (s + e) / 2;
+      const lx  = a.vertex.x + (R_ARC + 16) * Math.cos(mid);
+      const ly  = a.vertex.y + (R_ARC + 16) * Math.sin(mid);
+      ctx.font      = isSelected ? 'bold 14px Arial' : '12px Arial';
+      ctx.fillStyle = isSelected ? '#c0392b' : '#333';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.label, lx, ly);
+    }
+
+    /* Small dot at arc midpoint for unlabelled angles
+       to make them visually clickable */
+    if (!a.label) {
+      const mid = (s + e) / 2;
+      const dx  = a.vertex.x + R_ARC * Math.cos(mid);
+      const dy  = a.vertex.y + R_ARC * Math.sin(mid);
+      ctx.beginPath();
+      ctx.arc(dx, dy, isSelected ? 5 : 3, 0, 2 * Math.PI);
+      ctx.fillStyle = isSelected ? '#c0392b' : '#999';
+      ctx.fill();
+    }
   });
 
   /* Vertex labels */
   ctx.font = 'bold 15px Arial';
   ctx.fillStyle = '#1a1a1a';
   ctx.textAlign = 'center';
-  ctx.fillText('A', VA.x - 16, VA.y + 6);
-  ctx.fillText('B', VB.x + 16, VB.y + 6);
-  ctx.fillText('C', VC.x + 14, VC.y - 10);
-  ctx.fillText('D', VD.x - 16, VD.y - 10);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('A', VA.x - 18, VA.y + 8);
+  ctx.fillText('B', VB.x + 18, VB.y + 8);
+  ctx.fillText('C', VC.x + 16, VC.y - 14);
+  ctx.fillText('D', VD.x - 18, VD.y - 14);
 
-  /* AC label */
+  /* AC length label (rotated along diagonal) */
   ctx.save();
-  const mx = (VA.x + VC.x) / 2 - 10;
-  const my = (VA.y + VC.y) / 2 + 5;
+  const mx  = (VA.x + VC.x) / 2;
+  const my  = (VA.y + VC.y) / 2;
   const ang = Math.atan2(VC.y - VA.y, VC.x - VA.x);
   ctx.translate(mx, my);
   ctx.rotate(ang);
-  ctx.font = 'italic 13px Arial';
+  ctx.font      = 'italic 13px Arial';
   ctx.fillStyle = '#1a5276';
   ctx.textAlign = 'center';
-  ctx.fillText('6,3 cm', 0, -8);
+  ctx.fillText('6,3 cm', 0, -10);
   ctx.restore();
 
   /* Note */
-  ctx.font = '11px Arial';
+  ctx.font      = '11px Arial';
   ctx.fillStyle = '#888';
   ctx.textAlign = 'center';
-  ctx.fillText('(Abbildung nicht maßstabsgerecht)', 220, 330);
+  ctx.fillText('(Abbildung nicht maßstabsgerecht)', cv.width / 2, cv.height - 8);
 
   /* Info text */
   const info = document.getElementById('angle-select-info');
   if (info) {
     if (selectedAngle) {
-      const a = ANGLES.find(x => x.id === selectedAngle);
-      info.textContent = a
-        ? `Ausgewählt: Winkel „${a.label}"`
-        : 'Kein Winkel ausgewählt';
+      /* Don't reveal which angle it is — just confirm selection */
+      info.textContent = 'Ein Winkel ist ausgewählt (rot markiert)';
     } else {
-      info.textContent = 'Kein Winkel ausgewählt';
+      info.textContent = 'Kein Winkel ausgewählt — klicke auf einen Winkelbogen';
     }
   }
 }
 
+/* ── Click handler: find nearest arc midpoint ── */
 function handleCanvasClick(clientX, clientY) {
   const rect = cv.getBoundingClientRect();
-  const cx = clientX - rect.left;
-  const cy = clientY - rect.top;
+  const cx   = clientX - rect.left;
+  const cy   = clientY - rect.top;
 
-  /* Find closest angle vertex within 50px */
-  let best = null;
-  let bestDist = 60;
+  let best     = null;
+  let bestDist = 55; /* max click distance in px */
+
   ANGLES.forEach(a => {
-    /* Check if click is near the arc midpoint */
-    let s = a.a1, e = a.a2;
-    let diff = e - s;
-    if (diff < -Math.PI) e += 2 * Math.PI;
-    if (diff > Math.PI) s += 2 * Math.PI;
-    if (s > e) { const t = s; s = e; e = t; }
-    const mid = (s + e) / 2;
-    const R = 28;
-    const ax = a.vertex.x + R * Math.cos(mid);
-    const ay = a.vertex.y + R * Math.sin(mid);
-    const d = Math.hypot(cx - ax, cy - ay);
+    const [s, e] = normalizeArc(a.a1, a.a2);
+    const mid    = (s + e) / 2;
+    const R      = 28;
+    const ax     = a.vertex.x + R * Math.cos(mid);
+    const ay     = a.vertex.y + R * Math.sin(mid);
+    const d      = Math.hypot(cx - ax, cy - ay);
     if (d < bestDist) {
       bestDist = d;
-      best = a.id;
+      best     = a.id;
     }
   });
 
@@ -637,8 +666,7 @@ function handleCanvasClick(clientX, clientY) {
 
 cv.addEventListener('click', e => handleCanvasClick(e.clientX, e.clientY));
 cv.addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  handleCanvasClick(t.clientX, t.clientY);
+  handleCanvasClick(e.touches[0].clientX, e.touches[0].clientY);
   e.preventDefault();
 }, { passive: false });
 
