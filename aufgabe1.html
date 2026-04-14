@@ -783,10 +783,17 @@ function check1f() {
   const calcEl   = document.getElementById('ans-1f-calc');
   calcEl.classList.remove('correct','incorrect');
   const ct = calcText.toLowerCase().replace(/\s/g,'');
-  const calcOk = calcText.trim().length > 5
-    && ct.includes('6')
-    && (ct.includes('9') || ct.includes('3²') || ct.includes('3^2'))
-    && ct.includes('54');
+  
+  // Check for various forms of the calculation (e.g., 6*3*3, 6x3^2, 6*3², etc.)
+  const has6 = ct.includes('6');
+  const hasSquareForm = ct.includes('9')      // 9 as result of 3²
+    || ct.includes('3²')
+    || ct.includes('3^2')
+    || ct.includes('3*3')      // 3*3 multiplied
+    || ct.includes('3x3');     // 3x3 using 'x' as multiplication
+  const has54 = ct.includes('54');
+  
+  const calcOk = calcText.trim().length > 5 && has6 && hasSquareForm && has54;
   calcEl.classList.add(calcOk ? 'correct' : 'incorrect');
   saveResult('ans-1f-calc', calcOk ? 'correct' : 'incorrect');
 
