@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Aufgabe 4 – Viereck</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    .step-block {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+    .step-block.locked {
+      filter: blur(5px);
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a5276;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .step-mc {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0;
+    }
+    .step-mc-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .step-mc-option.selected  { border-color: #2471a3; background: #eaf4fb; }
+    .step-mc-option.correct   { border-color: #27ae60; background: #f0fff4; }
+    .step-mc-option.incorrect { border-color: #c0392b; background: #fff5f5; }
+    .step-mc-cb {
+      width: 22px; height: 22px;
+      border: 2px solid #999; border-radius: 4px;
+      display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .check-btn-sm {
+      background: #2471a3; color: white; border: none;
+      border-radius: 6px; padding: 9px 18px;
+      font-size: 14px; font-family: Arial, sans-serif;
+      font-weight: bold; cursor: pointer;
+      min-height: 40px; transition: background 0.2s;
+      -webkit-appearance: none; margin-top: 8px;
+    }
+    .check-btn-sm:active { background: #1a5276; }
+
+    .inline-feedback {
+      margin-top: 8px; padding: 8px 12px;
+      border-radius: 6px; font-size: 14px;
+      line-height: 1.5; display: none;
+    }
+    .inline-feedback.show  { display: block; }
+    .inline-feedback.correct {
+      background: #eafaf1; border: 1.5px solid #27ae60; color: #1e8449;
+    }
+    .inline-feedback.incorrect {
+      background: #fdedec; border: 1.5px solid #c0392b; color: #922b21;
+    }
+
+    .part-block {
+      padding: 14px; border: 1px solid #e0e0e0;
+      border-radius: 8px; background: #fafafa;
+      margin-bottom: 12px;
+    }
+    .two-part-vert {
+      display: flex; flex-direction: column;
+      gap: 14px; margin: 8px 0;
+    }
+
+    /* ── Quadrilateral diagram ── */
+    .diagram-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+
+    /* ── Angle marker canvas for 4a ── */
+    .angle-task-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-bar">
+    <span class="header-title">MSA 2025 Mathematik – Nachschreibtermin</span>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 56%"></div>
+    </div>
+    <span class="progress-text">Aufgabe 4 von 7</span>
+  </div>
+
+  <div class="task-header">
+    <h1>Aufgabe 4 – Viereck</h1>
+    <span class="points-badge">9 Punkte</span>
+  </div>
+
+  <div class="task-content">
+
+    <p class="exercise-text">
+      Die Abbildung zeigt das Viereck <em>ABCD</em>.
+    </p>
+
+    <!-- ── Quadrilateral SVG ── -->
+    <div class="diagram-wrap">
+      <!--
+        From the exam:
+        A = bottom-left, B = bottom-right,
+        C = top-right, D = top-left
+        Given: angle at A = 49°, angle at B = 36°,
+               angle at C = 105°
+        AC diagonal with length 6.3 cm labelled.
+        D has a dot (right angle marker implied by the bullet).
+
+        Layout (scaled for screen):
+        A = (40, 260)
+        B = (340, 260)
+        C = (300, 80)
+        D = (80, 80)
+      -->
+      <svg width="420" height="300" viewBox="0 0 420 300"
+           aria-label="Viereck ABCD mit Winkeln und Diagonale">
+
+        <!-- Quadrilateral -->
+        <polygon points="40,260 340,260 300,80 80,80"
+                 fill="#f0f4ff" stroke="#1a1a1a" stroke-width="2"/>
+
+        <!-- Diagonal AC -->
+        <line x1="40" y1="260" x2="300" y2="80"
+              stroke="#1a5276" stroke-width="1.8"
+              stroke-dasharray="6,4"/>
+
+        <!-- Vertex labels -->
+        <text x="22" y="278" font-family="Arial" font-size="15"
+              font-weight="bold" font-style="italic">A</text>
+        <text x="348" y="278" font-family="Arial" font-size="15"
+              font-weight="bold" font-style="italic">B</text>
+        <text x="306" y="72" font-family="Arial" font-size="15"
+              font-weight="bold" font-style="italic">C</text>
+        <text x="62" y="72" font-family="Arial" font-size="15"
+              font-weight="bold" font-style="italic">D</text>
+
+        <!-- Angle at A = 49° -->
+        <path d="M 68,260 A 28,28 0 0,1 54,238"
+              fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+        <text x="70" y="250" font-family="Arial" font-size="12">49°</text>
+
+        <!-- Angle at B = 36° -->
+        <path d="M 316,260 A 26,26 0 0,0 327,238"
+              fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+        <text x="298" y="250" font-family="Arial" font-size="12">36°</text>
+
+        <!-- Angle at C = 105° -->
+        <path d="M 287,96 A 22,22 0 0,0 278,110"
+              fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+        <text x="258" y="108" font-family="Arial" font-size="12">105°</text>
+
+        <!-- Dot at D (right angle / given point) -->
+        <circle cx="80" cy="80" r="4" fill="#1a1a1a"/>
+
+        <!-- AC length label: 6.3 cm along diagonal -->
+        <text font-family="Arial" font-size="13" fill="#1a5276"
+              font-style="italic"
+              transform="rotate(-36, 170, 170)">
+          <tspan x="130" y="180">6,3 cm</tspan>
+        </text>
+
+        <!-- Note -->
+        <text x="210" y="292" text-anchor="middle"
+              font-family="Arial" font-size="11" fill="#888">
+          (Abbildung nicht maßstabsgerecht)
+        </text>
+
+      </svg>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         4a  Winkel ε kennzeichnen  (1 P)
+         ε = 180° − 90° − 49° = 41°
+         ε is the angle at A in triangle ACD,
+         specifically the angle between AC and AD.
+         The formula given: ε = 180° − 90° − 49°
+         So ε is in triangle ACD where:
+           angle at D = 90° (right angle, dot)
+           angle at A (between AD and AC) = 49°
+           → ε = angle at C in triangle ACD = 41°
+
+         Task: identify which angle ε is.
+         We offer an MC: where is ε located?
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">a)</div>
+      <p class="exercise-text">
+        In der Abbildung gibt es einen Winkel ε.<br>
+        Seine Größe wird mit der folgenden Rechnung bestimmt:
+      </p>
+      <div class="formula-box" style="text-align:center; font-size:17px;">
+        ε = 180° − 90° − 49°
+      </div>
+
+      <!-- Step 1: What does this formula tell us? -->
+      <div class="step-block" id="4a-step1">
+        <div class="step-title">
+          Schritt 1 – Was beschreibt diese Formel?
+        </div>
+        <div class="step-mc" id="smc-4a-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('4a-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Die Summe aller Winkel im Viereck ABCD</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('4a-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Den dritten Winkel in einem Dreieck,
+              in dem zwei Winkel bereits bekannt sind
+              (90° und 49°)</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('4a-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Den Außenwinkel des Vierecks bei C</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('4a-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Die Differenz zweier Seiten des Vierecks</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check4a_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4a-1"></div>
+      </div>
+
+      <!-- Step 2: Where is ε in the figure? -->
+      <div class="step-block locked" id="4a-step2">
+        <div class="step-title">
+          Schritt 2 – Wo befindet sich der Winkel ε in der Abbildung?
+        </div>
+        <div class="step-mc" id="smc-4a-2">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('4a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Bei Punkt A, zwischen den Seiten AB und AD</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('4a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Bei Punkt C, zwischen der Diagonale AC
+              und der Seite CD</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('4a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Bei Punkt D, zwischen den Seiten AD und DC</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('4a-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Bei Punkt B, zwischen den Seiten AB und BC</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check4a_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4a-2"></div>
+      </div>
+
+      <!-- Step 3: Calculate ε -->
+      <div class="step-block locked" id="4a-step3">
+        <div class="step-title">
+          Schritt 3 – Berechne den Winkel ε
+        </div>
+        <div class="answer-unit-row">
+          <span style="font-size:16px;">ε =</span>
+          <input class="unit-input" id="ans-4a-eps"
+                 type="text" inputmode="decimal"
+                 placeholder="" autocomplete="off"
+                 style="width:100px;">
+          <span class="unit-label">°</span>
+        </div>
+        <button class="check-btn-sm" onclick="check4a_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4a-3"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check4a_final()">
+          Zusammenfassung anzeigen
+        </button>
+        <span class="scored-notice" id="notice-4a"></span>
+      </div>
+      <div class="feedback-box" id="feedback-4a"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         4b  CD nachweisen + Fläche ACD  (5 P)
+
+         Triangle ACD:
+           AC = 6.3 cm (given)
+           angle at D = 90° (dot)
+           angle at A (DAC) = 49°
+           → ε = angle at C = 41°
+
+         Part 1: Prove CD ≈ 4.8 cm
+           In right triangle ACD:
+           tan(49°) = CD / AD  ... but we need CD
+           Actually: sin(49°) = CD / AC
+           sin(49°) = CD / 6.3
+           CD = 6.3 · sin(49°) ≈ 6.3 · 0.7547 ≈ 4.755 ≈ 4.8 cm ✓
+
+         Part 2: Area of triangle ACD
+           AD = AC · cos(49°) = 6.3 · cos(49°) ≈ 6.3 · 0.6561 ≈ 4.13 cm
+           Area = 0.5 · AD · CD = 0.5 · 4.13 · 4.755 ≈ 9.82 cm²
+           OR: Area = 0.5 · AC² · sin(49°) · cos(49°)
+                    = 0.5 · 6.3² · sin(49°) · cos(49°) ≈ 9.82 cm²
+
+         Scoring (5 P):
+           4b-s1: identify correct trig ratio for CD → 1 P
+           4b-s2: calculate CD ≈ 4.8 cm → 1 P
+           4b-s3: identify formula for area → 1 P
+           4b-s4: calculate AD → 1 P
+           4b-s5: calculate area ≈ 9.82 cm² → 1 P
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">b)</div>
+
+      <!-- Part 1: Prove CD -->
+      <div class="part-block">
+        <p class="exercise-text">
+          <strong>Teil 1:</strong>
+          Weise nach, dass die Länge der Strecke
+          <em>CD</em> ungefähr <strong>4,8 cm</strong> ist.
+        </p>
+
+        <!-- S1: Which trig ratio gives CD? -->
+        <div class="step-block" id="4b-step1">
+          <div class="step-title">
+            Schritt 1 – Welche Formel liefert die Länge CD?
+          </div>
+          <p style="font-size:14px; margin-bottom:8px;">
+            Im rechtwinkligen Dreieck ACD gilt: Winkel bei D = 90°,
+            Winkel bei A = 49°, AC = 6,3 cm.
+          </p>
+          <div class="step-mc" id="smc-4b-1">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('4b-1',this)">
+              <div class="step-mc-cb"></div>
+              <span>CD = AC · tan(49°)</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('4b-1',this)">
+              <div class="step-mc-cb"></div>
+              <span>CD = AC · sin(49°)</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('4b-1',this)">
+              <div class="step-mc-cb"></div>
+              <span>CD = AC · cos(49°)</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('4b-1',this)">
+              <div class="step-mc-cb"></div>
+              <span>CD = AC ÷ sin(49°)</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check4b_step1()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-4b-1"></div>
+        </div>
+
+        <!-- S2: Calculate CD -->
+        <div class="step-block locked" id="4b-step2">
+          <div class="step-title">
+            Schritt 2 – Berechne CD
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">CD ≈</span>
+            <input class="unit-input" id="ans-4b-cd"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off"
+                   style="width:120px;">
+            <span class="unit-label">cm</span>
+          </div>
+          <button class="check-btn-sm" onclick="check4b_step2()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-4b-2"></div>
+        </div>
+      </div>
+
+      <!-- Part 2: Area of ACD -->
+      <div class="part-block">
+        <p class="exercise-text">
+          <strong>Teil 2:</strong>
+          Ermittle den Flächeninhalt des Dreiecks <em>ACD</em>.
+        </p>
+
+        <!-- S3: Area formula -->
+        <div class="step-block locked" id="4b-step3">
+          <div class="step-title">
+            Schritt 3 – Welche Formel verwendest du für den Flächeninhalt?
+          </div>
+          <div class="step-mc" id="smc-4b-3">
+            <div class="step-mc-option" data-val="A"
+                 onclick="selectStepMC('4b-3',this)">
+              <div class="step-mc-cb"></div>
+              <span>A = Grundseite · Höhe</span>
+            </div>
+            <div class="step-mc-option" data-val="B"
+                 onclick="selectStepMC('4b-3',this)">
+              <div class="step-mc-cb"></div>
+              <span>A = ½ · Grundseite · Höhe</span>
+            </div>
+            <div class="step-mc-option" data-val="C"
+                 onclick="selectStepMC('4b-3',this)">
+              <div class="step-mc-cb"></div>
+              <span>A = Grundseite²</span>
+            </div>
+            <div class="step-mc-option" data-val="D"
+                 onclick="selectStepMC('4b-3',this)">
+              <div class="step-mc-cb"></div>
+              <span>A = π · Grundseite²</span>
+            </div>
+          </div>
+          <button class="check-btn-sm" onclick="check4b_step3()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-4b-3"></div>
+        </div>
+
+        <!-- S4: Calculate AD -->
+        <div class="step-block locked" id="4b-step4">
+          <div class="step-title">
+            Schritt 4 – Berechne die Seite AD (die Grundseite des Dreiecks)
+          </div>
+          <p style="font-size:14px; margin-bottom:8px;">
+            Hinweis: AD ist die Ankathete zum Winkel 49° in dem
+            rechtwinkligen Dreieck ACD.
+          </p>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">AD ≈</span>
+            <input class="unit-input" id="ans-4b-ad"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off"
+                   style="width:120px;">
+            <span class="unit-label">cm</span>
+          </div>
+          <button class="check-btn-sm" onclick="check4b_step4()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-4b-4"></div>
+        </div>
+
+        <!-- S5: Calculate area -->
+        <div class="step-block locked" id="4b-step5">
+          <div class="step-title">
+            Schritt 5 – Berechne den Flächeninhalt des Dreiecks ACD
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">A<sub>ACD</sub> ≈</span>
+            <input class="unit-input" id="ans-4b-area"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off"
+                   style="width:140px;">
+            <span class="unit-label">cm²</span>
+          </div>
+          <button class="check-btn-sm" onclick="check4b_step5()">Prüfen</button>
+          <div class="inline-feedback" id="ifb-4b-5"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check4b_final()">
+          Zusammenfassung anzeigen
+        </button>
+        <span class="scored-notice" id="notice-4b"></span>
+      </div>
+      <div class="feedback-box" id="feedback-4b"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         4c*  Länge BC berechnen  (3 P)
+
+         Triangle ABC:
+           AB = AD + DB
+           We need AB first.
+           From triangle ACD: AD = AC · cos(49°) ≈ 4.13 cm
+           From triangle BCD (or directly from the figure):
+           Actually we need to find AB.
+
+           In triangle ABC:
+             angle at B = 36°
+             angle at C = 105° (given as angle BCD in figure,
+               but this is the full angle at C in the quadrilateral)
+             Note: angle ACB = angle at C in triangle ABC
+             angle ACB = 105° − ε = 105° − 41° = 64°
+
+           In triangle ABC:
+             angle at A (angle BAC) = 180° − 36° − 64° = 80°
+             AC = 6.3 cm (known)
+             Using sine rule:
+             BC / sin(80°) = AC / sin(36°)
+             BC = AC · sin(80°) / sin(36°)
+             BC = 6.3 · sin(80°) / sin(36°)
+             BC ≈ 6.3 · 0.9848 / 0.5878
+             BC ≈ 10.55 cm
+
+         Scoring (3 P):
+           4c-s1: identify angle ACB = 105° − 41° = 64° → 1 P
+           4c-s2: identify correct sine rule setup → 1 P
+           4c-s3: calculate BC ≈ 10.55 cm → 1 P
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">c) <span class="star-label">(*)</span></div>
+      <p class="exercise-text">
+        Berechne die Länge der Strecke <em>BC</em>.
+      </p>
+
+      <!-- S1: Find angle ACB -->
+      <div class="step-block" id="4c-step1">
+        <div class="step-title">
+          Schritt 1 – Wie groß ist der Winkel ACB im Dreieck ABC?
+        </div>
+        <p style="font-size:14px; margin-bottom:8px;">
+          Der Winkel bei C im Viereck beträgt 105°.
+          Der Winkel ε (aus Aufgabe a) liegt ebenfalls bei C.
+        </p>
+        <div class="step-mc" id="smc-4c-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('4c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>∠ACB = 105° + 41° = 146°</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('4c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>∠ACB = 105° − 41° = 64°</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('4c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>∠ACB = 41° (gleich wie ε)</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('4c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>∠ACB = 105° (unverändert)</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check4c_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4c-1"></div>
+      </div>
+
+      <!-- S2: Which rule and setup? -->
+      <div class="step-block locked" id="4c-step2">
+        <div class="step-title">
+          Schritt 2 – Welche Regel verwendest du und wie lautet der Ansatz?
+        </div>
+        <div class="step-mc" id="smc-4c-2">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('4c-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Satz des Pythagoras: BC² = AB² + AC²</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('4c-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Sinussatz:
+              BC / sin(∠BAC) = AC / sin(∠ABC)</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('4c-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>Cosinussatz: BC² = AB² + AC² − 2·AB·AC·cos(∠BAC)</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('4c-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>BC = AC · tan(∠ABC)</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check4c_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4c-2"></div>
+      </div>
+
+      <!-- S3: Calculate BC -->
+      <div class="step-block locked" id="4c-step3">
+        <div class="step-title">
+          Schritt 3 – Berechne BC
+        </div>
+        <p style="font-size:14px; margin-bottom:8px;">
+          Im Dreieck ABC:
+          ∠ABC = 36°, ∠ACB = 64°,
+          ∠BAC = 180° − 36° − 64° = 80°, AC = 6,3 cm.
+        </p>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">BC ≈</span>
+          <input class="unit-input" id="ans-4c-bc"
+                 type="text" inputmode="decimal"
+                 placeholder="" autocomplete="off"
+                 style="width:120px;">
+          <span class="unit-label">cm</span>
+        </div>
+        <button class="check-btn-sm" onclick="check4c_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-4c-3"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;
+                  flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check4c_final()">
+          Zusammenfassung anzeigen
+        </button>
+        <span class="scored-notice" id="notice-4c"></span>
+      </div>
+      <div class="feedback-box" id="feedback-4c"></div>
+    </div>
+
+  </div><!-- /task-content -->
+
+  <div class="nav-footer">
+    <button class="nav-btn"
+            onclick="navigateTo('aufgabe3.html')">← Zurück</button>
+    <span class="score-display">Punkte: 0 / 60</span>
+    <button class="nav-btn next"
+            onclick="navigateTo('aufgabe5.html')">Weiter →</button>
+  </div>
+
+</div><!-- /page -->
+
+<script src="exam.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   Aufgabe 4 – Viereck  (9 Punkte)
+
+   4a: S1=0P gate, S2=0P gate, S3=1P
+   4b: S1=1P, S2=1P, S3=1P, S4=1P, S5=1P
+   4c*: S1=1P, S2=1P, S3=1P
+
+   Computed values:
+   ε = 180 − 90 − 49 = 41°
+   CD = 6.3 · sin(49°) ≈ 4.754 cm
+   AD = 6.3 · cos(49°) ≈ 4.132 cm
+   Area ACD = 0.5 · AD · CD ≈ 9.815 cm²
+   ∠ACB = 105 − 41 = 64°
+   ∠BAC = 180 − 36 − 64 = 80°
+   BC = 6.3 · sin(80°) / sin(36°) ≈ 10.55 cm
+   ══════════════════════════════════════════ */
+
+const stepMCSel = {};
+
+const EPS_DEG  = 41;
+const CD_CM    = 6.3 * Math.sin(49 * Math.PI / 180);   // ≈ 4.754
+const AD_CM    = 6.3 * Math.cos(49 * Math.PI / 180);   // ≈ 4.132
+const AREA_ACD = 0.5 * AD_CM * CD_CM;                  // ≈ 9.815
+const ACB_DEG  = 64;
+const BAC_DEG  = 80;
+const BC_CM    = 6.3 * Math.sin(BAC_DEG * Math.PI / 180)
+               / Math.sin(36  * Math.PI / 180);        // ≈ 10.55
+
+/* ── MC helpers ── */
+function selectStepMC(groupId, el) {
+  const container = el.closest('.step-mc');
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.step-mc-cb');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.step-mc-cb');
+  if (cb) cb.textContent = '✓';
+  stepMCSel[groupId] = el.dataset.val;
+  saveCustom(`stepmcs-${groupId}`, el.dataset.val);
+}
+
+function restoreStepMC(groupId) {
+  const val = loadCustom(`stepmcs-${groupId}`);
+  if (!val) return;
+  stepMCSel[groupId] = val;
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    if (o.dataset.val === val) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.step-mc-cb');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+
+function markStepMC(groupId, correctVal) {
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  const chosen = stepMCSel[groupId];
+  if (!chosen) return;
+  const ok = (chosen === correctVal);
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosen)
+      o.classList.add(ok ? 'correct' : 'incorrect');
+  });
+  saveResult(`smc_${groupId}_chosen`, chosen);
+  saveResult(`smc_${groupId}_result`, ok ? 'correct' : 'incorrect');
+}
+
+function restoreStepMCResult(groupId) {
+  const chosen = loadResult(`smc_${groupId}_chosen`);
+  const result = loadResult(`smc_${groupId}_result`);
+  if (!chosen || !result) return;
+  const container = document.getElementById(`smc-${groupId}`);
+  if (!container) return;
+  container.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === chosen) o.classList.add(result);
+  });
+}
+
+/* ── Unlock ── */
+function unlockStep(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
+}
+function restoreUnlocked(id) {
+  if (loadCustom(`unlocked-${id}`)) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('locked');
+  }
+}
+
+/* ── Inline feedback with badge ── */
+function showInlineFB(id, ok, hint, storedEarned, maxPts) {
+  const el = document.getElementById(`ifb-${id}`);
+  if (!el) return;
+  const cssClass = ok ? 'correct' : 'incorrect';
+
+  let badge = '';
+  if (maxPts != null && maxPts > 0) {
+    const display = (storedEarned != null) ? storedEarned : 0;
+    badge = `<span style="
+      display:inline-block;
+      background:${display > 0 ? '#27ae60' : '#c0392b'};
+      color:white; font-size:12px; font-weight:bold;
+      padding:2px 8px; border-radius:10px; margin-left:6px;
+      vertical-align:middle;">${display}/${maxPts}&nbsp;P</span>`;
+  }
+
+  const html = ok
+    ? `✅ Richtig!${badge}`
+    : `❌ Noch nicht richtig.${badge}`
+      + (hint
+          ? `<br><span style="font-style:italic;font-size:13px;">
+             ${hint}</span>`
+          : '');
+  el.className = `inline-feedback show ${cssClass}`;
+  el.innerHTML = html;
+  saveInlineFeedback(id, html, cssClass);
+}
+
+/* ── Summary ── */
+function showSubExerciseSummary(feedbackId, noticeId, scoreKeys, maxTotal) {
+  const state  = ExamState.load();
+  const earned = scoreKeys.reduce((sum, k) =>
+    sum + (state.scores[k] ? (state.scores[k].earned || 0) : 0), 0);
+  const fb = document.getElementById(feedbackId);
+  if (!fb) return;
+  const allDone  = Math.abs(earned - maxTotal) < 0.01;
+  const cssClass = allDone ? 'correct' : 'incorrect';
+  const badge    = `<span style="
+    display:inline-block;
+    background:${allDone ? '#27ae60' : '#e67e22'};
+    color:white; font-size:13px; font-weight:bold;
+    padding:3px 10px; border-radius:10px; margin-left:8px;">
+    ${earned}/${maxTotal}&nbsp;P</span>`;
+  fb.className = `feedback-box show ${cssClass}`;
+  fb.innerHTML = allDone
+    ? `<span class="feedback-icon">✅</span>
+       <strong>Alle Schritte richtig!</strong>${badge}`
+    : `<span class="feedback-icon">⚠️</span>
+       <strong>Teilweise richtig.</strong>${badge}
+       <div class="hint-text">Überprüfe die rot markierten Schritte.</div>`;
+  const noticeEl = document.getElementById(noticeId);
+  if (noticeEl) {
+    if (earned > 0) {
+      noticeEl.className = 'scored-notice earned';
+      noticeEl.textContent = `✓ ${earned}/${maxTotal} Punkt(e) vergeben`;
+    } else {
+      noticeEl.className = 'scored-notice not-earned';
+      noticeEl.textContent =
+        `0/${maxTotal} Punkt(e) – weiteres Üben möglich`;
+    }
+  }
+  saveFeedback(feedbackId.replace('feedback-',''), fb.innerHTML, cssClass);
+}
+
+/* ══════════════════════════════════════════
+   4a  (1 P)
+   S1: formula meaning → 0 P gate
+   S2: location of ε   → 0 P gate
+   S3: calculate ε     → 1 P
+   ══════════════════════════════════════════ */
+
+function check4a_step1() {
+  if (!stepMCSel['4a-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4a-1'] === 'B';
+  markStepMC('4a-1','B');
+  showInlineFB('4a-1', ok,
+    ok ? '' :
+    'Die Winkelsumme im Dreieck beträgt 180°. '
+    + 'Zwei Winkel (90° und 49°) sind bekannt.');
+  if (ok) unlockStep('4a-step2');
+  updateScoreDisplay();
+}
+
+function check4a_step2() {
+  if (!stepMCSel['4a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4a-2'] === 'B';
+  markStepMC('4a-2','B');
+  showInlineFB('4a-2', ok,
+    ok ? '' :
+    'ε ist der dritte Winkel im rechtwinkligen Dreieck ACD. '
+    + 'Der rechte Winkel liegt bei D, der 49°-Winkel bei A.');
+  if (ok) unlockStep('4a-step3');
+  updateScoreDisplay();
+}
+
+function check4a_step3() {
+  const val = parseNum(document.getElementById('ans-4a-eps').value);
+  const ok  = !isNaN(val) && Math.abs(val - EPS_DEG) < 0.6;
+  clearInputStyle('ans-4a-eps');
+  applyInputStyle('ans-4a-eps', ok);
+  const stored = recordScore('4a-s3', 1, ok);
+  showInlineFB('4a-3', ok,
+    ok ? '' :
+    'Winkelsumme im Dreieck = 180°. '
+    + 'Subtrahiere die beiden bekannten Winkel.',
+    stored, 1);
+  updateNotice('4a-s3');
+  updateScoreDisplay();
+}
+
+function check4a_final() {
+  showSubExerciseSummary('feedback-4a','notice-4a',['4a-s3'], 1);
+}
+
+/* ══════════════════════════════════════════
+   4b  (5 P)
+   S1: trig ratio for CD    → 1 P
+   S2: calculate CD         → 1 P
+   S3: area formula         → 1 P
+   S4: calculate AD         → 1 P
+   S5: calculate area       → 1 P
+   ══════════════════════════════════════════ */
+
+function check4b_step1() {
+  if (!stepMCSel['4b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4b-1'] === 'B';
+  markStepMC('4b-1','B');
+  const stored = recordScore('4b-s1', 1, ok);
+  showInlineFB('4b-1', ok,
+    ok ? '' :
+    'CD ist die Gegenkathete zum Winkel 49°. '
+    + 'AC ist die Hypotenuse. '
+    + 'Welche Funktion verknüpft Gegenkathete und Hypotenuse?',
+    stored, 1);
+  if (ok) unlockStep('4b-step2');
+  updateNotice('4b-s1');
+  updateScoreDisplay();
+}
+
+function check4b_step2() {
+  const val = parseNum(document.getElementById('ans-4b-cd').value);
+  const ok  = !isNaN(val) && Math.abs(val - CD_CM) < 0.1;
+  clearInputStyle('ans-4b-cd');
+  applyInputStyle('ans-4b-cd', ok);
+  const stored = recordScore('4b-s2', 1, ok);
+  showInlineFB('4b-2', ok,
+    ok ? '' :
+    'Setze AC\u00a0=\u00a06,3 und den Winkel 49° in die Formel ein.',
+    stored, 1);
+  if (ok) unlockStep('4b-step3');
+  updateNotice('4b-s2');
+  updateScoreDisplay();
+}
+
+function check4b_step3() {
+  if (!stepMCSel['4b-3']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4b-3'] === 'B';
+  markStepMC('4b-3','B');
+  const stored = recordScore('4b-s3', 1, ok);
+  showInlineFB('4b-3', ok,
+    ok ? '' :
+    'Der Flächeninhalt eines Dreiecks = ½ · Grundseite · Höhe.',
+    stored, 1);
+  if (ok) unlockStep('4b-step4');
+  updateNotice('4b-s3');
+  updateScoreDisplay();
+}
+
+function check4b_step4() {
+  const val = parseNum(document.getElementById('ans-4b-ad').value);
+  const ok  = !isNaN(val) && Math.abs(val - AD_CM) < 0.1;
+  clearInputStyle('ans-4b-ad');
+  applyInputStyle('ans-4b-ad', ok);
+  const stored = recordScore('4b-s4', 1, ok);
+  showInlineFB('4b-4', ok,
+    ok ? '' :
+    'AD ist die Ankathete zum Winkel 49°, AC ist die Hypotenuse. '
+    + 'Welche Funktion verknüpft Ankathete und Hypotenuse?',
+    stored, 1);
+  if (ok) unlockStep('4b-step5');
+  updateNotice('4b-s4');
+  updateScoreDisplay();
+}
+
+function check4b_step5() {
+  const val = parseNum(document.getElementById('ans-4b-area').value);
+  const ok  = !isNaN(val) && Math.abs(val - AREA_ACD) < 0.2;
+  clearInputStyle('ans-4b-area');
+  applyInputStyle('ans-4b-area', ok);
+  const stored = recordScore('4b-s5', 1, ok);
+  showInlineFB('4b-5', ok,
+    ok ? '' :
+    'Setze AD und CD als Grundseite und Höhe in die Formel ein.',
+    stored, 1);
+  updateNotice('4b-s5');
+  updateScoreDisplay();
+}
+
+function check4b_final() {
+  showSubExerciseSummary(
+    'feedback-4b','notice-4b',
+    ['4b-s1','4b-s2','4b-s3','4b-s4','4b-s5'], 5
+  );
+}
+
+/* ══════════════════════════════════════════
+   4c*  (3 P)
+   S1: ∠ACB = 64°     → 1 P
+   S2: sine rule setup → 1 P
+   S3: BC ≈ 10.55 cm  → 1 P
+   ══════════════════════════════════════════ */
+
+function check4c_step1() {
+  if (!stepMCSel['4c-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4c-1'] === 'B';
+  markStepMC('4c-1','B');
+  const stored = recordScore('4c-s1', 1, ok);
+  showInlineFB('4c-1', ok,
+    ok ? '' :
+    'Der Gesamtwinkel bei C im Viereck ist 105°. '
+    + 'Davon ist ε\u00a0=\u00a041° der Anteil im Dreieck ACD. '
+    + 'Der Rest gehört zum Dreieck ABC.',
+    stored, 1);
+  if (ok) unlockStep('4c-step2');
+  updateNotice('4c-s1');
+  updateScoreDisplay();
+}
+
+function check4c_step2() {
+  if (!stepMCSel['4c-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['4c-2'] === 'B';
+  markStepMC('4c-2','B');
+  const stored = recordScore('4c-s2', 1, ok);
+  showInlineFB('4c-2', ok,
+    ok ? '' :
+    'Im Dreieck ABC sind zwei Winkel und eine Seite bekannt '
+    + '(∠ABC\u00a0=\u00a036°, ∠ACB\u00a0=\u00a064°, AC\u00a0=\u00a06,3\u00a0cm). '
+    + 'Welcher Satz gilt für diesen Fall?',
+    stored, 1);
+  if (ok) unlockStep('4c-step3');
+  updateNotice('4c-s2');
+  updateScoreDisplay();
+}
+
+function check4c_step3() {
+  const val = parseNum(document.getElementById('ans-4c-bc').value);
+  const ok  = !isNaN(val) && Math.abs(val - BC_CM) < 0.15;
+  clearInputStyle('ans-4c-bc');
+  applyInputStyle('ans-4c-bc', ok);
+  const stored = recordScore('4c-s3', 1, ok);
+  showInlineFB('4c-3', ok,
+    ok ? '' :
+    'Berechne zunächst ∠BAC\u00a0=\u00a0180°\u00a0−\u00a036°\u00a0−\u00a064°, '
+    + 'dann wende den Sinussatz an: '
+    + 'BC\u00a0÷\u00a0sin(∠BAC)\u00a0=\u00a0AC\u00a0÷\u00a0sin(∠ABC).',
+    stored, 1);
+  markTaskCompleted('task4');
+  updateNotice('4c-s3');
+  updateScoreDisplay();
+}
+
+function check4c_final() {
+  showSubExerciseSummary(
+    'feedback-4c','notice-4c',
+    ['4c-s1','4c-s2','4c-s3'], 3
+  );
+}
+
+/* ══════════════════════════════════════════
+   Init
+   ══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+
+  ['4a-1','4a-2',
+   '4b-1','4b-3',
+   '4c-1','4c-2']
+    .forEach(id => restoreStepMC(id));
+
+  ['4a-1','4a-2',
+   '4b-1','4b-3',
+   '4c-1','4c-2']
+    .forEach(id => restoreStepMCResult(id));
+
+  ['4a-step2','4a-step3',
+   '4b-step2','4b-step3','4b-step4','4b-step5',
+   '4c-step2','4c-step3']
+    .forEach(id => restoreUnlocked(id));
+
+  ['4a-1','4a-2','4a-3',
+   '4b-1','4b-2','4b-3','4b-4','4b-5',
+   '4c-1','4c-2','4c-3']
+    .forEach(id => restoreInlineFeedback(id));
+
+  ['4a','4b','4c'].forEach(id => restoreFeedback(id));
+
+  ['4a-s3',
+   '4b-s1','4b-s2','4b-s3','4b-s4','4b-s5',
+   '4c-s1','4c-s2','4c-s3']
+    .forEach(id => updateNotice(id));
+
+  /* Summary notices */
+  const keyMap = {
+    '4a': { keys: ['4a-s3'],                                    max: 1 },
+    '4b': { keys: ['4b-s1','4b-s2','4b-s3','4b-s4','4b-s5'],   max: 5 },
+    '4c': { keys: ['4c-s1','4c-s2','4c-s3'],                   max: 3 }
+  };
+  const st = ExamState.load();
+  Object.keys(keyMap).forEach(id => {
+    const { keys, max } = keyMap[id];
+    const noticeEl = document.getElementById(`notice-${id}`);
+    if (!noticeEl) return;
+    const earned = keys.reduce((s,k) =>
+      s + (st.scores[k]?.earned || 0), 0);
+    const anyAttempted = keys.some(k => st.scores[k]?.attempts > 0);
+    if (!anyAttempted) return;
+    if (earned > 0) {
+      noticeEl.className = 'scored-notice earned';
+      noticeEl.textContent = `✓ ${earned}/${max} Punkt(e) vergeben`;
+    } else {
+      noticeEl.className = 'scored-notice not-earned';
+      noticeEl.textContent =
+        `0/${max} Punkt(e) – weiteres Üben möglich`;
+    }
+  });
+
+  updateScoreDisplay();
+});
+</script>
+</body>
+</html>
