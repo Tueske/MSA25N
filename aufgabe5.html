@@ -503,6 +503,9 @@
 
 const stepMCSel = {};
 
+/* ── Place this at the VERY TOP of the <script> block,
+     right after const stepMCSel = {};              ── */
+
 /* ══════════════════════════════════════════
    Coordinate system canvas with interactive
    line-drawing tool (two draggable points)
@@ -510,14 +513,14 @@ const stepMCSel = {};
 
 const cv   = document.getElementById('coord-canvas');
 const cctx = cv.getContext('2d');
-const OX   = 220, OY = 360;  /* origin in pixels */
-const SCALE = 50;             /* pixels per unit */
+const OX   = 220, OY = 360;
+const SCALE = 50;
 
-/* ── Two user-placed points ── */
-let userPoints = []; /* [{x, y}] in math coords, max 2 */
-let dragIndex  = -1; /* which point is being dragged */
+/* ── Two user-placed points (math coords) ── */
+let userPoints = [];
+let dragIndex  = -1;
 
-/* Restore saved points */
+/* Restore saved points immediately */
 (function restorePoints() {
   const saved = loadCustom('5-line-points');
   if (saved && Array.isArray(saved) && saved.length <= 2) {
@@ -533,9 +536,25 @@ function canvasToMath(px, py) {
   return { mx: (px - OX) / SCALE, my: (OY - py) / SCALE };
 }
 
-/* ── Snap to nearest 0.5 in math coords ── */
+/* ── Snap to nearest 1/6 so both ½ and ⅓ multiples work ── */
 function snapMath(v) {
-  return Math.round(v * 2) / 2;
+  return Math.round(v * 6) / 6;
+}
+
+/* ── Round for display: show max 2 decimal places ── */
+function displayNum(v) {
+  const r = Math.round(v * 100) / 100;
+  return String(r).replace('.', ',');
+}
+
+/* ── Get line parameters from user points ── */
+function getUserLineParams() {
+  if (userPoints.length < 2) return null;
+  const p0 = userPoints[0], p1 = userPoints[1];
+  if (Math.abs(p1.x - p0.x) < 0.001) return null;
+  const m = (p1.y - p0.y) / (p1.x - p0.x);
+  const b = p0.y - m * p0.x;
+  return { m, b };
 }
 
 /* ── Draw everything ── */
@@ -569,7 +588,9 @@ function drawCoordSystem() {
   for (let x = -4; x <= 4; x++) {
     if (x === 0) continue;
     const px = OX + x * SCALE;
-    cctx.beginPath(); cctx.moveTo(px, OY - 4); cctx.lineTo(px, OY + 4); cctx.stroke();
+    cctx.beginPath();
+    cctx.moveTo(px, OY - 4); cctx.lineTo(px, OY + 4);
+    cctx.stroke();
     cctx.fillText(String(x), px, OY + 6);
   }
   cctx.textAlign = 'right';
@@ -577,11 +598,13 @@ function drawCoordSystem() {
   for (let y = -2; y <= 7; y++) {
     if (y === 0) continue;
     const py = OY - y * SCALE;
-    cctx.beginPath(); cctx.moveTo(OX - 4, py); cctx.lineTo(OX + 4, py); cctx.stroke();
+    cctx.beginPath();
+    cctx.moveTo(OX - 4, py); cctx.lineTo(OX + 4, py);
+    cctx.stroke();
     cctx.fillText(String(y), OX - 8, py);
   }
 
-  /* Origin label */
+  /* Origin */
   cctx.textAlign = 'right';
   cctx.textBaseline = 'top';
   cctx.fillText('O', OX - 6, OY + 6);
@@ -595,7 +618,7 @@ function drawCoordSystem() {
   cctx.textBaseline = 'bottom';
   cctx.fillText('y', OX + 14, 14);
 
-  /* ── Draw f(x) = ⅔x + 1 ── */
+  /* ── f(x) = ⅔x + 1 ── */
   cctx.strokeStyle = '#1a5276';
   cctx.lineWidth = 2;
   cctx.beginPath();
@@ -603,11 +626,9 @@ function drawCoordSystem() {
     const x = (px - OX) / SCALE;
     const y = (2/3) * x + 1;
     const py = OY - y * SCALE;
-    if (px === 0) cctx.moveTo(px, py);
-    else cctx.lineTo(px, py);
+    if (px === 0) cctx.moveTo(px, py); else cctx.lineTo(px, py);
   }
   cctx.stroke();
-
   /* f label */
   cctx.font = 'bold italic 14px Arial';
   cctx.fillStyle = '#1a5276';
@@ -617,25 +638,16 @@ function drawCoordSystem() {
   const fLy = OY - ((2/3)*3.5 + 1) * SCALE;
   cctx.fillText('f', fLx + 8, fLy - 4);
 
-  /* ── Draw user line (if two points placed) ── */
+  /* ── User line (if 2 points) ── */
   if (userPoints.length === 2) {
-    const p0 = userPoints[0];
-    const p1 = userPoints[1];
-
-    /* Extend line across full canvas */
+    const p0 = userPoints[0], p1 = userPoints[1];
     if (Math.abs(p1.x - p0.x) > 0.001) {
       const slope = (p1.y - p0.y) / (p1.x - p0.x);
       const yInt  = p0.y - slope * p0.x;
-
-      /* Find canvas-edge intersections */
-      const xMin = (0 - OX) / SCALE;
-      const xMax = (W - OX) / SCALE;
-      const yAtXMin = slope * xMin + yInt;
-      const yAtXMax = slope * xMax + yInt;
-
-      const c0 = mathToCanvas(xMin, yAtXMin);
-      const c1 = mathToCanvas(xMax, yAtXMax);
-
+      const xMin  = (0 - OX) / SCALE;
+      const xMax  = (W - OX) / SCALE;
+      const c0 = mathToCanvas(xMin, slope * xMin + yInt);
+      const c1 = mathToCanvas(xMax, slope * xMax + yInt);
       cctx.strokeStyle = '#e74c3c';
       cctx.lineWidth   = 2;
       cctx.setLineDash([]);
@@ -643,7 +655,6 @@ function drawCoordSystem() {
       cctx.moveTo(c0.px, c0.py);
       cctx.lineTo(c1.px, c1.py);
       cctx.stroke();
-
       /* g label */
       cctx.font = 'bold italic 14px Arial';
       cctx.fillStyle = '#e74c3c';
@@ -655,7 +666,7 @@ function drawCoordSystem() {
       const c0 = mathToCanvas(p0.x, -3);
       const c1 = mathToCanvas(p0.x, 8);
       cctx.strokeStyle = '#e74c3c';
-      cctx.lineWidth   = 2;
+      cctx.lineWidth = 2;
       cctx.beginPath();
       cctx.moveTo(c0.px, c0.py);
       cctx.lineTo(c1.px, c1.py);
@@ -663,13 +674,13 @@ function drawCoordSystem() {
     }
   }
 
-  /* ── Draw user points ── */
-  userPoints.forEach((pt, i) => {
+  /* ── User points ── */
+  userPoints.forEach((pt) => {
     const c = mathToCanvas(pt.x, pt.y);
     /* Outer ring */
     cctx.beginPath();
     cctx.arc(c.px, c.py, 10, 0, 2 * Math.PI);
-    cctx.fillStyle = 'rgba(231, 76, 60, 0.2)';
+    cctx.fillStyle = 'rgba(231,76,60,0.2)';
     cctx.fill();
     cctx.strokeStyle = '#e74c3c';
     cctx.lineWidth = 2;
@@ -684,10 +695,12 @@ function drawCoordSystem() {
     cctx.fillStyle = '#c0392b';
     cctx.textAlign = 'left';
     cctx.textBaseline = 'bottom';
-    cctx.fillText(`(${pt.x}|${pt.y})`, c.px + 12, c.py - 6);
+    cctx.fillText(
+      `(${displayNum(pt.x)}|${displayNum(pt.y)})`,
+      c.px + 12, c.py - 6
+    );
   });
 
-  /* ── Update info text ── */
   updateLineInfo();
 }
 
@@ -698,42 +711,41 @@ function updateLineInfo() {
     info.textContent = 'Setze den ersten Punkt.';
   } else if (userPoints.length === 1) {
     info.textContent =
-      `Punkt 1: (${userPoints[0].x}|${userPoints[0].y}) — setze den zweiten Punkt.`;
+      `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}) `
+      + '— setze den zweiten Punkt.';
   } else {
-    const p0 = userPoints[0], p1 = userPoints[1];
-    let slopeStr = '';
-    let yIntStr  = '';
-    if (Math.abs(p1.x - p0.x) > 0.001) {
-      const m = (p1.y - p0.y) / (p1.x - p0.x);
-      const b = p0.y - m * p0.x;
-      /* Display as fraction if close to 2/3 */
-      const mRound = Math.round(m * 1000) / 1000;
-      const bRound = Math.round(b * 100) / 100;
-      slopeStr = `m = ${mRound}`;
-      yIntStr  = `b = ${bRound}`;
+    const params = getUserLineParams();
+    if (params) {
+      info.innerHTML =
+        `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}), `
+        + `Punkt 2: (${displayNum(userPoints[1].x)}|${displayNum(userPoints[1].y)})<br>`
+        + `Steigung m ≈ ${displayNum(params.m)}, `
+        + `y-Achsenabschnitt b ≈ ${displayNum(params.b)}`;
     } else {
-      slopeStr = 'Vertikale Linie (keine Steigung)';
+      info.textContent = 'Vertikale Linie (keine Funktion)';
     }
-    info.innerHTML =
-      `Punkt 1: (${p0.x}|${p0.y}), Punkt 2: (${p1.x}|${p1.y})<br>`;
   }
 }
 
-/* ── Save points to localStorage ── */
 function savePoints() {
   saveCustom('5-line-points', userPoints);
 }
 
-/* ── Hit test: is (cx, cy) near a point? ── */
+function resetLine() {
+  userPoints = [];
+  savePoints();
+  drawCoordSystem();
+}
+
+/* ── Hit test ── */
 function hitTestPoint(cx, cy) {
   for (let i = 0; i < userPoints.length; i++) {
     const c = mathToCanvas(userPoints[i].x, userPoints[i].y);
-    if (Math.hypot(cx - c.px, cy - c.py) < 20) return i;
+    if (Math.hypot(cx - c.px, cy - c.py) < 22) return i;
   }
   return -1;
 }
 
-/* ── Get canvas-relative coordinates from event ── */
 function getCanvasXY(e) {
   const rect = cv.getBoundingClientRect();
   const scaleX = cv.width  / rect.width;
@@ -751,20 +763,14 @@ cv.addEventListener('mousedown', function(e) {
   const { cx, cy } = getCanvasXY(e);
   const hit = hitTestPoint(cx, cy);
   if (hit >= 0) {
-    /* Start dragging existing point */
     dragIndex = hit;
   } else if (userPoints.length < 2) {
-    /* Place new point */
     const m = canvasToMath(cx, cy);
     userPoints.push({ x: snapMath(m.mx), y: snapMath(m.my) });
     savePoints();
     drawCoordSystem();
-  } else {
-    /* Already 2 points — check if near one to drag */
-    dragIndex = -1;
   }
 });
-
 cv.addEventListener('mousemove', function(e) {
   if (dragIndex < 0) return;
   const { cx, cy } = getCanvasXY(e);
@@ -772,20 +778,12 @@ cv.addEventListener('mousemove', function(e) {
   userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
   drawCoordSystem();
 });
-
 cv.addEventListener('mouseup', function() {
-  if (dragIndex >= 0) {
-    savePoints();
-    drawCoordSystem();
-  }
+  if (dragIndex >= 0) { savePoints(); drawCoordSystem(); }
   dragIndex = -1;
 });
-
 cv.addEventListener('mouseleave', function() {
-  if (dragIndex >= 0) {
-    savePoints();
-    drawCoordSystem();
-  }
+  if (dragIndex >= 0) { savePoints(); drawCoordSystem(); }
   dragIndex = -1;
 });
 
@@ -803,7 +801,6 @@ cv.addEventListener('touchstart', function(e) {
     drawCoordSystem();
   }
 }, { passive: false });
-
 cv.addEventListener('touchmove', function(e) {
   e.preventDefault();
   if (dragIndex < 0) return;
@@ -812,17 +809,14 @@ cv.addEventListener('touchmove', function(e) {
   userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
   drawCoordSystem();
 }, { passive: false });
-
-cv.addEventListener('touchend', function(e) {
-  if (dragIndex >= 0) {
-    savePoints();
-    drawCoordSystem();
-  }
+cv.addEventListener('touchend', function() {
+  if (dragIndex >= 0) { savePoints(); drawCoordSystem(); }
   dragIndex = -1;
 });
 
-/* Initial draw */
 drawCoordSystem();
+
+
 /* ══════════════════════════════════════════
    5a  (1 P)
    Sy = (0, 1)
@@ -868,8 +862,13 @@ function getUserLineParams() {
   return { m, b };
 }
 
+/* ══════════════════════════════════════════
+   5b check functions
+   S1: drawn line parallel to f → 1.5 P
+   S2: equation g(x) = mx + b  → 1.5 P
+   ══════════════════════════════════════════ */
+
 function check5b_step1() {
-  /* Check drawn line: slope must be ≈ ⅔, y-intercept must ≠ 1 */
   const params = getUserLineParams();
 
   if (!params) {
@@ -879,7 +878,8 @@ function check5b_step1() {
     return;
   }
 
-  const slopeOk = Math.abs(params.m - 2/3) < 0.05;
+  /* Tolerance 0.08 for slope to account for snap rounding */
+  const slopeOk = Math.abs(params.m - 2/3) < 0.08;
   const diffB   = Math.abs(params.b - 1) > 0.05;
   const ok      = slopeOk && diffB;
 
@@ -889,10 +889,10 @@ function check5b_step1() {
   if (!slopeOk) {
     hint = 'Die gezeichnete Gerade hat nicht dieselbe Steigung wie f. '
       + 'Parallele Geraden haben eine gemeinsame Eigenschaft – '
-      + 'überprüfe die Steigung deiner Geraden.';
+      + 'überprüfe die Steigung.';
   } else if (!diffB) {
-    hint = 'Deine Gerade hat die richtige Steigung, liegt aber '
-      + 'genau auf f. Verschiebe einen Punkt nach oben oder unten.';
+    hint = 'Deine Gerade hat die richtige Steigung, liegt aber genau auf f. '
+      + 'Verschiebe einen Punkt nach oben oder unten.';
   }
 
   showInlineFB('5b-1', ok, hint, stored, 1.5);
@@ -902,36 +902,38 @@ function check5b_step1() {
 }
 
 function check5b_step2() {
-  /* Check equation: m = ⅔, b ≠ 1 */
   const mRaw = document.getElementById('ans-5b-m').value;
   const bRaw = document.getElementById('ans-5b-b').value;
 
-  /* Accept 2/3, 0.667, 0,667 etc. for m */
-  const mVal = fractionCheck(mRaw, 2, 3)
-    ? 2/3
-    : parseNum(mRaw);
+  /* Accept 2/3, 0.667, 0,667 etc. */
+  let mVal;
+  if (fractionCheck(mRaw, 2, 3)) {
+    mVal = 2/3;
+  } else {
+    mVal = parseNum(mRaw);
+  }
   const bVal = parseNum(bRaw);
 
   const mOk = !isNaN(mVal) && Math.abs(mVal - 2/3) < 0.02;
   const bOk = !isNaN(bVal) && Math.abs(bVal - 1) > 0.01;
   const ok  = mOk && bOk;
 
-  /* Additionally check consistency with drawn line if available */
-  const params = getUserLineParams();
-  let consistentHint = '';
-  if (ok && params) {
-    const drawnMOk = Math.abs(params.m - 2/3) < 0.05;
-    const drawnBClose = Math.abs(params.b - bVal) < 0.1;
-    if (!drawnMOk || !drawnBClose) {
-      consistentHint = ' (Hinweis: Deine Gleichung und die gezeichnete '
-        + 'Gerade stimmen nicht überein – überprüfe beides.)';
-    }
-  }
-
   clearInputStyle('ans-5b-m');
   clearInputStyle('ans-5b-b');
   applyInputStyle('ans-5b-m', mOk);
   applyInputStyle('ans-5b-b', bOk);
+
+  /* Check consistency with drawn line */
+  let extra = '';
+  const params = getUserLineParams();
+  if (ok && params) {
+    const drawnMOk = Math.abs(params.m - 2/3) < 0.08;
+    const drawnBClose = Math.abs(params.b - bVal) < 0.15;
+    if (!drawnMOk || !drawnBClose) {
+      extra = ' (Achtung: Deine Gleichung und die gezeichnete Gerade '
+        + 'stimmen nicht überein.)';
+    }
+  }
 
   const stored = recordPartialScore('5b-s2', ok ? 1.5 : 0, 1.5);
 
@@ -945,7 +947,7 @@ function check5b_step2() {
   }
 
   showInlineFB('5b-2', ok,
-    ok ? consistentHint : hint,
+    ok ? extra : hint,
     stored, 1.5);
   updateNotice('5b-s2');
   updateScoreDisplay();
