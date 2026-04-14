@@ -1026,13 +1026,26 @@ function check5d_step3() {
 }
 
 function check5d_step4() {
-  const y1v = parseNum(document.getElementById('ans-5d-y1').value);
-  const y2v = parseNum(document.getElementById('ans-5d-y2').value);
-  const vals = [y1v, y2v].sort((a,b) => a-b);
-  const ok = !isNaN(vals[0]) && !isNaN(vals[1])
-    && Math.abs(vals[0] - 1) < 0.05 && Math.abs(vals[1] - 5/3) < 0.05;
+  const y1Raw = document.getElementById('ans-5d-y1').value;
+  const y2Raw = document.getElementById('ans-5d-y2').value;
+  
+  // Check y1 = 1
+  const y1v = parseNum(y1Raw);
+  const y1Ok = !isNaN(y1v) && Math.abs(y1v - 1) < 0.05;
+  
+  // Check y2 = 5/3 (accept fraction notation or decimal)
+  let y2Ok = false;
+  if (fractionCheck(y2Raw, 5, 3)) {
+    y2Ok = true;
+  } else {
+    const y2v = parseNum(y2Raw);
+    y2Ok = !isNaN(y2v) && Math.abs(y2v - 5/3) < 0.05;
+  }
+  
+  const ok = y1Ok && y2Ok;
   clearInputStyle('ans-5d-y1'); clearInputStyle('ans-5d-y2');
-  applyInputStyle('ans-5d-y1', ok); applyInputStyle('ans-5d-y2', ok);
+  applyInputStyle('ans-5d-y1', y1Ok);
+  applyInputStyle('ans-5d-y2', y2Ok);
   const stored = recordScore('5d-s4', 1, ok);
   showInlineFB('5d-4', ok,
     ok ? '' : 'Setze die x-Werte in f(x) = ⅔x + 1 ein.',
