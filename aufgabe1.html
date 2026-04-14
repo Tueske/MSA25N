@@ -793,7 +793,7 @@ function check1f() {
     || ct.includes('3x3');     // 3x3 using 'x' as multiplication
   const has54 = ct.includes('54');
   
-  const calcOk = calcText.trim().length > 5 && has6 && hasSquareForm && has54;
+  const calcOk = calcText.trim().length > 5 && has6 && hasSquareForm;
   calcEl.classList.add(calcOk ? 'correct' : 'incorrect');
   saveResult('ans-1f-calc', calcOk ? 'correct' : 'incorrect');
 
