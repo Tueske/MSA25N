@@ -342,7 +342,7 @@
           <div class="step-mc-option" data-val="C-sphere"
                onclick="selectStepMC('2b-1',this)">
             <div class="step-mc-cb"></div>
-            <span>V =
+            <span>V = 2 · 
               <span class="frac"><span class="num">4</span>
               <span class="den">3</span></span> · π · r³</span>
           </div>
@@ -413,7 +413,7 @@
           <div class="step-mc-option" data-val="C-sphere"
                onclick="selectStepMC('2b-3',this)">
             <div class="step-mc-cb"></div>
-            <span>V =
+            <span>V = 2 · 
               <span class="frac"><span class="num">4</span>
               <span class="den">3</span></span> · π · r³</span>
           </div>
@@ -727,22 +727,19 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 2 – Kugelkerze  (9 Punkte)
+   Badge always shows actually-stored earned,
+   never a computed value. Points only on
+   first correct attempt.
    ══════════════════════════════════════════ */
 
-/* ── Module-level variables ──
-   Initialised to null; populated in init()
-   after DOMContentLoaded has fired.          */
 const stepMCSel  = {};
-let   what1Choice = null;   // 'box' | 'sphere' | null
+let   what1Choice = null;
 
 const BOX_V     = 20.5 * 10.5 * 10.5;
 const CANDLES_V = 2 * (4/3) * Math.PI * 125;
 const PCT       = (CANDLES_V / BOX_V) * 100;
 
-/* ══════════════════════════════════════════
-   MC helpers
-   ══════════════════════════════════════════ */
-
+/* ── MC helpers ── */
 function selectStepMC(groupId, el) {
   const container = el.closest('.step-mc');
   container.querySelectorAll('.step-mc-option').forEach(o => {
@@ -799,10 +796,7 @@ function restoreStepMCResult(groupId) {
   });
 }
 
-/* ══════════════════════════════════════════
-   Unlock / restore
-   ══════════════════════════════════════════ */
-
+/* ── Unlock ── */
 function unlockStep(id) {
   const el = document.getElementById(id);
   if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
@@ -814,25 +808,26 @@ function restoreUnlocked(id) {
   }
 }
 
-/* ══════════════════════════════════════════
-   Inline feedback with optional badge
-   earnedPts / maxPts: omit for gate steps
-   ══════════════════════════════════════════ */
-
-function showInlineFB(id, ok, hint, earnedPts, maxPts) {
+/* ── Inline feedback
+   storedEarned: the value returned by recordScore/recordPartialScore
+   maxPts:       the maximum achievable (0 = gate, omit badge)
+   This ensures the badge ALWAYS shows the stored value,
+   never a computed guess.                                ── */
+function showInlineFB(id, ok, hint, storedEarned, maxPts) {
   const el = document.getElementById(`ifb-${id}`);
   if (!el) return;
   const cssClass = ok ? 'correct' : 'incorrect';
 
   let badge = '';
   if (maxPts != null && maxPts > 0) {
-    const pts = (earnedPts != null) ? earnedPts : (ok ? maxPts : 0);
+    /* storedEarned is what was actually saved — truthful on all attempts */
+    const display = (storedEarned != null) ? storedEarned : 0;
     badge = `<span style="
       display:inline-block;
-      background:${ok ? '#27ae60' : '#c0392b'};
+      background:${display > 0 ? '#27ae60' : '#c0392b'};
       color:white; font-size:12px; font-weight:bold;
       padding:2px 8px; border-radius:10px; margin-left:6px;
-      vertical-align:middle;">${pts}/${maxPts}&nbsp;P</span>`;
+      vertical-align:middle;">${display}/${maxPts}&nbsp;P</span>`;
   }
 
   const html = ok
@@ -847,10 +842,7 @@ function showInlineFB(id, ok, hint, earnedPts, maxPts) {
   saveInlineFeedback(id, html, cssClass);
 }
 
-/* ══════════════════════════════════════════
-   Select persistence
-   ══════════════════════════════════════════ */
-
+/* ── Select persistence ── */
 function saveSelect(id) {
   const el = document.getElementById(id);
   if (el) saveCustom(`sel-${id}`, el.value);
@@ -858,14 +850,10 @@ function saveSelect(id) {
 function restoreSelect(id) {
   const val = loadCustom(`sel-${id}`);
   const el  = document.getElementById(id);
-  if (el && val !== undefined && val !== null) el.value = val;
+  if (el && val != null) el.value = val;
 }
 
-/* ══════════════════════════════════════════
-   Summary feedback (bottom button)
-   Reads sub-scores, displays total, no re-award
-   ══════════════════════════════════════════ */
-
+/* ── Summary (bottom button) — reads only, never awards ── */
 function showSubExerciseSummary(feedbackId, noticeId, scoreKeys, maxTotal) {
   const state  = ExamState.load();
   const earned = scoreKeys.reduce((sum, k) =>
@@ -887,7 +875,6 @@ function showSubExerciseSummary(feedbackId, noticeId, scoreKeys, maxTotal) {
     : `<span class="feedback-icon">⚠️</span>
        <strong>Teilweise richtig.</strong>${badge}
        <div class="hint-text">Überprüfe die rot markierten Schritte.</div>`;
-
   const noticeEl = document.getElementById(noticeId);
   if (noticeEl) {
     if (earned > 0) {
@@ -901,29 +888,20 @@ function showSubExerciseSummary(feedbackId, noticeId, scoreKeys, maxTotal) {
   saveFeedback(feedbackId.replace('feedback-',''), fb.innerHTML, cssClass);
 }
 
-/* ══════════════════════════════════════════
-   2b helpers: order-independent volume steps
-   ══════════════════════════════════════════ */
-
+/* ── 2b order helpers ── */
 function correctFormulaForChoice(choice) {
   return choice === 'box' ? 'C-box' : 'C-sphere';
 }
 function correctVolForChoice(choice) {
   return choice === 'box' ? BOX_V : CANDLES_V;
 }
-
 function applyChoiceLabels() {
   if (!what1Choice) return;
-  const first  = what1Choice === 'box'
-    ? 'der Schachtel' : 'zweier Kerzen';
-  const second = what1Choice === 'box'
-    ? 'zweier Kerzen' : 'der Schachtel';
-  const lbl1   = what1Choice === 'box'
-    ? 'V\u2081 (Schachtel)' : 'V\u2081 (Kerzen)';
-  const lbl2   = what1Choice === 'box'
-    ? 'V\u2082 (Kerzen)' : 'V\u2082 (Schachtel)';
-
-  const ids = {
+  const first  = what1Choice === 'box' ? 'der Schachtel' : 'zweier Kerzen';
+  const second = what1Choice === 'box' ? 'zweier Kerzen' : 'der Schachtel';
+  const lbl1   = what1Choice === 'box' ? 'V₁ (Schachtel)' : 'V₁ (Kerzen)';
+  const lbl2   = what1Choice === 'box' ? 'V₂ (Kerzen)'    : 'V₂ (Schachtel)';
+  const map = {
     '2b-step1-title': `Schritt 1 – Wie berechnest du das Volumen ${first}?`,
     '2b-step2-title': `Schritt 2 – Berechne das Volumen ${first}`,
     '2b-step2-label': `${lbl1} =`,
@@ -931,36 +909,34 @@ function applyChoiceLabels() {
     '2b-step4-title': `Schritt 4 – Berechne das Volumen ${second}`,
     '2b-step4-label': `${lbl2} =`,
   };
-  Object.keys(ids).forEach(id => {
+  Object.keys(map).forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = ids[id];
+    if (el) el.textContent = map[id];
   });
 }
 
 /* ══════════════════════════════════════════
-   2a check functions
+   2a
    ══════════════════════════════════════════ */
-
 function check2a_step1() {
   if (!stepMCSel['2a-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['2a-1'] === 'B';
   markStepMC('2a-1','B');
+  /* Gate: 0 P — no badge */
   showInlineFB('2a-1', ok,
-    ok ? '' :
-    'Überlege, welche Formel das Volumen eines kugelförmigen Körpers beschreibt.');
+    ok ? '' : 'Überlege, welche Formel das Volumen einer Kugel beschreibt.');
   if (ok) unlockStep('2a-step2');
   updateScoreDisplay();
 }
 
 function check2a_step2() {
   if (!stepMCSel['2a-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2a-2'] === 'C';
+  const ok      = stepMCSel['2a-2'] === 'C';
   markStepMC('2a-2','C');
-  recordPartialScore('2a-s2', ok ? 1 : 0, 1);
+  const stored  = recordPartialScore('2a-s2', ok ? 1 : 0, 1);
   showInlineFB('2a-2', ok,
-    ok ? '' :
-    'Setze r\u00a0=\u00a05 ein. r³ bedeutet r hoch\u00a03.',
-    ok ? 1 : 0, 1);
+    ok ? '' : 'Setze r\u00a0=\u00a05 ein. r³ bedeutet r hoch\u00a03.',
+    stored, 1);
   if (ok) unlockStep('2a-step3');
   updateNotice('2a-s2');
   updateScoreDisplay();
@@ -972,11 +948,10 @@ function check2a_step3() {
   const ok      = !isNaN(val) && Math.abs(val - CORRECT) < 1.5;
   clearInputStyle('ans-2a');
   applyInputStyle('ans-2a', ok);
-  recordScore('2a-s3', 1, ok);
+  const stored  = recordScore('2a-s3', 1, ok);
   showInlineFB('2a-result', ok,
-    ok ? '' :
-    'Nutze den Taschenrechner und beachte die Reihenfolge der Rechenoperationen.',
-    ok ? 1 : 0, 1);
+    ok ? '' : 'Nutze den Taschenrechner und beachte die Rechenreihenfolge.',
+    stored, 1);
   updateNotice('2a-s3');
   updateScoreDisplay();
 }
@@ -986,41 +961,34 @@ function check2a_final() {
 }
 
 /* ══════════════════════════════════════════
-   2b check functions
+   2b
    ══════════════════════════════════════════ */
-
 function check2b_what1() {
   const nounVal = document.getElementById('sel-2b-what-noun').value;
   const ofVal   = document.getElementById('sel-2b-what-of').value;
   saveSelect('sel-2b-what-noun');
   saveSelect('sel-2b-what-of');
-
-  const nounEl = document.getElementById('sel-2b-what-noun');
-  const ofEl   = document.getElementById('sel-2b-what-of');
+  const nounEl  = document.getElementById('sel-2b-what-noun');
+  const ofEl    = document.getElementById('sel-2b-what-of');
   nounEl.classList.remove('correct','incorrect');
   ofEl.classList.remove('correct','incorrect');
-
-  const nounOk = nounVal === 'Volumen';
-  const ofOk   = ofVal === 'der Schachtel' || ofVal === 'zweier Kerzen';
-  const ok     = nounOk && ofOk;
-
+  const nounOk  = nounVal === 'Volumen';
+  const ofOk    = ofVal === 'der Schachtel' || ofVal === 'zweier Kerzen';
+  const ok      = nounOk && ofOk;
   nounEl.classList.add(nounOk ? 'correct' : 'incorrect');
   ofEl.classList.add(ofOk   ? 'correct' : 'incorrect');
   saveResult('sel-2b-what-noun', nounOk ? 'correct' : 'incorrect');
   saveResult('sel-2b-what-of',   ofOk   ? 'correct' : 'incorrect');
-
   if (ok) {
     what1Choice = ofVal === 'der Schachtel' ? 'box' : 'sphere';
     saveCustom('2b-what1-choice', what1Choice);
     applyChoiceLabels();
   }
-
-  recordPartialScore('2b-w1', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2b-w1', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-what1', ok,
     ok ? '' :
-    'Beides ist möglich: das Volumen der Schachtel oder '
-    + 'das Volumen zweier Kerzen.',
-    ok ? 0.5 : 0, 0.5);
+    'Beides ist möglich: Volumen der Schachtel oder zweier Kerzen.',
+    stored, 0.5);
   if (ok) unlockStep('2b-step1');
   updateNotice('2b-w1');
   updateScoreDisplay();
@@ -1032,11 +1000,12 @@ function check2b_step1() {
   const correctVal = correctFormulaForChoice(what1Choice);
   const ok = stepMCSel['2b-1'] === correctVal;
   markStepMC('2b-1', correctVal);
+  /* Gate: no badge */
   showInlineFB('2b-1', ok,
     ok ? '' :
     what1Choice === 'box'
-      ? 'Ein Quader hat drei Kantenlängen. Wie wird sein Volumen berechnet?'
-      : 'Eine Kerze hat Kugelform. Welche Formel beschreibt das Kugelvolumen?');
+      ? 'Wie berechnet man das Volumen eines Quaders?'
+      : 'Welche Formel beschreibt das Volumen einer Kugel?');
   if (ok) unlockStep('2b-step2');
   updateScoreDisplay();
 }
@@ -1048,14 +1017,13 @@ function check2b_step2() {
   const ok       = !isNaN(val) && Math.abs(val - expected) < 2;
   clearInputStyle('ans-2b-vol1');
   applyInputStyle('ans-2b-vol1', ok);
-  recordPartialScore('2b-calc1', ok ? 0.5 : 0, 0.5);
+  const stored   = recordPartialScore('2b-calc1', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-2', ok,
     ok ? '' :
     what1Choice === 'box'
       ? 'Setze 20,5 · 10,5 · 10,5 in die Formel ein.'
-      : 'Setze r\u00a0=\u00a05 in die Kugelformel ein '
-        + 'und multipliziere mit 2 für zwei Kerzen.',
-    ok ? 0.5 : 0, 0.5);
+      : 'Setze r\u00a0=\u00a05 ein und multipliziere mit 2.',
+    stored, 0.5);
   if (ok) unlockStep('2b-what2');
   updateNotice('2b-calc1');
   updateScoreDisplay();
@@ -1067,27 +1035,22 @@ function check2b_what2() {
   const ofVal      = document.getElementById('sel-2b-what2-of').value;
   saveSelect('sel-2b-what2-noun');
   saveSelect('sel-2b-what2-of');
-
   const nounEl     = document.getElementById('sel-2b-what2-noun');
   const ofEl       = document.getElementById('sel-2b-what2-of');
   nounEl.classList.remove('correct','incorrect');
   ofEl.classList.remove('correct','incorrect');
-
   const nounOk     = nounVal === 'Volumen';
   const requiredOf = what1Choice === 'box' ? 'zweier Kerzen' : 'der Schachtel';
   const ofOk       = ofVal === requiredOf;
   const ok         = nounOk && ofOk;
-
   nounEl.classList.add(nounOk ? 'correct' : 'incorrect');
   ofEl.classList.add(ofOk   ? 'correct' : 'incorrect');
   saveResult('sel-2b-what2-noun', nounOk ? 'correct' : 'incorrect');
   saveResult('sel-2b-what2-of',   ofOk   ? 'correct' : 'incorrect');
-
-  recordPartialScore('2b-w2', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2b-w2', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-what2', ok,
-    ok ? '' :
-    `Das Volumen ${requiredOf} fehlt noch.`,
-    ok ? 0.5 : 0, 0.5);
+    ok ? '' : `Das Volumen ${requiredOf} fehlt noch.`,
+    stored, 0.5);
   if (ok) unlockStep('2b-step3');
   updateNotice('2b-w2');
   updateScoreDisplay();
@@ -1100,11 +1063,12 @@ function check2b_step3() {
   const correctVal   = correctFormulaForChoice(secondChoice);
   const ok = stepMCSel['2b-3'] === correctVal;
   markStepMC('2b-3', correctVal);
+  /* Gate: no badge */
   showInlineFB('2b-3', ok,
     ok ? '' :
     secondChoice === 'box'
-      ? 'Ein Quader hat drei Kantenlängen. Wie wird sein Volumen berechnet?'
-      : 'Eine Kerze hat Kugelform. Welche Formel beschreibt das Kugelvolumen?');
+      ? 'Wie berechnet man das Volumen eines Quaders?'
+      : 'Welche Formel beschreibt das Volumen einer Kugel?');
   if (ok) unlockStep('2b-step4');
   updateScoreDisplay();
 }
@@ -1117,14 +1081,13 @@ function check2b_step4() {
   const ok           = !isNaN(val) && Math.abs(val - expected) < 2;
   clearInputStyle('ans-2b-vol2');
   applyInputStyle('ans-2b-vol2', ok);
-  recordPartialScore('2b-calc2', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2b-calc2', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-4', ok,
     ok ? '' :
     secondChoice === 'box'
       ? 'Setze 20,5 · 10,5 · 10,5 in die Formel ein.'
-      : 'Setze r\u00a0=\u00a05 in die Kugelformel ein '
-        + 'und multipliziere mit 2 für zwei Kerzen.',
-    ok ? 0.5 : 0, 0.5);
+      : 'Setze r\u00a0=\u00a05 ein und multipliziere mit 2.',
+    stored, 0.5);
   if (ok) unlockStep('2b-what3');
   updateNotice('2b-calc2');
   updateScoreDisplay();
@@ -1135,27 +1098,21 @@ function check2b_what3() {
   const ofVal   = document.getElementById('sel-2b-what3-of').value;
   saveSelect('sel-2b-what3-noun');
   saveSelect('sel-2b-what3-of');
-
-  const nounEl = document.getElementById('sel-2b-what3-noun');
-  const ofEl   = document.getElementById('sel-2b-what3-of');
+  const nounEl  = document.getElementById('sel-2b-what3-noun');
+  const ofEl    = document.getElementById('sel-2b-what3-of');
   nounEl.classList.remove('correct','incorrect');
   ofEl.classList.remove('correct','incorrect');
-
-  const nounOk = nounVal === 'Füllvolumen Anteil';
-  const ofOk   = ofVal   === 'als Prozent';
-  const ok     = nounOk && ofOk;
-
+  const nounOk  = nounVal === 'Füllvolumen Anteil';
+  const ofOk    = ofVal   === 'als Prozent';
+  const ok      = nounOk && ofOk;
   nounEl.classList.add(nounOk ? 'correct' : 'incorrect');
   ofEl.classList.add(ofOk   ? 'correct' : 'incorrect');
   saveResult('sel-2b-what3-noun', nounOk ? 'correct' : 'incorrect');
   saveResult('sel-2b-what3-of',   ofOk   ? 'correct' : 'incorrect');
-
-  recordPartialScore('2b-w3', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2b-w3', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-what3', ok,
-    ok ? '' :
-    'Beide Volumina sind bekannt. '
-    + 'Welche abschließende Größe verlangt die Aufgabe?',
-    ok ? 0.5 : 0, 0.5);
+    ok ? '' : 'Welche abschließende Größe verlangt die Aufgabe?',
+    stored, 0.5);
   if (ok) unlockStep('2b-step5');
   updateNotice('2b-w3');
   updateScoreDisplay();
@@ -1165,9 +1122,9 @@ function check2b_step5() {
   if (!stepMCSel['2b-5']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['2b-5'] === 'B';
   markStepMC('2b-5','B');
+  /* Gate: no badge */
   showInlineFB('2b-5', ok,
-    ok ? '' :
-    'Der Prozentsatz gibt an, welchen Anteil ein Teilwert am Grundwert hat.');
+    ok ? '' : 'Der Prozentsatz = Teilwert ÷ Grundwert · 100.');
   if (ok) unlockStep('2b-step6');
   updateScoreDisplay();
 }
@@ -1177,11 +1134,10 @@ function check2b_step6() {
   const ok     = !isNaN(pctVal) && Math.abs(pctVal - PCT) < 1;
   clearInputStyle('ans-2b-pct');
   applyInputStyle('ans-2b-pct', ok);
-  recordPartialScore('2b-calc3', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2b-calc3', ok ? 0.5 : 0, 0.5);
   showInlineFB('2b-pct', ok,
-    ok ? '' :
-    'Setze Kerzenvolumen und Schachtelvolumen in die Prozentformel ein.',
-    ok ? 0.5 : 0, 0.5);
+    ok ? '' : 'Setze beide Volumina in die Prozentformel ein.',
+    stored, 0.5);
   updateNotice('2b-calc3');
   updateScoreDisplay();
 }
@@ -1194,19 +1150,17 @@ function check2b_final() {
 }
 
 /* ══════════════════════════════════════════
-   2c check functions
+   2c
    ══════════════════════════════════════════ */
-
 function check2c_stepA() {
   if (!stepMCSel['2c-A']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2c-A'] === 'A';
+  const ok     = stepMCSel['2c-A'] === 'A';
   markStepMC('2c-A','A');
-  recordPartialScore('2c-sA', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2c-sA', ok ? 0.5 : 0, 0.5);
   showInlineFB('2c-A', ok,
     ok ? '' :
-    'Ein Zahlenbeispiel bedeutet: du wählst selbst einen Wert '
-    + 'und überprüfst die Aussage damit.',
-    ok ? 0.5 : 0, 0.5);
+    'Beim Zahlenbeispiel wählst du selbst einen konkreten Wert.',
+    stored, 0.5);
   if (ok) unlockStep('2c-stepC');
   updateNotice('2c-sA');
   updateScoreDisplay();
@@ -1216,35 +1170,29 @@ function check2c_stepC() {
   const rVal  = parseNum(document.getElementById('ans-2c-r').value);
   const v1Val = parseNum(document.getElementById('ans-2c-v1').value);
   const v2Val = parseNum(document.getElementById('ans-2c-v2').value);
-
   if (isNaN(rVal) || rVal <= 0) {
     showInlineFB('2c-C', false,
       'Bitte gib zunächst einen positiven Wert für den Radius ein.');
     return;
   }
-
   const cV1  = (4/3) * Math.PI * Math.pow(rVal, 3);
   const cV2  = (4/3) * Math.PI * Math.pow(2 * rVal, 3);
   const v1Ok = !isNaN(v1Val) && Math.abs(v1Val - cV1) < cV1 * 0.05;
   const v2Ok = !isNaN(v2Val) && Math.abs(v2Val - cV2) < cV2 * 0.05;
   const ok   = v1Ok && v2Ok;
-
   clearInputStyle('ans-2c-r');
   clearInputStyle('ans-2c-v1');
   clearInputStyle('ans-2c-v2');
   applyInputStyle('ans-2c-r',  rVal > 0);
   applyInputStyle('ans-2c-v1', v1Ok);
   applyInputStyle('ans-2c-v2', v2Ok);
-
-  recordScore('2c-sB', 1, ok);
-
-  const hints = [];
+  const stored = recordScore('2c-sB', 1, ok);
+  const hints  = [];
   if (!v1Ok) hints.push('Prüfe V(r) mit der Kugelformel.');
   if (!v2Ok) hints.push('Für V(2r) verdoppelst du den Radius.');
   showInlineFB('2c-C', ok,
     ok ? '' : hints.join(' '),
-    ok ? 1 : 0, 1);
-
+    stored, 1);
   if (ok) unlockStep('2c-stepD');
   updateNotice('2c-sB');
   updateScoreDisplay();
@@ -1252,26 +1200,24 @@ function check2c_stepC() {
 
 function check2c_stepD() {
   if (!stepMCSel['2c-D']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2c-D'] === '8';
+  const ok     = stepMCSel['2c-D'] === '8';
   markStepMC('2c-D','8');
-  recordPartialScore('2c-sC', ok ? 0.5 : 0, 0.5);
+  const stored = recordPartialScore('2c-sC', ok ? 0.5 : 0, 0.5);
   showInlineFB('2c-D', ok,
-    ok ? '' :
-    'Berechne V(2r)\u00a0÷\u00a0V(r) mit deinen Werten.',
-    ok ? 0.5 : 0, 0.5);
+    ok ? '' : 'Berechne V(2r)\u00a0÷\u00a0V(r) mit deinen Werten.',
+    stored, 0.5);
   updateNotice('2c-sC');
   updateScoreDisplay();
 }
 
 function check2c_stepE() {
   if (!stepMCSel['2c-E']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2c-E'] === 'C';
+  const ok     = stepMCSel['2c-E'] === 'C';
   markStepMC('2c-E','C');
-  recordScore('2c-sD', 1, ok);
+  const stored = recordScore('2c-sD', 1, ok);
   showInlineFB('2c-E', ok,
-    ok ? '' :
-    'Wende (a·b)ⁿ\u00a0=\u00a0aⁿ·bⁿ an und berechne 2³.',
-    ok ? 1 : 0, 1);
+    ok ? '' : 'Wende (a·b)ⁿ\u00a0=\u00a0aⁿ·bⁿ an und berechne 2³.',
+    stored, 1);
   if (ok) unlockStep('2c-stepF');
   updateNotice('2c-sD');
   updateScoreDisplay();
@@ -1279,13 +1225,12 @@ function check2c_stepE() {
 
 function check2c_stepF() {
   if (!stepMCSel['2c-F']) { alert('Bitte wähle eine Antwort aus.'); return; }
-  const ok = stepMCSel['2c-F'] === 'B';
+  const ok     = stepMCSel['2c-F'] === 'B';
   markStepMC('2c-F','B');
-  recordScore('2c-sE', 1, ok);
+  const stored = recordScore('2c-sE', 1, ok);
   showInlineFB('2c-F', ok,
-    ok ? '' :
-    'Ersetze (2r)³ durch 8r³ und forme den Term um.',
-    ok ? 1 : 0, 1);
+    ok ? '' : 'Ersetze (2r)³ durch 8r³ und forme den Term um.',
+    stored, 1);
   updateNotice('2c-sE');
   updateScoreDisplay();
 }
@@ -1299,42 +1244,32 @@ function check2c_final() {
 }
 
 /* ══════════════════════════════════════════
-   Page init — runs after DOMContentLoaded
-   (exam.js DOMContentLoaded also fires here)
+   Init
    ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
-
-  /* 1. Restore what1Choice FIRST so labels are correct */
   what1Choice = loadCustom('2b-what1-choice') || null;
   applyChoiceLabels();
 
-  /* 2. Restore MC selections (blue highlight) */
-  ['2a-1','2a-2',
-   '2b-1','2b-3','2b-5',
+  ['2a-1','2a-2','2b-1','2b-3','2b-5',
    '2c-A','2c-D','2c-E','2c-F']
     .forEach(id => restoreStepMC(id));
 
-  /* 3. Restore MC evaluation colours */
-  ['2a-1','2a-2',
-   '2b-1','2b-3','2b-5',
+  ['2a-1','2a-2','2b-1','2b-3','2b-5',
    '2c-A','2c-D','2c-E','2c-F']
     .forEach(id => restoreStepMCResult(id));
 
-  /* 4. Restore select (dropdown) values */
   ['sel-2b-what-noun','sel-2b-what-of',
    'sel-2b-what2-noun','sel-2b-what2-of',
    'sel-2b-what3-noun','sel-2b-what3-of']
     .forEach(id => restoreSelect(id));
 
-  /* 5. Restore unlocked steps */
   ['2a-step2','2a-step3',
-   '2b-step1','2b-step2',
-   '2b-what2','2b-step3','2b-step4',
-   '2b-what3','2b-step5','2b-step6',
+   '2b-step1','2b-step2','2b-what2',
+   '2b-step3','2b-step4','2b-what3',
+   '2b-step5','2b-step6',
    '2c-stepC','2c-stepD','2c-stepF']
     .forEach(id => restoreUnlocked(id));
 
-  /* 6. Restore inline feedbacks */
   ['2a-1','2a-2','2a-result',
    '2b-what1','2b-1','2b-2',
    '2b-what2','2b-3','2b-4',
@@ -1342,34 +1277,29 @@ document.addEventListener('DOMContentLoaded', function() {
    '2c-A','2c-C','2c-D','2c-E','2c-F']
     .forEach(id => restoreInlineFeedback(id));
 
-  /* 7. Restore summary feedback boxes */
   ['2a','2b','2c'].forEach(id => restoreFeedback(id));
 
-  /* 8. Restore scored notices for all sub-steps */
   ['2a-s2','2a-s3',
-   '2b-w1','2b-calc1',
-   '2b-w2','2b-calc2',
-   '2b-w3','2b-calc3',
-   '2c-sA','2c-sB','2c-sC',
-   '2c-sD','2c-sE']
+   '2b-w1','2b-calc1','2b-w2','2b-calc2','2b-w3','2b-calc3',
+   '2c-sA','2c-sB','2c-sC','2c-sD','2c-sE']
     .forEach(id => updateNotice(id));
 
-  /* 9. Restore summary notices */
+  /* Restore summary notices */
   const keyMap = {
-    '2a': { keys: ['2a-s2','2a-s3'],                           max: 2 },
+    '2a': { keys: ['2a-s2','2a-s3'], max: 2 },
     '2b': { keys: ['2b-w1','2b-calc1','2b-w2',
-                   '2b-calc2','2b-w3','2b-calc3'],              max: 3 },
-    '2c': { keys: ['2c-sA','2c-sB','2c-sC','2c-sD','2c-sE'],  max: 4 }
+                   '2b-calc2','2b-w3','2b-calc3'], max: 3 },
+    '2c': { keys: ['2c-sA','2c-sB','2c-sC',
+                   '2c-sD','2c-sE'], max: 4 }
   };
-  const state = ExamState.load();
+  const st = ExamState.load();
   Object.keys(keyMap).forEach(id => {
     const { keys, max } = keyMap[id];
     const noticeEl = document.getElementById(`notice-${id}`);
     if (!noticeEl) return;
     const earned = keys.reduce((s,k) =>
-      s + (state.scores[k]?.earned || 0), 0);
-    const anyAttempted = keys.some(k =>
-      state.scores[k]?.attempts > 0);
+      s + (st.scores[k]?.earned || 0), 0);
+    const anyAttempted = keys.some(k => st.scores[k]?.attempts > 0);
     if (!anyAttempted) return;
     if (earned > 0) {
       noticeEl.className = 'scored-notice earned';

@@ -99,6 +99,8 @@ function recordScore(subId, maxPoints, isCorrect) {
   }
   entry.attempts += 1;
   ExamState.save(state);
+  /* Return actually stored earned so callers can show correct badge */
+  return entry.earned;
 }
 
 function recordPartialScore(subId, earned, maxPoints) {
@@ -112,6 +114,8 @@ function recordPartialScore(subId, earned, maxPoints) {
   }
   entry.attempts += 1;
   ExamState.save(state);
+  /* Return actually stored earned */
+  return entry.earned;
 }
 
 function recordStepScore(stepKey, isCorrect) {
