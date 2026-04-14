@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Aufgabe 5 – Funktionen</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    .step-block {
+      background: #fafafa; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: 14px 16px; margin: 12px 0;
+      transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+    .step-block.locked {
+      filter: blur(5px); opacity: 0.5;
+      pointer-events: none; user-select: none;
+      -webkit-user-select: none;
+    }
+    .step-title {
+      font-size: 14px; font-weight: bold; color: #1a5276;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .step-mc {
+      display: flex; flex-direction: column; gap: 8px; margin: 8px 0;
+    }
+    .step-mc-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border: 2px solid #ccc;
+      border-radius: 8px; cursor: pointer; font-size: 15px;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-user-select: none; user-select: none;
+    }
+    .step-mc-option.selected  { border-color: #2471a3; background: #eaf4fb; }
+    .step-mc-option.correct   { border-color: #27ae60; background: #f0fff4; }
+    .step-mc-option.incorrect { border-color: #c0392b; background: #fff5f5; }
+    .step-mc-cb {
+      width: 22px; height: 22px; border: 2px solid #999;
+      border-radius: 4px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; font-size: 14px;
+    }
+    .check-btn-sm {
+      background: #2471a3; color: white; border: none;
+      border-radius: 6px; padding: 9px 18px; font-size: 14px;
+      font-family: Arial, sans-serif; font-weight: bold;
+      cursor: pointer; min-height: 40px;
+      -webkit-appearance: none; margin-top: 8px;
+    }
+    .check-btn-sm:active { background: #1a5276; }
+    .inline-feedback {
+      margin-top: 8px; padding: 8px 12px; border-radius: 6px;
+      font-size: 14px; line-height: 1.5; display: none;
+    }
+    .inline-feedback.show { display: block; }
+    .inline-feedback.correct {
+      background: #eafaf1; border: 1.5px solid #27ae60; color: #1e8449;
+    }
+    .inline-feedback.incorrect {
+      background: #fdedec; border: 1.5px solid #c0392b; color: #922b21;
+    }
+    .part-block {
+      padding: 14px; border: 1px solid #e0e0e0;
+      border-radius: 8px; background: #fafafa; margin-bottom: 12px;
+    }
+
+    /* ── Coordinate system canvas ── */
+    .coord-wrap {
+      display: flex; justify-content: center;
+      margin: 16px 0; overflow-x: auto;
+    }
+    .coord-wrap canvas {
+      border: 1px solid #ddd; border-radius: 6px;
+    }
+
+    /* ── Two-coordinate input ── */
+    .coord-input-row {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap; font-size: 17px; margin: 8px 0;
+    }
+    .coord-field {
+      border: 2px solid #999; border-radius: 6px;
+      padding: 8px 10px; font-size: 17px;
+      font-family: Arial, sans-serif; width: 70px;
+      text-align: center; -webkit-appearance: none;
+      transition: border-color 0.2s;
+    }
+    .coord-field.correct   { border-color: #27ae60; background: #f0fff4; }
+    .coord-field.incorrect { border-color: #c0392b; background: #fff5f5; }
+
+    /* ── Function equation input ── */
+    .func-eq-row {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap; font-size: 17px; margin: 8px 0;
+    }
+
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-bar">
+    <span class="header-title">MSA 2025 Mathematik – Nachschreibtermin</span>
+  </div>
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 70%"></div>
+    </div>
+    <span class="progress-text">Aufgabe 5 von 7</span>
+  </div>
+  <div class="task-header">
+    <h1>Aufgabe 5 – Funktionen</h1>
+    <span class="points-badge">11 Punkte</span>
+  </div>
+
+  <div class="task-content">
+
+    <p class="exercise-text">
+      Gegeben ist eine lineare Funktion <em>f</em> mit
+      <strong>f(x) = ⅔·x + 1</strong>.<br>
+      Ihr Graph ist die Gerade <em>f</em>.
+    </p>
+
+    <!-- ── Coordinate system (drawn via canvas) ── -->
+    <div class="coord-wrap">
+      <canvas id="coord-canvas" width="440" height="480"></canvas>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         5a  Schnittpunkt mit y-Achse  (1 P)
+         f(0) = ⅔·0 + 1 = 1 → Sy(0|1)
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">a)</div>
+      <p class="exercise-text">
+        Gib die Koordinaten des Schnittpunktes der
+        Geraden <em>f</em> mit der <em>y</em>-Achse an.
+      </p>
+
+      <div class="coord-input-row">
+        <span>S<sub>y</sub>&nbsp;(</span>
+        <input class="coord-field" id="ans-5a-x"
+               type="text" inputmode="decimal"
+               placeholder="" autocomplete="off">
+        <span>|</span>
+        <input class="coord-field" id="ans-5a-y"
+               type="text" inputmode="decimal"
+               placeholder="" autocomplete="off">
+        <span>)</span>
+      </div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <button class="check-btn-sm" onclick="check5a()">Prüfen</button>
+        <span class="scored-notice" id="notice-5a-s1"></span>
+      </div>
+      <div class="inline-feedback" id="ifb-5a"></div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check5a_final()">Zusammenfassung</button>
+        <span class="scored-notice" id="notice-5a"></span>
+      </div>
+      <div class="feedback-box" id="feedback-5a"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         5b  Parallele Gerade g  (3 P)
+         Parallel → same slope ⅔, different y-intercept.
+         S1: what property must g have? → same slope (MC) → 1P
+         S2: give equation g(x) = ⅔x + b where b ≠ 1 → 1P
+         S3: draw it (we skip drawing, award for equation) → 1P
+         Simplified: S1 MC (1P) + S2 equation (2P)
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">b)</div>
+      <p class="exercise-text">
+        Eine Gerade <em>g</em> verläuft parallel zur
+        Geraden <em>f</em>.
+      </p>
+
+      <!-- S1: What does parallel mean? → 1P -->
+      <div class="step-block" id="5b-step1">
+        <div class="step-title">
+          Schritt 1 – Was muss für eine parallele Gerade gelten?
+        </div>
+        <div class="step-mc" id="smc-5b-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('5b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Gleiche Steigung, gleicher y-Achsenabschnitt</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('5b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Gleiche Steigung, anderer y-Achsenabschnitt</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('5b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Andere Steigung, gleicher y-Achsenabschnitt</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('5b-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>Die Steigungen multipliziert ergeben −1</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5b_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5b-1"></div>
+      </div>
+
+      <!-- S2: Give the slope → 1P -->
+      <div class="step-block locked" id="5b-step2">
+        <div class="step-title">
+          Schritt 2 – Welche Steigung hat g?
+        </div>
+        <div class="answer-unit-row">
+          <span style="font-size:15px;">Steigung m =</span>
+          <input class="unit-input" id="ans-5b-m"
+                 type="text" inputmode="decimal"
+                 placeholder="" autocomplete="off"
+                 style="width:100px;">
+        </div>
+        <p class="input-hint">
+          Gib die Steigung als Bruch (z.B. 2/3) oder Dezimalzahl an.
+        </p>
+        <button class="check-btn-sm" onclick="check5b_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5b-2"></div>
+      </div>
+
+      <!-- S3: Give the equation → 1P -->
+      <div class="step-block locked" id="5b-step3">
+        <div class="step-title">
+          Schritt 3 – Gib eine Gleichung für g an
+        </div>
+        <p style="font-size:14px; margin-bottom:8px;">
+          Wähle einen y-Achsenabschnitt, der sich von 1 unterscheidet.
+        </p>
+        <div class="func-eq-row">
+          <span>g(x) =</span>
+          <span>⅔·x +</span>
+          <input class="coord-field" id="ans-5b-b"
+                 type="text" inputmode="decimal"
+                 placeholder="b" autocomplete="off"
+                 style="width:80px;">
+        </div>
+        <button class="check-btn-sm" onclick="check5b_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5b-3"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check5b_final()">Zusammenfassung</button>
+        <span class="scored-notice" id="notice-5b"></span>
+      </div>
+      <div class="feedback-box" id="feedback-5b"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         5c  Parabel p  (3 P)
+         p is a downward-opening shifted normal parabola.
+         Vertex S(1|4), x-intercepts P1(−1|0) P2(3|0),
+         y-intercept Sy(0|3).
+         Vertex form: p(x) = −(x−1)² + 4
+
+         S1: What does "nach unten geöffnet" mean for a? → MC 1P
+         S2: Give vertex form → 2P
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">c)</div>
+      <p class="exercise-text">
+        Eine Parabel <em>p</em> ist eine verschobene und
+        <strong>nach unten geöffnete</strong> Normalparabel.
+        Sie hat folgende Eigenschaften:
+      </p>
+      <ul style="font-size:15px; margin:8px 0 14px 20px; line-height:1.8;">
+        <li>Scheitelpunkt bei <strong>S(1|4)</strong></li>
+        <li>Schnittpunkte mit der x-Achse:
+            <strong>P₁(−1|0)</strong> und <strong>P₂(3|0)</strong></li>
+        <li>Schnittpunkt mit der y-Achse:
+            <strong>S<sub>y</sub>(0|3)</strong></li>
+      </ul>
+
+      <!-- S1: What does downward-opening mean? → 1P -->
+      <div class="step-block" id="5c-step1">
+        <div class="step-title">
+          Schritt 1 – Was bedeutet „nach unten geöffnet" für den Vorfaktor a?
+        </div>
+        <div class="step-mc" id="smc-5c-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('5c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>a = 1 (wie die Normalparabel)</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('5c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>a = −1 (Normalparabel, aber gespiegelt)</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('5c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>a = 0 (keine Krümmung)</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('5c-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>a = 2 (stärker gekrümmt)</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5c_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5c-1"></div>
+      </div>
+
+      <!-- S2: Give vertex form → 2P -->
+      <div class="step-block locked" id="5c-step2">
+        <div class="step-title">
+          Schritt 2 – Gib die Funktionsgleichung in Scheitelpunktform an
+        </div>
+        <p style="font-size:14px; margin-bottom:8px;">
+          Scheitelpunktform: p(x) = a·(x − d)² + e
+        </p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">a =</span>
+            <input class="coord-field" id="ans-5c-a"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">d =</span>
+            <input class="coord-field" id="ans-5c-d"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">e =</span>
+            <input class="coord-field" id="ans-5c-e"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5c_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5c-2"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check5c_final()">Zusammenfassung</button>
+        <span class="scored-notice" id="notice-5c"></span>
+      </div>
+      <div class="feedback-box" id="feedback-5c"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         5d*  Schnittpunkte f und q  (4 P)
+         f(x) = ⅔x + 1
+         q(x) = x² − ⅓x + 1
+         f = q → ⅔x + 1 = x² − ⅓x + 1
+                 0 = x² − x
+                 0 = x(x − 1)
+                 x₁ = 0, x₂ = 1
+         y₁ = f(0) = 1, y₂ = f(1) = ⅔ + 1 = 5/3 ≈ 1.667
+
+         S1: Set up equation → MC 1P
+         S2: Simplify → MC 1P
+         S3: Solve x₁, x₂ → 1P
+         S4: Calculate y₁, y₂ → 1P
+         ════════════════════════════════════════ -->
+    <div class="sub-exercise">
+      <div class="sub-label">d) <span class="star-label">(*)</span></div>
+      <p class="exercise-text">
+        Gegeben sind die lineare Funktion <em>f</em> mit
+        <strong>f(x) = ⅔·x + 1</strong> und die quadratische
+        Funktion <em>q</em> mit
+        <strong>q(x) = x² − ⅓·x + 1</strong>.
+      </p>
+      <p class="exercise-text">
+        Berechne die Koordinaten der Schnittpunkte der
+        Parabel <em>q</em> und der Geraden <em>f</em>.
+      </p>
+
+      <!-- S1: Set up equation → 1P -->
+      <div class="step-block" id="5d-step1">
+        <div class="step-title">
+          Schritt 1 – Wie lautet der Ansatz?
+        </div>
+        <div class="step-mc" id="smc-5d-1">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('5d-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>f(x) + q(x) = 0</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('5d-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>f(x) = q(x)</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('5d-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>f(x) · q(x) = 0</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('5d-1',this)">
+            <div class="step-mc-cb"></div>
+            <span>q(x) = 0</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5d_step1()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5d-1"></div>
+      </div>
+
+      <!-- S2: Simplify → 1P -->
+      <div class="step-block locked" id="5d-step2">
+        <div class="step-title">
+          Schritt 2 – Welche vereinfachte Gleichung ergibt sich?
+        </div>
+        <div class="step-mc" id="smc-5d-2">
+          <div class="step-mc-option" data-val="A"
+               onclick="selectStepMC('5d-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>x² + x + 2 = 0</span>
+          </div>
+          <div class="step-mc-option" data-val="B"
+               onclick="selectStepMC('5d-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>x² − x = 0</span>
+          </div>
+          <div class="step-mc-option" data-val="C"
+               onclick="selectStepMC('5d-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>x² − x + 2 = 0</span>
+          </div>
+          <div class="step-mc-option" data-val="D"
+               onclick="selectStepMC('5d-2',this)">
+            <div class="step-mc-cb"></div>
+            <span>x² + x = 0</span>
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5d_step2()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5d-2"></div>
+      </div>
+
+      <!-- S3: Solve for x → 1P -->
+      <div class="step-block locked" id="5d-step3">
+        <div class="step-title">
+          Schritt 3 – Bestimme die x-Werte der Schnittpunkte
+        </div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">x₁ =</span>
+            <input class="coord-field" id="ans-5d-x1"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">x₂ =</span>
+            <input class="coord-field" id="ans-5d-x2"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+        </div>
+        <button class="check-btn-sm" onclick="check5d_step3()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5d-3"></div>
+      </div>
+
+      <!-- S4: Calculate y-values → 1P -->
+      <div class="step-block locked" id="5d-step4">
+        <div class="step-title">
+          Schritt 4 – Berechne die y-Werte der Schnittpunkte
+        </div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">y₁ =</span>
+            <input class="coord-field" id="ans-5d-y1"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+          <div class="answer-unit-row">
+            <span style="font-size:15px;">y₂ =</span>
+            <input class="coord-field" id="ans-5d-y2"
+                   type="text" inputmode="decimal"
+                   placeholder="" autocomplete="off">
+          </div>
+        </div>
+        <p class="input-hint">
+          Setze die x-Werte in f(x) ein.
+          Gib Brüche als Dezimalzahl oder Bruch an.
+        </p>
+        <button class="check-btn-sm" onclick="check5d_step4()">Prüfen</button>
+        <div class="inline-feedback" id="ifb-5d-4"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px;">
+        <button class="submit-btn" onclick="check5d_final()">Zusammenfassung</button>
+        <span class="scored-notice" id="notice-5d"></span>
+      </div>
+      <div class="feedback-box" id="feedback-5d"></div>
+    </div>
+
+  </div>
+
+  <div class="nav-footer">
+    <button class="nav-btn" onclick="navigateTo('aufgabe4.html')">← Zurück</button>
+    <span class="score-display">Punkte: 0 / 60</span>
+    <button class="nav-btn next" onclick="navigateTo('aufgabe6.html')">Weiter →</button>
+  </div>
+
+</div>
+
+<script src="exam.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   Aufgabe 5 – Funktionen  (11 Punkte)
+
+   5a: Sy(0|1)                           → 1 P
+   5b: parallel → same slope, diff b     → 3 P (1+1+1)
+   5c: p(x) = −(x−1)²+4                 → 3 P (1+2)
+   5d*: intersection f∩q → (0|1),(1|5/3) → 4 P (1+1+1+1)
+   ══════════════════════════════════════════ */
+
+const stepMCSel = {};
+
+/* ── Coordinate system canvas ── */
+const cv  = document.getElementById('coord-canvas');
+const cctx = cv.getContext('2d');
+const OX = 220, OY = 360; /* origin position */
+const SCALE = 50; /* pixels per unit */
+
+function drawCoordSystem() {
+  const W = cv.width, H = cv.height;
+  cctx.clearRect(0, 0, W, H);
+
+  /* Grid */
+  cctx.strokeStyle = '#e8e8e8';
+  cctx.lineWidth = 1;
+  for (let x = -4; x <= 4; x++) {
+    const px = OX + x * SCALE;
+    cctx.beginPath(); cctx.moveTo(px, 0); cctx.lineTo(px, H); cctx.stroke();
+  }
+  for (let y = -2; y <= 7; y++) {
+    const py = OY - y * SCALE;
+    cctx.beginPath(); cctx.moveTo(0, py); cctx.lineTo(W, py); cctx.stroke();
+  }
+
+  /* Axes */
+  cctx.strokeStyle = '#1a1a1a';
+  cctx.lineWidth = 2;
+  cctx.beginPath(); cctx.moveTo(0, OY); cctx.lineTo(W, OY); cctx.stroke();
+  cctx.beginPath(); cctx.moveTo(OX, 0); cctx.lineTo(OX, H); cctx.stroke();
+
+  /* Ticks + labels */
+  cctx.font = '12px Arial';
+  cctx.fillStyle = '#333';
+  cctx.textAlign = 'center';
+  cctx.textBaseline = 'top';
+  for (let x = -4; x <= 4; x++) {
+    if (x === 0) continue;
+    const px = OX + x * SCALE;
+    cctx.beginPath(); cctx.moveTo(px, OY - 4); cctx.lineTo(px, OY + 4); cctx.stroke();
+    cctx.fillText(String(x), px, OY + 6);
+  }
+  cctx.textAlign = 'right';
+  cctx.textBaseline = 'middle';
+  for (let y = -2; y <= 7; y++) {
+    if (y === 0) continue;
+    const py = OY - y * SCALE;
+    cctx.beginPath(); cctx.moveTo(OX - 4, py); cctx.lineTo(OX + 4, py); cctx.stroke();
+    cctx.fillText(String(y), OX - 8, py);
+  }
+
+  /* Origin label */
+  cctx.textAlign = 'right';
+  cctx.textBaseline = 'top';
+  cctx.fillText('O', OX - 6, OY + 6);
+
+  /* Axis labels */
+  cctx.font = 'italic 14px Arial';
+  cctx.textAlign = 'left';
+  cctx.textBaseline = 'middle';
+  cctx.fillText('x', W - 14, OY - 12);
+  cctx.textAlign = 'center';
+  cctx.textBaseline = 'bottom';
+  cctx.fillText('y', OX + 14, 14);
+
+  /* Draw f(x) = ⅔x + 1 */
+  cctx.strokeStyle = '#1a5276';
+  cctx.lineWidth = 2;
+  cctx.beginPath();
+  for (let px = 0; px < W; px++) {
+    const x = (px - OX) / SCALE;
+    const y = (2/3) * x + 1;
+    const py = OY - y * SCALE;
+    if (px === 0) cctx.moveTo(px, py);
+    else cctx.lineTo(px, py);
+  }
+  cctx.stroke();
+
+  /* Label f */
+  cctx.font = 'bold italic 14px Arial';
+  cctx.fillStyle = '#1a5276';
+  cctx.textAlign = 'left';
+  cctx.textBaseline = 'bottom';
+  const fLabelX = OX + 3.5 * SCALE;
+  const fLabelY = OY - ((2/3)*3.5 + 1) * SCALE;
+  cctx.fillText('f', fLabelX + 8, fLabelY - 4);
+}
+
+drawCoordSystem();
+
+/* ── MC / Unlock / Feedback helpers ── */
+function selectStepMC(g, el) {
+  const c = el.closest('.step-mc');
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.step-mc-cb');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.step-mc-cb');
+  if (cb) cb.textContent = '✓';
+  stepMCSel[g] = el.dataset.val;
+  saveCustom(`stepmcs-${g}`, el.dataset.val);
+}
+function restoreStepMC(g) {
+  const v = loadCustom(`stepmcs-${g}`);
+  if (!v) return; stepMCSel[g] = v;
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    if (o.dataset.val === v) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.step-mc-cb');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+function markStepMC(g, cv) {
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  const ch = stepMCSel[g]; if (!ch) return;
+  const ok = (ch === cv);
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === ch) o.classList.add(ok ? 'correct' : 'incorrect');
+  });
+  saveResult(`smc_${g}_chosen`, ch);
+  saveResult(`smc_${g}_result`, ok ? 'correct' : 'incorrect');
+}
+function restoreStepMCResult(g) {
+  const ch = loadResult(`smc_${g}_chosen`);
+  const r  = loadResult(`smc_${g}_result`);
+  if (!ch || !r) return;
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === ch) o.classList.add(r);
+  });
+}
+function unlockStep(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
+}
+function restoreUnlocked(id) {
+  if (loadCustom(`unlocked-${id}`)) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('locked');
+  }
+}
+function showInlineFB(id, ok, hint, stored, maxPts) {
+  const el = document.getElementById(`ifb-${id}`);
+  if (!el) return;
+  const css = ok ? 'correct' : 'incorrect';
+  let badge = '';
+  if (maxPts != null && maxPts > 0) {
+    const d = (stored != null) ? stored : 0;
+    badge = `<span style="display:inline-block;
+      background:${d > 0 ? '#27ae60' : '#c0392b'};
+      color:white;font-size:12px;font-weight:bold;
+      padding:2px 8px;border-radius:10px;margin-left:6px;
+      vertical-align:middle;">${d}/${maxPts}&nbsp;P</span>`;
+  }
+  const html = ok
+    ? `✅ Richtig!${badge}`
+    : `❌ Noch nicht richtig.${badge}`
+      + (hint ? `<br><span style="font-style:italic;font-size:13px;">${hint}</span>` : '');
+  el.className = `inline-feedback show ${css}`;
+  el.innerHTML = html;
+  saveInlineFeedback(id, html, css);
+}
+function showSubExerciseSummary(fid, nid, keys, max) {
+  const st = ExamState.load();
+  const earned = keys.reduce((s,k) => s + (st.scores[k]?.earned || 0), 0);
+  const fb = document.getElementById(fid);
+  if (!fb) return;
+  const all = Math.abs(earned - max) < 0.01;
+  const css = all ? 'correct' : 'incorrect';
+  const badge = `<span style="display:inline-block;
+    background:${all ? '#27ae60' : '#e67e22'};
+    color:white;font-size:13px;font-weight:bold;
+    padding:3px 10px;border-radius:10px;margin-left:8px;">
+    ${earned}/${max}&nbsp;P</span>`;
+  fb.className = `feedback-box show ${css}`;
+  fb.innerHTML = all
+    ? `<span class="feedback-icon">✅</span><strong>Alle Schritte richtig!</strong>${badge}`
+    : `<span class="feedback-icon">⚠️</span><strong>Teilweise richtig.</strong>${badge}
+       <div class="hint-text">Überprüfe die rot markierten Schritte.</div>`;
+  const ne = document.getElementById(nid);
+  if (ne) {
+    ne.className = earned > 0 ? 'scored-notice earned' : 'scored-notice not-earned';
+    ne.textContent = earned > 0
+      ? `✓ ${earned}/${max} Punkt(e) vergeben`
+      : `0/${max} Punkt(e) – weiteres Üben möglich`;
+  }
+  saveFeedback(fid.replace('feedback-',''), fb.innerHTML, css);
+}
+
+/* ══════════════════════════════════════════
+   5a  (1 P)
+   Sy = (0, 1)
+   ══════════════════════════════════════════ */
+function check5a() {
+  const xv = parseNum(document.getElementById('ans-5a-x').value);
+  const yv = parseNum(document.getElementById('ans-5a-y').value);
+  const xOk = !isNaN(xv) && Math.abs(xv) < 0.01;
+  const yOk = !isNaN(yv) && Math.abs(yv - 1) < 0.05;
+  const ok = xOk && yOk;
+  clearInputStyle('ans-5a-x'); clearInputStyle('ans-5a-y');
+  applyInputStyle('ans-5a-x', xOk);
+  applyInputStyle('ans-5a-y', yOk);
+  const stored = recordScore('5a-s1', 1, ok);
+  showInlineFB('5a', ok,
+    ok ? '' :
+    'Der Schnittpunkt mit der y-Achse hat immer x\u00a0=\u00a00. '
+    + 'Setze x\u00a0=\u00a00 in f(x) ein.',
+    stored, 1);
+  updateNotice('5a-s1');
+  updateScoreDisplay();
+}
+function check5a_final() {
+  showSubExerciseSummary('feedback-5a','notice-5a',['5a-s1'], 1);
+}
+
+/* ══════════════════════════════════════════
+   5b  (3 P)
+   S1: parallel = same slope, diff b → 1P
+   S2: slope = 2/3 → 1P
+   S3: b ≠ 1 → 1P
+   ══════════════════════════════════════════ */
+function check5b_step1() {
+  if (!stepMCSel['5b-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['5b-1'] === 'B';
+  markStepMC('5b-1','B');
+  const stored = recordScore('5b-s1', 1, ok);
+  showInlineFB('5b-1', ok,
+    ok ? '' :
+    'Parallele Geraden haben eine besondere Eigenschaft bezüglich ihrer Steigung.',
+    stored, 1);
+  if (ok) unlockStep('5b-step2');
+  updateNotice('5b-s1');
+  updateScoreDisplay();
+}
+function check5b_step2() {
+  const raw = document.getElementById('ans-5b-m').value;
+  /* Accept 2/3, 0.667, 0,667 etc. */
+  const ok = fractionCheck(raw, 2, 3)
+    || (Math.abs(parseNum(raw) - 2/3) < 0.01);
+  clearInputStyle('ans-5b-m');
+  applyInputStyle('ans-5b-m', ok);
+  const stored = recordScore('5b-s2', 1, ok);
+  showInlineFB('5b-2', ok,
+    ok ? '' :
+    'Die Steigung von f ist der Koeffizient vor x in f(x).',
+    stored, 1);
+  if (ok) unlockStep('5b-step3');
+  updateNotice('5b-s2');
+  updateScoreDisplay();
+}
+function check5b_step3() {
+  const bVal = parseNum(document.getElementById('ans-5b-b').value);
+  const ok = !isNaN(bVal) && Math.abs(bVal - 1) > 0.01;
+  clearInputStyle('ans-5b-b');
+  applyInputStyle('ans-5b-b', ok);
+  const stored = recordScore('5b-s3', 1, ok);
+  showInlineFB('5b-3', ok,
+    ok ? '' :
+    'Der y-Achsenabschnitt muss sich von dem der Geraden f unterscheiden (b ≠ 1).',
+    stored, 1);
+  updateNotice('5b-s3');
+  updateScoreDisplay();
+}
+function check5b_final() {
+  showSubExerciseSummary('feedback-5b','notice-5b',
+    ['5b-s1','5b-s2','5b-s3'], 3);
+}
+
+/* ══════════════════════════════════════════
+   5c  (3 P)
+   S1: a = −1 → 1P
+   S2: d=1, e=4, a=−1 → 2P
+   ══════════════════════════════════════════ */
+function check5c_step1() {
+  if (!stepMCSel['5c-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['5c-1'] === 'B';
+  markStepMC('5c-1','B');
+  const stored = recordScore('5c-s1', 1, ok);
+  showInlineFB('5c-1', ok,
+    ok ? '' :
+    '„Nach unten geöffnet" bedeutet, dass die Parabel an der x-Achse gespiegelt ist.',
+    stored, 1);
+  if (ok) unlockStep('5c-step2');
+  updateNotice('5c-s1');
+  updateScoreDisplay();
+}
+function check5c_step2() {
+  const aVal = parseNum(document.getElementById('ans-5c-a').value);
+  const dVal = parseNum(document.getElementById('ans-5c-d').value);
+  const eVal = parseNum(document.getElementById('ans-5c-e').value);
+  const aOk = !isNaN(aVal) && Math.abs(aVal - (-1)) < 0.01;
+  const dOk = !isNaN(dVal) && Math.abs(dVal - 1) < 0.01;
+  const eOk = !isNaN(eVal) && Math.abs(eVal - 4) < 0.01;
+  const ok = aOk && dOk && eOk;
+  clearInputStyle('ans-5c-a');
+  clearInputStyle('ans-5c-d');
+  clearInputStyle('ans-5c-e');
+  applyInputStyle('ans-5c-a', aOk);
+  applyInputStyle('ans-5c-d', dOk);
+  applyInputStyle('ans-5c-e', eOk);
+  const stored = recordScore('5c-s2', 2, ok);
+  const hints = [];
+  if (!dOk || !eOk) hints.push('d und e sind die Koordinaten des Scheitelpunkts S(d|e).');
+  if (!aOk) hints.push('a bestimmt die Öffnungsrichtung.');
+  showInlineFB('5c-2', ok,
+    ok ? '' : hints.join(' '),
+    stored, 2);
+  updateNotice('5c-s2');
+  updateScoreDisplay();
+}
+function check5c_final() {
+  showSubExerciseSummary('feedback-5c','notice-5c',
+    ['5c-s1','5c-s2'], 3);
+}
+
+/* ══════════════════════════════════════════
+   5d*  (4 P)
+   S1: f(x) = q(x) → 1P
+   S2: x² − x = 0 → 1P
+   S3: x₁=0, x₂=1 → 1P
+   S4: y₁=1, y₂=5/3 → 1P
+   ══════════════════════════════════════════ */
+function check5d_step1() {
+  if (!stepMCSel['5d-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['5d-1'] === 'B';
+  markStepMC('5d-1','B');
+  const stored = recordScore('5d-s1', 1, ok);
+  showInlineFB('5d-1', ok,
+    ok ? '' :
+    'Schnittpunkte zweier Funktionen findet man, indem man die Funktionswerte gleichsetzt.',
+    stored, 1);
+  if (ok) unlockStep('5d-step2');
+  updateNotice('5d-s1');
+  updateScoreDisplay();
+}
+function check5d_step2() {
+  if (!stepMCSel['5d-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
+  const ok = stepMCSel['5d-2'] === 'B';
+  markStepMC('5d-2','B');
+  const stored = recordScore('5d-s2', 1, ok);
+  showInlineFB('5d-2', ok,
+    ok ? '' :
+    'Setze f(x) = q(x) und bringe alles auf eine Seite. '
+    + 'Beachte: ⅔x − (−⅓x) = ⅔x + ⅓x = x.',
+    stored, 1);
+  if (ok) unlockStep('5d-step3');
+  updateNotice('5d-s2');
+  updateScoreDisplay();
+}
+function check5d_step3() {
+  const x1v = parseNum(document.getElementById('ans-5d-x1').value);
+  const x2v = parseNum(document.getElementById('ans-5d-x2').value);
+  /* Accept in any order */
+  const set = [x1v, x2v].sort((a,b) => a - b);
+  const ok = !isNaN(set[0]) && !isNaN(set[1])
+    && Math.abs(set[0] - 0) < 0.01
+    && Math.abs(set[1] - 1) < 0.01;
+  clearInputStyle('ans-5d-x1'); clearInputStyle('ans-5d-x2');
+  applyInputStyle('ans-5d-x1', ok);
+  applyInputStyle('ans-5d-x2', ok);
+  const stored = recordScore('5d-s3', 1, ok);
+  showInlineFB('5d-3', ok,
+    ok ? '' :
+    'x² − x = 0 → x·(x − 1) = 0. Nullproduktsatz anwenden.',
+    stored, 1);
+  if (ok) unlockStep('5d-step4');
+  updateNotice('5d-s3');
+  updateScoreDisplay();
+}
+function check5d_step4() {
+  const y1v = parseNum(document.getElementById('ans-5d-y1').value);
+  const y2v = parseNum(document.getElementById('ans-5d-y2').value);
+  /* Expected: y1=1 (for x=0), y2=5/3≈1.667 (for x=1) — any order */
+  const vals = [y1v, y2v].sort((a,b) => a - b);
+  const ok = !isNaN(vals[0]) && !isNaN(vals[1])
+    && Math.abs(vals[0] - 1) < 0.05
+    && Math.abs(vals[1] - 5/3) < 0.05;
+  clearInputStyle('ans-5d-y1'); clearInputStyle('ans-5d-y2');
+  applyInputStyle('ans-5d-y1', ok);
+  applyInputStyle('ans-5d-y2', ok);
+  const stored = recordScore('5d-s4', 1, ok);
+  showInlineFB('5d-4', ok,
+    ok ? '' :
+    'Setze die x-Werte in f(x) = ⅔·x + 1 ein.',
+    stored, 1);
+  markTaskCompleted('task5');
+  updateNotice('5d-s4');
+  updateScoreDisplay();
+}
+function check5d_final() {
+  showSubExerciseSummary('feedback-5d','notice-5d',
+    ['5d-s1','5d-s2','5d-s3','5d-s4'], 4);
+}
+
+/* ══════════════════════════════════════════
+   Init
+   ══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+
+  ['5b-1','5c-1','5d-1','5d-2']
+    .forEach(id => restoreStepMC(id));
+  ['5b-1','5c-1','5d-1','5d-2']
+    .forEach(id => restoreStepMCResult(id));
+  ['5b-step2','5b-step3',
+   '5c-step2',
+   '5d-step2','5d-step3','5d-step4']
+    .forEach(id => restoreUnlocked(id));
+  ['5a','5b-1','5b-2','5b-3',
+   '5c-1','5c-2',
+   '5d-1','5d-2','5d-3','5d-4']
+    .forEach(id => restoreInlineFeedback(id));
+  ['5a','5b','5c','5d'].forEach(id => restoreFeedback(id));
+  ['5a-s1',
+   '5b-s1','5b-s2','5b-s3',
+   '5c-s1','5c-s2',
+   '5d-s1','5d-s2','5d-s3','5d-s4']
+    .forEach(id => updateNotice(id));
+
+  const keyMap = {
+    '5a': { keys: ['5a-s1'], max: 1 },
+    '5b': { keys: ['5b-s1','5b-s2','5b-s3'], max: 3 },
+    '5c': { keys: ['5c-s1','5c-s2'], max: 3 },
+    '5d': { keys: ['5d-s1','5d-s2','5d-s3','5d-s4'], max: 4 }
+  };
+  const st = ExamState.load();
+  Object.keys(keyMap).forEach(id => {
+    const { keys, max } = keyMap[id];
+    const ne = document.getElementById(`notice-${id}`);
+    if (!ne) return;
+    const earned = keys.reduce((s,k) => s + (st.scores[k]?.earned || 0), 0);
+    const any = keys.some(k => st.scores[k]?.attempts > 0);
+    if (!any) return;
+    ne.className = earned > 0 ? 'scored-notice earned' : 'scored-notice not-earned';
+    ne.textContent = earned > 0
+      ? `✓ ${earned}/${max} Punkt(e) vergeben`
+      : `0/${max} Punkt(e) – weiteres Üben möglich`;
+  });
+
+  updateScoreDisplay();
+});
+</script>
+</body>
+</html>
