@@ -494,21 +494,12 @@
 <script>
 /* ══════════════════════════════════════════
    Aufgabe 5 – Funktionen  (11 Punkte)
-
-   5a: Sy(0|1)                           → 1 P
-   5b: parallel → same slope, diff b     → 3 P (1+1+1)
-   5c: p(x) = −(x−1)²+4                 → 3 P (1+2)
-   5d*: intersection f∩q → (0|1),(1|5/3) → 4 P (1+1+1+1)
    ══════════════════════════════════════════ */
 
 const stepMCSel = {};
 
-/* ── Place this at the VERY TOP of the <script> block,
-     right after const stepMCSel = {};              ── */
-
 /* ══════════════════════════════════════════
-   Coordinate system canvas with interactive
-   line-drawing tool (two draggable points)
+   Canvas + line tool
    ══════════════════════════════════════════ */
 
 const cv   = document.getElementById('coord-canvas');
@@ -516,38 +507,32 @@ const cctx = cv.getContext('2d');
 const OX   = 220, OY = 360;
 const SCALE = 50;
 
-/* ── Two user-placed points (math coords) ── */
 let userPoints = [];
 let dragIndex  = -1;
 
 /* Restore saved points immediately */
-(function restorePoints() {
+try {
   const saved = loadCustom('5-line-points');
   if (saved && Array.isArray(saved) && saved.length <= 2) {
     userPoints = saved;
   }
-})();
+} catch(e) { /* loadCustom not ready yet — will restore in init */ }
 
-/* ── Coordinate conversions ── */
 function mathToCanvas(mx, my) {
   return { px: OX + mx * SCALE, py: OY - my * SCALE };
 }
 function canvasToMath(px, py) {
   return { mx: (px - OX) / SCALE, my: (OY - py) / SCALE };
 }
-
-/* ── Snap to nearest 1/6 so both ½ and ⅓ multiples work ── */
 function snapMath(v) {
   return Math.round(v * 6) / 6;
 }
-
-/* ── Round for display: show max 2 decimal places ── */
 function displayNum(v) {
   const r = Math.round(v * 100) / 100;
   return String(r).replace('.', ',');
 }
 
-/* ── Get line parameters from user points ── */
+/* Single definition of getUserLineParams */
 function getUserLineParams() {
   if (userPoints.length < 2) return null;
   const p0 = userPoints[0], p1 = userPoints[1];
@@ -557,12 +542,10 @@ function getUserLineParams() {
   return { m, b };
 }
 
-/* ── Draw everything ── */
 function drawCoordSystem() {
   const W = cv.width, H = cv.height;
   cctx.clearRect(0, 0, W, H);
 
-  /* Grid */
   cctx.strokeStyle = '#e8e8e8';
   cctx.lineWidth = 1;
   for (let x = -4; x <= 4; x++) {
@@ -574,13 +557,11 @@ function drawCoordSystem() {
     cctx.beginPath(); cctx.moveTo(0, py); cctx.lineTo(W, py); cctx.stroke();
   }
 
-  /* Axes */
   cctx.strokeStyle = '#1a1a1a';
   cctx.lineWidth = 2;
   cctx.beginPath(); cctx.moveTo(0, OY); cctx.lineTo(W, OY); cctx.stroke();
   cctx.beginPath(); cctx.moveTo(OX, 0); cctx.lineTo(OX, H); cctx.stroke();
 
-  /* Ticks + labels */
   cctx.font = '12px Arial';
   cctx.fillStyle = '#333';
   cctx.textAlign = 'center';
@@ -588,117 +569,78 @@ function drawCoordSystem() {
   for (let x = -4; x <= 4; x++) {
     if (x === 0) continue;
     const px = OX + x * SCALE;
-    cctx.beginPath();
-    cctx.moveTo(px, OY - 4); cctx.lineTo(px, OY + 4);
-    cctx.stroke();
-    cctx.fillText(String(x), px, OY + 6);
+    cctx.beginPath(); cctx.moveTo(px, OY-4); cctx.lineTo(px, OY+4); cctx.stroke();
+    cctx.fillText(String(x), px, OY+6);
   }
   cctx.textAlign = 'right';
   cctx.textBaseline = 'middle';
   for (let y = -2; y <= 7; y++) {
     if (y === 0) continue;
     const py = OY - y * SCALE;
-    cctx.beginPath();
-    cctx.moveTo(OX - 4, py); cctx.lineTo(OX + 4, py);
-    cctx.stroke();
-    cctx.fillText(String(y), OX - 8, py);
+    cctx.beginPath(); cctx.moveTo(OX-4, py); cctx.lineTo(OX+4, py); cctx.stroke();
+    cctx.fillText(String(y), OX-8, py);
   }
 
-  /* Origin */
-  cctx.textAlign = 'right';
-  cctx.textBaseline = 'top';
-  cctx.fillText('O', OX - 6, OY + 6);
-
-  /* Axis labels */
+  cctx.textAlign = 'right'; cctx.textBaseline = 'top';
+  cctx.fillText('O', OX-6, OY+6);
   cctx.font = 'italic 14px Arial';
-  cctx.textAlign = 'left';
-  cctx.textBaseline = 'middle';
-  cctx.fillText('x', W - 14, OY - 12);
-  cctx.textAlign = 'center';
-  cctx.textBaseline = 'bottom';
-  cctx.fillText('y', OX + 14, 14);
+  cctx.textAlign = 'left'; cctx.textBaseline = 'middle';
+  cctx.fillText('x', W-14, OY-12);
+  cctx.textAlign = 'center'; cctx.textBaseline = 'bottom';
+  cctx.fillText('y', OX+14, 14);
 
-  /* ── f(x) = ⅔x + 1 ── */
+  /* f(x) = ⅔x + 1 */
   cctx.strokeStyle = '#1a5276';
   cctx.lineWidth = 2;
   cctx.beginPath();
   for (let px = 0; px < W; px++) {
     const x = (px - OX) / SCALE;
-    const y = (2/3) * x + 1;
+    const y = (2/3)*x + 1;
     const py = OY - y * SCALE;
     if (px === 0) cctx.moveTo(px, py); else cctx.lineTo(px, py);
   }
   cctx.stroke();
-  /* f label */
   cctx.font = 'bold italic 14px Arial';
   cctx.fillStyle = '#1a5276';
-  cctx.textAlign = 'left';
-  cctx.textBaseline = 'bottom';
-  const fLx = OX + 3.5 * SCALE;
-  const fLy = OY - ((2/3)*3.5 + 1) * SCALE;
-  cctx.fillText('f', fLx + 8, fLy - 4);
+  cctx.textAlign = 'left'; cctx.textBaseline = 'bottom';
+  cctx.fillText('f', OX + 3.5*SCALE + 8, OY - ((2/3)*3.5+1)*SCALE - 4);
 
-  /* ── User line (if 2 points) ── */
+  /* User line */
   if (userPoints.length === 2) {
     const p0 = userPoints[0], p1 = userPoints[1];
     if (Math.abs(p1.x - p0.x) > 0.001) {
-      const slope = (p1.y - p0.y) / (p1.x - p0.x);
-      const yInt  = p0.y - slope * p0.x;
-      const xMin  = (0 - OX) / SCALE;
-      const xMax  = (W - OX) / SCALE;
-      const c0 = mathToCanvas(xMin, slope * xMin + yInt);
-      const c1 = mathToCanvas(xMax, slope * xMax + yInt);
-      cctx.strokeStyle = '#e74c3c';
-      cctx.lineWidth   = 2;
-      cctx.setLineDash([]);
-      cctx.beginPath();
-      cctx.moveTo(c0.px, c0.py);
-      cctx.lineTo(c1.px, c1.py);
-      cctx.stroke();
-      /* g label */
-      cctx.font = 'bold italic 14px Arial';
-      cctx.fillStyle = '#e74c3c';
-      cctx.textAlign = 'left';
-      cctx.textBaseline = 'bottom';
-      cctx.fillText('g', c1.px - 30, c1.py - 6);
-    } else {
-      /* Vertical line */
-      const c0 = mathToCanvas(p0.x, -3);
-      const c1 = mathToCanvas(p0.x, 8);
+      const slope = (p1.y-p0.y)/(p1.x-p0.x);
+      const yInt  = p0.y - slope*p0.x;
+      const xMin = (0-OX)/SCALE, xMax = (W-OX)/SCALE;
+      const c0 = mathToCanvas(xMin, slope*xMin+yInt);
+      const c1 = mathToCanvas(xMax, slope*xMax+yInt);
       cctx.strokeStyle = '#e74c3c';
       cctx.lineWidth = 2;
-      cctx.beginPath();
-      cctx.moveTo(c0.px, c0.py);
-      cctx.lineTo(c1.px, c1.py);
-      cctx.stroke();
+      cctx.setLineDash([]);
+      cctx.beginPath(); cctx.moveTo(c0.px, c0.py); cctx.lineTo(c1.px, c1.py); cctx.stroke();
+      cctx.font = 'bold italic 14px Arial';
+      cctx.fillStyle = '#e74c3c';
+      cctx.textAlign = 'left'; cctx.textBaseline = 'bottom';
+      cctx.fillText('g', c1.px-30, c1.py-6);
+    } else {
+      const c0 = mathToCanvas(p0.x, -3);
+      const c1 = mathToCanvas(p0.x, 8);
+      cctx.strokeStyle = '#e74c3c'; cctx.lineWidth = 2;
+      cctx.beginPath(); cctx.moveTo(c0.px, c0.py); cctx.lineTo(c1.px, c1.py); cctx.stroke();
     }
   }
 
-  /* ── User points ── */
-  userPoints.forEach((pt) => {
+  /* User points */
+  userPoints.forEach(pt => {
     const c = mathToCanvas(pt.x, pt.y);
-    /* Outer ring */
-    cctx.beginPath();
-    cctx.arc(c.px, c.py, 10, 0, 2 * Math.PI);
-    cctx.fillStyle = 'rgba(231,76,60,0.2)';
-    cctx.fill();
-    cctx.strokeStyle = '#e74c3c';
-    cctx.lineWidth = 2;
-    cctx.stroke();
-    /* Inner dot */
-    cctx.beginPath();
-    cctx.arc(c.px, c.py, 4, 0, 2 * Math.PI);
-    cctx.fillStyle = '#e74c3c';
-    cctx.fill();
-    /* Coordinate label */
-    cctx.font = '11px Arial';
-    cctx.fillStyle = '#c0392b';
-    cctx.textAlign = 'left';
-    cctx.textBaseline = 'bottom';
-    cctx.fillText(
-      `(${displayNum(pt.x)}|${displayNum(pt.y)})`,
-      c.px + 12, c.py - 6
-    );
+    cctx.beginPath(); cctx.arc(c.px, c.py, 10, 0, 2*Math.PI);
+    cctx.fillStyle = 'rgba(231,76,60,0.2)'; cctx.fill();
+    cctx.strokeStyle = '#e74c3c'; cctx.lineWidth = 2; cctx.stroke();
+    cctx.beginPath(); cctx.arc(c.px, c.py, 4, 0, 2*Math.PI);
+    cctx.fillStyle = '#e74c3c'; cctx.fill();
+    cctx.font = '11px Arial'; cctx.fillStyle = '#c0392b';
+    cctx.textAlign = 'left'; cctx.textBaseline = 'bottom';
+    cctx.fillText(`(${displayNum(pt.x)}|${displayNum(pt.y)})`, c.px+12, c.py-6);
   });
 
   updateLineInfo();
@@ -710,72 +652,54 @@ function updateLineInfo() {
   if (userPoints.length === 0) {
     info.textContent = 'Setze den ersten Punkt.';
   } else if (userPoints.length === 1) {
-    info.textContent =
-      `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}) `
-      + '— setze den zweiten Punkt.';
+    info.textContent = `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}) — setze den zweiten Punkt.`;
   } else {
     const params = getUserLineParams();
     if (params) {
-      info.innerHTML =
-        `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}), `
+      info.innerHTML = `Punkt 1: (${displayNum(userPoints[0].x)}|${displayNum(userPoints[0].y)}), `
         + `Punkt 2: (${displayNum(userPoints[1].x)}|${displayNum(userPoints[1].y)})<br>`
-        + `Steigung m ≈ ${displayNum(params.m)}, `
-        + `y-Achsenabschnitt b ≈ ${displayNum(params.b)}`;
+        + `Steigung m ≈ ${displayNum(params.m)}, y-Achsenabschnitt b ≈ ${displayNum(params.b)}`;
     } else {
       info.textContent = 'Vertikale Linie (keine Funktion)';
     }
   }
 }
 
-function savePoints() {
-  saveCustom('5-line-points', userPoints);
-}
+function savePoints() { saveCustom('5-line-points', userPoints); }
+function resetLine() { userPoints = []; savePoints(); drawCoordSystem(); }
 
-function resetLine() {
-  userPoints = [];
-  savePoints();
-  drawCoordSystem();
-}
-
-/* ── Hit test ── */
 function hitTestPoint(cx, cy) {
   for (let i = 0; i < userPoints.length; i++) {
     const c = mathToCanvas(userPoints[i].x, userPoints[i].y);
-    if (Math.hypot(cx - c.px, cy - c.py) < 22) return i;
+    if (Math.hypot(cx-c.px, cy-c.py) < 22) return i;
   }
   return -1;
 }
 
 function getCanvasXY(e) {
   const rect = cv.getBoundingClientRect();
-  const scaleX = cv.width  / rect.width;
-  const scaleY = cv.height / rect.height;
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  return {
-    cx: (clientX - rect.left) * scaleX,
-    cy: (clientY - rect.top)  * scaleY,
-  };
+  const sx = cv.width / rect.width;
+  const sy = cv.height / rect.height;
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { cx: (cx - rect.left)*sx, cy: (cy - rect.top)*sy };
 }
 
-/* ── Mouse events ── */
 cv.addEventListener('mousedown', function(e) {
-  const { cx, cy } = getCanvasXY(e);
+  const {cx,cy} = getCanvasXY(e);
   const hit = hitTestPoint(cx, cy);
-  if (hit >= 0) {
-    dragIndex = hit;
-  } else if (userPoints.length < 2) {
+  if (hit >= 0) { dragIndex = hit; }
+  else if (userPoints.length < 2) {
     const m = canvasToMath(cx, cy);
-    userPoints.push({ x: snapMath(m.mx), y: snapMath(m.my) });
-    savePoints();
-    drawCoordSystem();
+    userPoints.push({x: snapMath(m.mx), y: snapMath(m.my)});
+    savePoints(); drawCoordSystem();
   }
 });
 cv.addEventListener('mousemove', function(e) {
   if (dragIndex < 0) return;
-  const { cx, cy } = getCanvasXY(e);
+  const {cx,cy} = getCanvasXY(e);
   const m = canvasToMath(cx, cy);
-  userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
+  userPoints[dragIndex] = {x: snapMath(m.mx), y: snapMath(m.my)};
   drawCoordSystem();
 });
 cv.addEventListener('mouseup', function() {
@@ -786,29 +710,25 @@ cv.addEventListener('mouseleave', function() {
   if (dragIndex >= 0) { savePoints(); drawCoordSystem(); }
   dragIndex = -1;
 });
-
-/* ── Touch events ── */
 cv.addEventListener('touchstart', function(e) {
   e.preventDefault();
-  const { cx, cy } = getCanvasXY(e);
+  const {cx,cy} = getCanvasXY(e);
   const hit = hitTestPoint(cx, cy);
-  if (hit >= 0) {
-    dragIndex = hit;
-  } else if (userPoints.length < 2) {
+  if (hit >= 0) { dragIndex = hit; }
+  else if (userPoints.length < 2) {
     const m = canvasToMath(cx, cy);
-    userPoints.push({ x: snapMath(m.mx), y: snapMath(m.my) });
-    savePoints();
-    drawCoordSystem();
+    userPoints.push({x: snapMath(m.mx), y: snapMath(m.my)});
+    savePoints(); drawCoordSystem();
   }
-}, { passive: false });
+}, {passive:false});
 cv.addEventListener('touchmove', function(e) {
   e.preventDefault();
   if (dragIndex < 0) return;
-  const { cx, cy } = getCanvasXY(e);
+  const {cx,cy} = getCanvasXY(e);
   const m = canvasToMath(cx, cy);
-  userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
+  userPoints[dragIndex] = {x: snapMath(m.mx), y: snapMath(m.my)};
   drawCoordSystem();
-}, { passive: false });
+}, {passive:false});
 cv.addEventListener('touchend', function() {
   if (dragIndex >= 0) { savePoints(); drawCoordSystem(); }
   dragIndex = -1;
@@ -816,10 +736,127 @@ cv.addEventListener('touchend', function() {
 
 drawCoordSystem();
 
+/* ══════════════════════════════════════════
+   MC helpers (single definition)
+   ══════════════════════════════════════════ */
+
+function selectStepMC(g, el) {
+  const c = el.closest('.step-mc');
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('selected','correct','incorrect');
+    const cb = o.querySelector('.step-mc-cb');
+    if (cb) cb.textContent = '';
+  });
+  el.classList.add('selected');
+  const cb = el.querySelector('.step-mc-cb');
+  if (cb) cb.textContent = '✓';
+  stepMCSel[g] = el.dataset.val;
+  saveCustom(`stepmcs-${g}`, el.dataset.val);
+}
+
+function restoreStepMC(g) {
+  const v = loadCustom(`stepmcs-${g}`);
+  if (!v) return;
+  stepMCSel[g] = v;
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    if (o.dataset.val === v) {
+      o.classList.add('selected');
+      const cb = o.querySelector('.step-mc-cb');
+      if (cb) cb.textContent = '✓';
+    }
+  });
+}
+
+function markStepMC(g, correctVal) {
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  const ch = stepMCSel[g];
+  if (!ch) return;
+  const ok = (ch === correctVal);
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === ch) o.classList.add(ok ? 'correct' : 'incorrect');
+  });
+  saveResult(`smc_${g}_chosen`, ch);
+  saveResult(`smc_${g}_result`, ok ? 'correct' : 'incorrect');
+}
+
+function restoreStepMCResult(g) {
+  const ch = loadResult(`smc_${g}_chosen`);
+  const r  = loadResult(`smc_${g}_result`);
+  if (!ch || !r) return;
+  const c = document.getElementById(`smc-${g}`);
+  if (!c) return;
+  c.querySelectorAll('.step-mc-option').forEach(o => {
+    o.classList.remove('correct','incorrect');
+    if (o.dataset.val === ch) o.classList.add(r);
+  });
+}
+
+function unlockStep(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
+}
+function restoreUnlocked(id) {
+  if (loadCustom(`unlocked-${id}`)) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('locked');
+  }
+}
+
+function showInlineFB(id, ok, hint, stored, maxPts) {
+  const el = document.getElementById(`ifb-${id}`);
+  if (!el) return;
+  const css = ok ? 'correct' : 'incorrect';
+  let badge = '';
+  if (maxPts != null && maxPts > 0) {
+    const d = (stored != null) ? stored : 0;
+    badge = `<span style="display:inline-block;
+      background:${d > 0 ? '#27ae60' : '#c0392b'};
+      color:white;font-size:12px;font-weight:bold;
+      padding:2px 8px;border-radius:10px;margin-left:6px;
+      vertical-align:middle;">${d}/${maxPts}&nbsp;P</span>`;
+  }
+  const html = ok
+    ? `✅ Richtig!${badge}`
+    : `❌ Noch nicht richtig.${badge}`
+      + (hint ? `<br><span style="font-style:italic;font-size:13px;">${hint}</span>` : '');
+  el.className = `inline-feedback show ${css}`;
+  el.innerHTML = html;
+  saveInlineFeedback(id, html, css);
+}
+
+function showSubExerciseSummary(fid, nid, keys, max) {
+  const st = ExamState.load();
+  const earned = keys.reduce((s,k) => s + (st.scores[k]?.earned || 0), 0);
+  const fb = document.getElementById(fid);
+  if (!fb) return;
+  const all = Math.abs(earned - max) < 0.01;
+  const css = all ? 'correct' : 'incorrect';
+  const badge = `<span style="display:inline-block;
+    background:${all ? '#27ae60' : '#e67e22'};
+    color:white;font-size:13px;font-weight:bold;
+    padding:3px 10px;border-radius:10px;margin-left:8px;">
+    ${earned}/${max}&nbsp;P</span>`;
+  fb.className = `feedback-box show ${css}`;
+  fb.innerHTML = all
+    ? `<span class="feedback-icon">✅</span><strong>Alle Schritte richtig!</strong>${badge}`
+    : `<span class="feedback-icon">⚠️</span><strong>Teilweise richtig.</strong>${badge}
+       <div class="hint-text">Überprüfe die rot markierten Schritte.</div>`;
+  const ne = document.getElementById(nid);
+  if (ne) {
+    ne.className = earned > 0 ? 'scored-notice earned' : 'scored-notice not-earned';
+    ne.textContent = earned > 0
+      ? `✓ ${earned}/${max} Punkt(e) vergeben`
+      : `0/${max} Punkt(e) – weiteres Üben möglich`;
+  }
+  saveFeedback(fid.replace('feedback-',''), fb.innerHTML, css);
+}
 
 /* ══════════════════════════════════════════
    5a  (1 P)
-   Sy = (0, 1)
    ══════════════════════════════════════════ */
 function check5a() {
   const xv = parseNum(document.getElementById('ans-5a-x').value);
@@ -832,9 +869,7 @@ function check5a() {
   applyInputStyle('ans-5a-y', yOk);
   const stored = recordScore('5a-s1', 1, ok);
   showInlineFB('5a', ok,
-    ok ? '' :
-    'Der Schnittpunkt mit der y-Achse hat immer x\u00a0=\u00a00. '
-    + 'Setze x\u00a0=\u00a00 in f(x) ein.',
+    ok ? '' : 'Der Schnittpunkt mit der y-Achse hat immer x = 0. Setze x = 0 in f(x) ein.',
     stored, 1);
   updateNotice('5a-s1');
   updateScoreDisplay();
@@ -845,56 +880,23 @@ function check5a_final() {
 
 /* ══════════════════════════════════════════
    5b  (3 P)
-   S1: drawn line must be parallel to f
-       (same slope ⅔, different y-intercept)  → 1.5 P
-   S2: equation g(x) = m·x + b
-       m must = ⅔, b must ≠ 1                 → 1.5 P
+   S1: drawn line → 1.5 P
+   S2: equation   → 1.5 P
    ══════════════════════════════════════════ */
-
-function getUserLineParams() {
-  /* Returns { m, b } from the two user-placed points,
-     or null if fewer than 2 points */
-  if (userPoints.length < 2) return null;
-  const p0 = userPoints[0], p1 = userPoints[1];
-  if (Math.abs(p1.x - p0.x) < 0.001) return null; /* vertical */
-  const m = (p1.y - p0.y) / (p1.x - p0.x);
-  const b = p0.y - m * p0.x;
-  return { m, b };
-}
-
-/* ══════════════════════════════════════════
-   5b check functions
-   S1: drawn line parallel to f → 1.5 P
-   S2: equation g(x) = mx + b  → 1.5 P
-   ══════════════════════════════════════════ */
-
 function check5b_step1() {
   const params = getUserLineParams();
-
   if (!params) {
     showInlineFB('5b-1', false,
-      'Setze zuerst zwei Punkte im Koordinatensystem, '
-      + 'um eine Gerade zu zeichnen.');
+      'Setze zuerst zwei Punkte im Koordinatensystem.');
     return;
   }
-
-  /* Tolerance 0.08 for slope to account for snap rounding */
   const slopeOk = Math.abs(params.m - 2/3) < 0.08;
   const diffB   = Math.abs(params.b - 1) > 0.05;
   const ok      = slopeOk && diffB;
-
-  const stored = recordPartialScore('5b-s1', ok ? 1.5 : 0, 1.5);
-
+  const stored  = recordPartialScore('5b-s1', ok ? 1.5 : 0, 1.5);
   let hint = '';
-  if (!slopeOk) {
-    hint = 'Die gezeichnete Gerade hat nicht dieselbe Steigung wie f. '
-      + 'Parallele Geraden haben eine gemeinsame Eigenschaft – '
-      + 'überprüfe die Steigung.';
-  } else if (!diffB) {
-    hint = 'Deine Gerade hat die richtige Steigung, liegt aber genau auf f. '
-      + 'Verschiebe einen Punkt nach oben oder unten.';
-  }
-
+  if (!slopeOk) hint = 'Die gezeichnete Gerade hat nicht dieselbe Steigung wie f. Parallele Geraden teilen eine Eigenschaft.';
+  else if (!diffB) hint = 'Richtige Steigung, aber die Gerade liegt auf f. Verschiebe einen Punkt.';
   showInlineFB('5b-1', ok, hint, stored, 1.5);
   if (ok) unlockStep('5b-step2');
   updateNotice('5b-s1');
@@ -904,64 +906,40 @@ function check5b_step1() {
 function check5b_step2() {
   const mRaw = document.getElementById('ans-5b-m').value;
   const bRaw = document.getElementById('ans-5b-b').value;
-
-  /* Accept 2/3, 0.667, 0,667 etc. */
   let mVal;
-  if (fractionCheck(mRaw, 2, 3)) {
-    mVal = 2/3;
-  } else {
-    mVal = parseNum(mRaw);
-  }
+  if (fractionCheck(mRaw, 2, 3)) { mVal = 2/3; }
+  else { mVal = parseNum(mRaw); }
   const bVal = parseNum(bRaw);
-
   const mOk = !isNaN(mVal) && Math.abs(mVal - 2/3) < 0.02;
   const bOk = !isNaN(bVal) && Math.abs(bVal - 1) > 0.01;
   const ok  = mOk && bOk;
-
-  clearInputStyle('ans-5b-m');
-  clearInputStyle('ans-5b-b');
+  clearInputStyle('ans-5b-m'); clearInputStyle('ans-5b-b');
   applyInputStyle('ans-5b-m', mOk);
   applyInputStyle('ans-5b-b', bOk);
-
-  /* Check consistency with drawn line */
   let extra = '';
   const params = getUserLineParams();
   if (ok && params) {
-    const drawnMOk = Math.abs(params.m - 2/3) < 0.08;
-    const drawnBClose = Math.abs(params.b - bVal) < 0.15;
-    if (!drawnMOk || !drawnBClose) {
-      extra = ' (Achtung: Deine Gleichung und die gezeichnete Gerade '
-        + 'stimmen nicht überein.)';
+    if (Math.abs(params.m - 2/3) >= 0.08 || Math.abs(params.b - bVal) >= 0.15) {
+      extra = ' (Achtung: Gleichung und gezeichnete Gerade stimmen nicht überein.)';
     }
   }
-
   const stored = recordPartialScore('5b-s2', ok ? 1.5 : 0, 1.5);
-
   let hint = '';
-  if (!mOk) {
-    hint = 'Die Steigung einer parallelen Geraden ist identisch '
-      + 'mit der Steigung von f.';
-  } else if (!bOk) {
-    hint = 'Die Steigung stimmt. Der y-Achsenabschnitt muss sich '
-      + 'von dem der Geraden f unterscheiden.';
-  }
-
-  showInlineFB('5b-2', ok,
-    ok ? extra : hint,
-    stored, 1.5);
+  if (!mOk) hint = 'Die Steigung einer parallelen Geraden ist identisch mit der von f.';
+  else if (!bOk) hint = 'Steigung stimmt. Der y-Achsenabschnitt muss sich von f unterscheiden.';
+  showInlineFB('5b-2', ok, ok ? extra : hint, stored, 1.5);
   updateNotice('5b-s2');
   updateScoreDisplay();
 }
 
 function check5b_final() {
-  showSubExerciseSummary('feedback-5b','notice-5b',
-    ['5b-s1','5b-s2'], 3);
+  showSubExerciseSummary('feedback-5b','notice-5b',['5b-s1','5b-s2'], 3);
 }
 
 /* ══════════════════════════════════════════
    5c  (3 P)
    S1: a = −1 → 1P
-   S2: d=1, e=4, a=−1 → 2P
+   S2: a=−1, d=1, e=4 → 2P
    ══════════════════════════════════════════ */
 function check5c_step1() {
   if (!stepMCSel['5c-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
@@ -969,13 +947,13 @@ function check5c_step1() {
   markStepMC('5c-1','B');
   const stored = recordScore('5c-s1', 1, ok);
   showInlineFB('5c-1', ok,
-    ok ? '' :
-    '„Nach unten geöffnet" bedeutet, dass die Parabel an der x-Achse gespiegelt ist.',
+    ok ? '' : '„Nach unten geöffnet" bedeutet, dass die Parabel gespiegelt ist.',
     stored, 1);
   if (ok) unlockStep('5c-step2');
   updateNotice('5c-s1');
   updateScoreDisplay();
 }
+
 function check5c_step2() {
   const aVal = parseNum(document.getElementById('ans-5c-a').value);
   const dVal = parseNum(document.getElementById('ans-5c-d').value);
@@ -984,9 +962,7 @@ function check5c_step2() {
   const dOk = !isNaN(dVal) && Math.abs(dVal - 1) < 0.01;
   const eOk = !isNaN(eVal) && Math.abs(eVal - 4) < 0.01;
   const ok = aOk && dOk && eOk;
-  clearInputStyle('ans-5c-a');
-  clearInputStyle('ans-5c-d');
-  clearInputStyle('ans-5c-e');
+  clearInputStyle('ans-5c-a'); clearInputStyle('ans-5c-d'); clearInputStyle('ans-5c-e');
   applyInputStyle('ans-5c-a', aOk);
   applyInputStyle('ans-5c-d', dOk);
   applyInputStyle('ans-5c-e', eOk);
@@ -994,23 +970,17 @@ function check5c_step2() {
   const hints = [];
   if (!dOk || !eOk) hints.push('d und e sind die Koordinaten des Scheitelpunkts S(d|e).');
   if (!aOk) hints.push('a bestimmt die Öffnungsrichtung.');
-  showInlineFB('5c-2', ok,
-    ok ? '' : hints.join(' '),
-    stored, 2);
+  showInlineFB('5c-2', ok, ok ? '' : hints.join(' '), stored, 2);
   updateNotice('5c-s2');
   updateScoreDisplay();
 }
+
 function check5c_final() {
-  showSubExerciseSummary('feedback-5c','notice-5c',
-    ['5c-s1','5c-s2'], 3);
+  showSubExerciseSummary('feedback-5c','notice-5c',['5c-s1','5c-s2'], 3);
 }
 
 /* ══════════════════════════════════════════
    5d*  (4 P)
-   S1: f(x) = q(x) → 1P
-   S2: x² − x = 0 → 1P
-   S3: x₁=0, x₂=1 → 1P
-   S4: y₁=1, y₂=5/3 → 1P
    ══════════════════════════════════════════ */
 function check5d_step1() {
   if (!stepMCSel['5d-1']) { alert('Bitte wähle eine Antwort aus.'); return; }
@@ -1018,105 +988,108 @@ function check5d_step1() {
   markStepMC('5d-1','B');
   const stored = recordScore('5d-s1', 1, ok);
   showInlineFB('5d-1', ok,
-    ok ? '' :
-    'Schnittpunkte zweier Funktionen findet man, indem man die Funktionswerte gleichsetzt.',
+    ok ? '' : 'Schnittpunkte findet man durch Gleichsetzen der Funktionswerte.',
     stored, 1);
   if (ok) unlockStep('5d-step2');
   updateNotice('5d-s1');
   updateScoreDisplay();
 }
+
 function check5d_step2() {
   if (!stepMCSel['5d-2']) { alert('Bitte wähle eine Antwort aus.'); return; }
   const ok = stepMCSel['5d-2'] === 'B';
   markStepMC('5d-2','B');
   const stored = recordScore('5d-s2', 1, ok);
   showInlineFB('5d-2', ok,
-    ok ? '' :
-    'Setze f(x) = q(x) und bringe alles auf eine Seite. '
-    + 'Beachte: ⅔x − (−⅓x) = ⅔x + ⅓x = x.',
+    ok ? '' : 'Setze f(x) = q(x) und bringe alles auf eine Seite. ⅔x − (−⅓x) = x.',
     stored, 1);
   if (ok) unlockStep('5d-step3');
   updateNotice('5d-s2');
   updateScoreDisplay();
 }
+
 function check5d_step3() {
   const x1v = parseNum(document.getElementById('ans-5d-x1').value);
   const x2v = parseNum(document.getElementById('ans-5d-x2').value);
-  /* Accept in any order */
-  const set = [x1v, x2v].sort((a,b) => a - b);
+  const set = [x1v, x2v].sort((a,b) => a-b);
   const ok = !isNaN(set[0]) && !isNaN(set[1])
-    && Math.abs(set[0] - 0) < 0.01
-    && Math.abs(set[1] - 1) < 0.01;
+    && Math.abs(set[0]) < 0.01 && Math.abs(set[1] - 1) < 0.01;
   clearInputStyle('ans-5d-x1'); clearInputStyle('ans-5d-x2');
-  applyInputStyle('ans-5d-x1', ok);
-  applyInputStyle('ans-5d-x2', ok);
+  applyInputStyle('ans-5d-x1', ok); applyInputStyle('ans-5d-x2', ok);
   const stored = recordScore('5d-s3', 1, ok);
   showInlineFB('5d-3', ok,
-    ok ? '' :
-    'x² − x = 0 → x·(x − 1) = 0. Nullproduktsatz anwenden.',
+    ok ? '' : 'x²−x = 0 → x(x−1) = 0. Nullproduktsatz anwenden.',
     stored, 1);
   if (ok) unlockStep('5d-step4');
   updateNotice('5d-s3');
   updateScoreDisplay();
 }
+
 function check5d_step4() {
   const y1v = parseNum(document.getElementById('ans-5d-y1').value);
   const y2v = parseNum(document.getElementById('ans-5d-y2').value);
-  /* Expected: y1=1 (for x=0), y2=5/3≈1.667 (for x=1) — any order */
-  const vals = [y1v, y2v].sort((a,b) => a - b);
+  const vals = [y1v, y2v].sort((a,b) => a-b);
   const ok = !isNaN(vals[0]) && !isNaN(vals[1])
-    && Math.abs(vals[0] - 1) < 0.05
-    && Math.abs(vals[1] - 5/3) < 0.05;
+    && Math.abs(vals[0] - 1) < 0.05 && Math.abs(vals[1] - 5/3) < 0.05;
   clearInputStyle('ans-5d-y1'); clearInputStyle('ans-5d-y2');
-  applyInputStyle('ans-5d-y1', ok);
-  applyInputStyle('ans-5d-y2', ok);
+  applyInputStyle('ans-5d-y1', ok); applyInputStyle('ans-5d-y2', ok);
   const stored = recordScore('5d-s4', 1, ok);
   showInlineFB('5d-4', ok,
-    ok ? '' :
-    'Setze die x-Werte in f(x) = ⅔·x + 1 ein.',
+    ok ? '' : 'Setze die x-Werte in f(x) = ⅔x + 1 ein.',
     stored, 1);
   markTaskCompleted('task5');
   updateNotice('5d-s4');
   updateScoreDisplay();
 }
+
 function check5d_final() {
   showSubExerciseSummary('feedback-5d','notice-5d',
     ['5d-s1','5d-s2','5d-s3','5d-s4'], 4);
 }
 
 /* ══════════════════════════════════════════
-   Init
+   Init — runs after DOMContentLoaded
    ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
 
-  ['5c-1','5d-1','5d-2']
-    .forEach(id => restoreStepMC(id));
-  ['5c-1','5d-1','5d-2']
-    .forEach(id => restoreStepMCResult(id));
-  ['5b-step2',
-   '5c-step2',
-   '5d-step2','5d-step3','5d-step4']
+  /* Restore line tool points (retry in case IIFE failed) */
+  try {
+    const saved = loadCustom('5-line-points');
+    if (saved && Array.isArray(saved) && saved.length <= 2) {
+      userPoints = saved;
+    }
+  } catch(e) {}
+  drawCoordSystem();
+
+  /* MC restore */
+  ['5c-1','5d-1','5d-2'].forEach(id => restoreStepMC(id));
+  ['5c-1','5d-1','5d-2'].forEach(id => restoreStepMCResult(id));
+
+  /* Unlock restore */
+  ['5b-step2','5c-step2','5d-step2','5d-step3','5d-step4']
     .forEach(id => restoreUnlocked(id));
-  ['5a','5b-1','5b-2',
-   '5c-1','5c-2',
-   '5d-1','5d-2','5d-3','5d-4']
+
+  /* Inline feedback restore */
+  ['5a','5b-1','5b-2','5c-1','5c-2','5d-1','5d-2','5d-3','5d-4']
     .forEach(id => restoreInlineFeedback(id));
+
+  /* Summary feedback */
   ['5a','5b','5c','5d'].forEach(id => restoreFeedback(id));
-  ['5a-s1',
-   '5b-s1','5b-s2',
-   '5c-s1','5c-s2',
-   '5d-s1','5d-s2','5d-s3','5d-s4']
+
+  /* Step notices */
+  ['5a-s1','5b-s1','5b-s2','5c-s1','5c-s2','5d-s1','5d-s2','5d-s3','5d-s4']
     .forEach(id => updateNotice(id));
 
+  /* Summary notices */
   const keyMap = {
-    '5a': { keys: ['5a-s1'], max: 1 },
-    '5b': { keys: ['5b-s1','5b-s2'], max: 3 },
-    '5c': { keys: ['5c-s1','5c-s2'], max: 3 },
-    '5d': { keys: ['5d-s1','5d-s2','5d-s3','5d-s4'], max: 4 }
+    '5a': {keys:['5a-s1'], max:1},
+    '5b': {keys:['5b-s1','5b-s2'], max:3},
+    '5c': {keys:['5c-s1','5c-s2'], max:3},
+    '5d': {keys:['5d-s1','5d-s2','5d-s3','5d-s4'], max:4}
   };
   const st = ExamState.load();
   Object.keys(keyMap).forEach(id => {
-    const { keys, max } = keyMap[id];
+    const {keys, max} = keyMap[id];
     const ne = document.getElementById(`notice-${id}`);
     if (!ne) return;
     const earned = keys.reduce((s,k) => s + (st.scores[k]?.earned || 0), 0);
