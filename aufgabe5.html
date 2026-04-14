@@ -125,8 +125,14 @@
     <!-- ── Coordinate system (drawn via canvas) ── -->
     <div class="coord-wrap">
       <canvas id="coord-canvas" width="440" height="480"></canvas>
+      <div style="font-size:13px; color:#666; margin-top:4px; text-align:center;">
+        <strong>Werkzeug:</strong>
+        Klicke/tippe ins Koordinatensystem, um zwei Punkte zu setzen.
+        Ziehe einen Punkt, um ihn zu verschieben.
+        <span id="line-tool-info" style="display:block; margin-top:4px;
+              font-weight:bold; color:#1a5276;"></span>
+      </div>
     </div>
-
 
     <!-- ════════════════════════════════════════
          5a  Schnittpunkt mit y-Achse  (1 P)
@@ -524,12 +530,42 @@
 
 const stepMCSel = {};
 
-/* ── Coordinate system canvas ── */
-const cv  = document.getElementById('coord-canvas');
-const cctx = cv.getContext('2d');
-const OX = 220, OY = 360; /* origin position */
-const SCALE = 50; /* pixels per unit */
+/* ══════════════════════════════════════════
+   Coordinate system canvas with interactive
+   line-drawing tool (two draggable points)
+   ══════════════════════════════════════════ */
 
+const cv   = document.getElementById('coord-canvas');
+const cctx = cv.getContext('2d');
+const OX   = 220, OY = 360;  /* origin in pixels */
+const SCALE = 50;             /* pixels per unit */
+
+/* ── Two user-placed points ── */
+let userPoints = []; /* [{x, y}] in math coords, max 2 */
+let dragIndex  = -1; /* which point is being dragged */
+
+/* Restore saved points */
+(function restorePoints() {
+  const saved = loadCustom('5-line-points');
+  if (saved && Array.isArray(saved) && saved.length <= 2) {
+    userPoints = saved;
+  }
+})();
+
+/* ── Coordinate conversions ── */
+function mathToCanvas(mx, my) {
+  return { px: OX + mx * SCALE, py: OY - my * SCALE };
+}
+function canvasToMath(px, py) {
+  return { mx: (px - OX) / SCALE, my: (OY - py) / SCALE };
+}
+
+/* ── Snap to nearest 0.5 in math coords ── */
+function snapMath(v) {
+  return Math.round(v * 2) / 2;
+}
+
+/* ── Draw everything ── */
 function drawCoordSystem() {
   const W = cv.width, H = cv.height;
   cctx.clearRect(0, 0, W, H);
@@ -586,7 +622,7 @@ function drawCoordSystem() {
   cctx.textBaseline = 'bottom';
   cctx.fillText('y', OX + 14, 14);
 
-  /* Draw f(x) = ⅔x + 1 */
+  /* ── Draw f(x) = ⅔x + 1 ── */
   cctx.strokeStyle = '#1a5276';
   cctx.lineWidth = 2;
   cctx.beginPath();
@@ -599,126 +635,222 @@ function drawCoordSystem() {
   }
   cctx.stroke();
 
-  /* Label f */
+  /* f label */
   cctx.font = 'bold italic 14px Arial';
   cctx.fillStyle = '#1a5276';
   cctx.textAlign = 'left';
   cctx.textBaseline = 'bottom';
-  const fLabelX = OX + 3.5 * SCALE;
-  const fLabelY = OY - ((2/3)*3.5 + 1) * SCALE;
-  cctx.fillText('f', fLabelX + 8, fLabelY - 4);
-}
+  const fLx = OX + 3.5 * SCALE;
+  const fLy = OY - ((2/3)*3.5 + 1) * SCALE;
+  cctx.fillText('f', fLx + 8, fLy - 4);
 
-drawCoordSystem();
+  /* ── Draw user line (if two points placed) ── */
+  if (userPoints.length === 2) {
+    const p0 = userPoints[0];
+    const p1 = userPoints[1];
 
-/* ── MC / Unlock / Feedback helpers ── */
-function selectStepMC(g, el) {
-  const c = el.closest('.step-mc');
-  c.querySelectorAll('.step-mc-option').forEach(o => {
-    o.classList.remove('selected','correct','incorrect');
-    const cb = o.querySelector('.step-mc-cb');
-    if (cb) cb.textContent = '';
-  });
-  el.classList.add('selected');
-  const cb = el.querySelector('.step-mc-cb');
-  if (cb) cb.textContent = '✓';
-  stepMCSel[g] = el.dataset.val;
-  saveCustom(`stepmcs-${g}`, el.dataset.val);
-}
-function restoreStepMC(g) {
-  const v = loadCustom(`stepmcs-${g}`);
-  if (!v) return; stepMCSel[g] = v;
-  const c = document.getElementById(`smc-${g}`);
-  if (!c) return;
-  c.querySelectorAll('.step-mc-option').forEach(o => {
-    if (o.dataset.val === v) {
-      o.classList.add('selected');
-      const cb = o.querySelector('.step-mc-cb');
-      if (cb) cb.textContent = '✓';
+    /* Extend line across full canvas */
+    if (Math.abs(p1.x - p0.x) > 0.001) {
+      const slope = (p1.y - p0.y) / (p1.x - p0.x);
+      const yInt  = p0.y - slope * p0.x;
+
+      /* Find canvas-edge intersections */
+      const xMin = (0 - OX) / SCALE;
+      const xMax = (W - OX) / SCALE;
+      const yAtXMin = slope * xMin + yInt;
+      const yAtXMax = slope * xMax + yInt;
+
+      const c0 = mathToCanvas(xMin, yAtXMin);
+      const c1 = mathToCanvas(xMax, yAtXMax);
+
+      cctx.strokeStyle = '#e74c3c';
+      cctx.lineWidth   = 2;
+      cctx.setLineDash([]);
+      cctx.beginPath();
+      cctx.moveTo(c0.px, c0.py);
+      cctx.lineTo(c1.px, c1.py);
+      cctx.stroke();
+
+      /* g label */
+      cctx.font = 'bold italic 14px Arial';
+      cctx.fillStyle = '#e74c3c';
+      cctx.textAlign = 'left';
+      cctx.textBaseline = 'bottom';
+      cctx.fillText('g', c1.px - 30, c1.py - 6);
+    } else {
+      /* Vertical line */
+      const c0 = mathToCanvas(p0.x, -3);
+      const c1 = mathToCanvas(p0.x, 8);
+      cctx.strokeStyle = '#e74c3c';
+      cctx.lineWidth   = 2;
+      cctx.beginPath();
+      cctx.moveTo(c0.px, c0.py);
+      cctx.lineTo(c1.px, c1.py);
+      cctx.stroke();
     }
-  });
-}
-function markStepMC(g, cv) {
-  const c = document.getElementById(`smc-${g}`);
-  if (!c) return;
-  const ch = stepMCSel[g]; if (!ch) return;
-  const ok = (ch === cv);
-  c.querySelectorAll('.step-mc-option').forEach(o => {
-    o.classList.remove('correct','incorrect');
-    if (o.dataset.val === ch) o.classList.add(ok ? 'correct' : 'incorrect');
-  });
-  saveResult(`smc_${g}_chosen`, ch);
-  saveResult(`smc_${g}_result`, ok ? 'correct' : 'incorrect');
-}
-function restoreStepMCResult(g) {
-  const ch = loadResult(`smc_${g}_chosen`);
-  const r  = loadResult(`smc_${g}_result`);
-  if (!ch || !r) return;
-  const c = document.getElementById(`smc-${g}`);
-  if (!c) return;
-  c.querySelectorAll('.step-mc-option').forEach(o => {
-    o.classList.remove('correct','incorrect');
-    if (o.dataset.val === ch) o.classList.add(r);
-  });
-}
-function unlockStep(id) {
-  const el = document.getElementById(id);
-  if (el) { el.classList.remove('locked'); saveCustom(`unlocked-${id}`, true); }
-}
-function restoreUnlocked(id) {
-  if (loadCustom(`unlocked-${id}`)) {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('locked');
   }
-}
-function showInlineFB(id, ok, hint, stored, maxPts) {
-  const el = document.getElementById(`ifb-${id}`);
-  if (!el) return;
-  const css = ok ? 'correct' : 'incorrect';
-  let badge = '';
-  if (maxPts != null && maxPts > 0) {
-    const d = (stored != null) ? stored : 0;
-    badge = `<span style="display:inline-block;
-      background:${d > 0 ? '#27ae60' : '#c0392b'};
-      color:white;font-size:12px;font-weight:bold;
-      padding:2px 8px;border-radius:10px;margin-left:6px;
-      vertical-align:middle;">${d}/${maxPts}&nbsp;P</span>`;
-  }
-  const html = ok
-    ? `✅ Richtig!${badge}`
-    : `❌ Noch nicht richtig.${badge}`
-      + (hint ? `<br><span style="font-style:italic;font-size:13px;">${hint}</span>` : '');
-  el.className = `inline-feedback show ${css}`;
-  el.innerHTML = html;
-  saveInlineFeedback(id, html, css);
-}
-function showSubExerciseSummary(fid, nid, keys, max) {
-  const st = ExamState.load();
-  const earned = keys.reduce((s,k) => s + (st.scores[k]?.earned || 0), 0);
-  const fb = document.getElementById(fid);
-  if (!fb) return;
-  const all = Math.abs(earned - max) < 0.01;
-  const css = all ? 'correct' : 'incorrect';
-  const badge = `<span style="display:inline-block;
-    background:${all ? '#27ae60' : '#e67e22'};
-    color:white;font-size:13px;font-weight:bold;
-    padding:3px 10px;border-radius:10px;margin-left:8px;">
-    ${earned}/${max}&nbsp;P</span>`;
-  fb.className = `feedback-box show ${css}`;
-  fb.innerHTML = all
-    ? `<span class="feedback-icon">✅</span><strong>Alle Schritte richtig!</strong>${badge}`
-    : `<span class="feedback-icon">⚠️</span><strong>Teilweise richtig.</strong>${badge}
-       <div class="hint-text">Überprüfe die rot markierten Schritte.</div>`;
-  const ne = document.getElementById(nid);
-  if (ne) {
-    ne.className = earned > 0 ? 'scored-notice earned' : 'scored-notice not-earned';
-    ne.textContent = earned > 0
-      ? `✓ ${earned}/${max} Punkt(e) vergeben`
-      : `0/${max} Punkt(e) – weiteres Üben möglich`;
-  }
-  saveFeedback(fid.replace('feedback-',''), fb.innerHTML, css);
+
+  /* ── Draw user points ── */
+  userPoints.forEach((pt, i) => {
+    const c = mathToCanvas(pt.x, pt.y);
+    /* Outer ring */
+    cctx.beginPath();
+    cctx.arc(c.px, c.py, 10, 0, 2 * Math.PI);
+    cctx.fillStyle = 'rgba(231, 76, 60, 0.2)';
+    cctx.fill();
+    cctx.strokeStyle = '#e74c3c';
+    cctx.lineWidth = 2;
+    cctx.stroke();
+    /* Inner dot */
+    cctx.beginPath();
+    cctx.arc(c.px, c.py, 4, 0, 2 * Math.PI);
+    cctx.fillStyle = '#e74c3c';
+    cctx.fill();
+    /* Coordinate label */
+    cctx.font = '11px Arial';
+    cctx.fillStyle = '#c0392b';
+    cctx.textAlign = 'left';
+    cctx.textBaseline = 'bottom';
+    cctx.fillText(`(${pt.x}|${pt.y})`, c.px + 12, c.py - 6);
+  });
+
+  /* ── Update info text ── */
+  updateLineInfo();
 }
 
+function updateLineInfo() {
+  const info = document.getElementById('line-tool-info');
+  if (!info) return;
+  if (userPoints.length === 0) {
+    info.textContent = 'Setze den ersten Punkt.';
+  } else if (userPoints.length === 1) {
+    info.textContent =
+      `Punkt 1: (${userPoints[0].x}|${userPoints[0].y}) — setze den zweiten Punkt.`;
+  } else {
+    const p0 = userPoints[0], p1 = userPoints[1];
+    let slopeStr = '';
+    let yIntStr  = '';
+    if (Math.abs(p1.x - p0.x) > 0.001) {
+      const m = (p1.y - p0.y) / (p1.x - p0.x);
+      const b = p0.y - m * p0.x;
+      /* Display as fraction if close to 2/3 */
+      const mRound = Math.round(m * 1000) / 1000;
+      const bRound = Math.round(b * 100) / 100;
+      slopeStr = `m = ${mRound}`;
+      yIntStr  = `b = ${bRound}`;
+    } else {
+      slopeStr = 'Vertikale Linie (keine Steigung)';
+    }
+    info.innerHTML =
+      `Punkt 1: (${p0.x}|${p0.y}), Punkt 2: (${p1.x}|${p1.y})<br>`
+      + `${slopeStr}` + (yIntStr ? `, ${yIntStr}` : '');
+  }
+}
+
+/* ── Save points to localStorage ── */
+function savePoints() {
+  saveCustom('5-line-points', userPoints);
+}
+
+/* ── Hit test: is (cx, cy) near a point? ── */
+function hitTestPoint(cx, cy) {
+  for (let i = 0; i < userPoints.length; i++) {
+    const c = mathToCanvas(userPoints[i].x, userPoints[i].y);
+    if (Math.hypot(cx - c.px, cy - c.py) < 20) return i;
+  }
+  return -1;
+}
+
+/* ── Get canvas-relative coordinates from event ── */
+function getCanvasXY(e) {
+  const rect = cv.getBoundingClientRect();
+  const scaleX = cv.width  / rect.width;
+  const scaleY = cv.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    cx: (clientX - rect.left) * scaleX,
+    cy: (clientY - rect.top)  * scaleY,
+  };
+}
+
+/* ── Mouse events ── */
+cv.addEventListener('mousedown', function(e) {
+  const { cx, cy } = getCanvasXY(e);
+  const hit = hitTestPoint(cx, cy);
+  if (hit >= 0) {
+    /* Start dragging existing point */
+    dragIndex = hit;
+  } else if (userPoints.length < 2) {
+    /* Place new point */
+    const m = canvasToMath(cx, cy);
+    userPoints.push({ x: snapMath(m.mx), y: snapMath(m.my) });
+    savePoints();
+    drawCoordSystem();
+  } else {
+    /* Already 2 points — check if near one to drag */
+    dragIndex = -1;
+  }
+});
+
+cv.addEventListener('mousemove', function(e) {
+  if (dragIndex < 0) return;
+  const { cx, cy } = getCanvasXY(e);
+  const m = canvasToMath(cx, cy);
+  userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
+  drawCoordSystem();
+});
+
+cv.addEventListener('mouseup', function() {
+  if (dragIndex >= 0) {
+    savePoints();
+    drawCoordSystem();
+  }
+  dragIndex = -1;
+});
+
+cv.addEventListener('mouseleave', function() {
+  if (dragIndex >= 0) {
+    savePoints();
+    drawCoordSystem();
+  }
+  dragIndex = -1;
+});
+
+/* ── Touch events ── */
+cv.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const { cx, cy } = getCanvasXY(e);
+  const hit = hitTestPoint(cx, cy);
+  if (hit >= 0) {
+    dragIndex = hit;
+  } else if (userPoints.length < 2) {
+    const m = canvasToMath(cx, cy);
+    userPoints.push({ x: snapMath(m.mx), y: snapMath(m.my) });
+    savePoints();
+    drawCoordSystem();
+  }
+}, { passive: false });
+
+cv.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (dragIndex < 0) return;
+  const { cx, cy } = getCanvasXY(e);
+  const m = canvasToMath(cx, cy);
+  userPoints[dragIndex] = { x: snapMath(m.mx), y: snapMath(m.my) };
+  drawCoordSystem();
+}, { passive: false });
+
+cv.addEventListener('touchend', function(e) {
+  if (dragIndex >= 0) {
+    savePoints();
+    drawCoordSystem();
+  }
+  dragIndex = -1;
+});
+
+/* Initial draw */
+drawCoordSystem();
 /* ══════════════════════════════════════════
    5a  (1 P)
    Sy = (0, 1)

@@ -379,6 +379,11 @@ function updateTaskCards() {
   }
 }
 
+function resetLine() {
+  userPoints = [];
+  savePoints();
+  drawCoordSystem();
+}
 /* ── Page Init ── */
 
 document.addEventListener('DOMContentLoaded', () => {
